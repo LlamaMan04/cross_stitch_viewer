@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+/// Empty-state library screen and entry point for future pattern imports.
 class LibraryScreen extends StatelessWidget {
+  /// Creates the pattern library screen.
   const LibraryScreen({super.key});
 
+  /// Builds the library empty state and import affordances.
   @override
   Widget build(BuildContext context) {
+    // Theme colors keep the empty state consistent with app-level theming.
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -69,6 +73,7 @@ class LibraryScreen extends StatelessWidget {
     );
   }
 
+  /// Shows temporary feedback until pattern import is implemented.
   void _showImportComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

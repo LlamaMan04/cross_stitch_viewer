@@ -5,4 +5,5 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+/// Placeholder entry point for widget-level tests as UI work is added.
 void main() {}

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// Basic application settings and product information screen.
 class SettingsScreen extends StatelessWidget {
+  /// Creates the settings screen.
   const SettingsScreen({super.key});
 
+  /// Builds the current settings list.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
