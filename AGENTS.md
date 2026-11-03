@@ -14,7 +14,7 @@ This is a Flutter application written in Dart. App startup is in `lib/main.dart`
 
 ## Coding Style and Naming
 
-Format Dart changes with `dart format .` and follow `analysis_options.yaml` (`flutter_lints`). Use two-space indentation, `lower_snake_case.dart` filenames, `UpperCamelCase` types, and `lowerCamelCase` members. Prefer focused files organized by domain responsibility. Keep domain code free of Flutter, persistence, filesystem, and plugin dependencies. Preserve stable JSON field names and validate decoded data at model or codec boundaries. Ensure every type, member, and variable have a comment describing the purpose of that element.
+Format Dart changes with `dart format .` and follow `analysis_options.yaml` (`flutter_lints`). Use two-space indentation, `lower_snake_case.dart` filenames, `UpperCamelCase` types, and `lowerCamelCase` members. Prefer focused files organized by domain responsibility. Keep domain code free of Flutter, persistence, filesystem, and plugin dependencies. Preserve stable JSON field names and validate decoded data at model or codec boundaries. Ensure every type, member, function, and variable have a comment describing the purpose of that element.
 
 ## Testing
 
