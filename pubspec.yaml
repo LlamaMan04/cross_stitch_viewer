@@ -31,6 +31,14 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Provides the typed SQLite persistence boundary used by the app.
+  drift: ^2.31.0
+  # Supplies bundled SQLite libraries for Flutter target platforms.
+  sqlite3_flutter_libs: ^0.5.39
+  # Locates the application-support directory for the production database.
+  path: ^1.9.1
+  path_provider: ^2.1.5
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -45,6 +53,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  # Generates Drift's typed database implementation.
+  build_runner: ^2.4.15
+  drift_dev: ^2.31.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

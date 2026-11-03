@@ -83,13 +83,13 @@ Use a sparse representation for empty cells and a compact representation for pop
 
 ### Phase 1 — Foundation and domain contracts
 
-1. Replace the starter app with a basic application shell and navigation.
+1. Replace the starter app with a basic application shell and navigation, and establish Drift as the app's local persistence stack. Add the Drift/SQLite dependencies, database lifecycle boundary, development database configuration, migration entry point, and test-database configuration. Keep the database layer behind repository interfaces and out of the domain models.
 2. Add domain models, JSON serialization, schema versioning, and repository interfaces.
 3. Add sample normalized pattern fixtures, including empty cells, multiple colors, page boundaries, symbols, and malformed/ambiguous cells.
-4. Decide and document persistence technology, file-picker integration, and state-management approach after validating all five target platform builds.
-5. Add formatting, linting, unit-test, and CI commands.
+4. Implement the Drift repository adapters and document file-picker and state-management boundaries after validating all five target platform builds. Map normalized pattern data, progress, markers, viewport state, import history, parser versions, and diagnostics to separate tables or related table groups. Add indexed lookup by document ID and grid coordinate, atomic replacement/save behavior, and migration tests.
+5. Add formatting, linting, unit-test, database migration-test, and CI commands.
 
-Exit criteria: a fixture can be loaded from a repository and round-tripped through serialization on every target platform.
+Exit criteria: a fixture can be loaded through a repository backed by Drift, persisted and reopened through SQLite, and round-tripped through the versioned portable serialization format on every target platform.
 
 ### Phase 2 — Pattern workspace and rendering
 
@@ -228,7 +228,11 @@ Use separate storage for:
 2. User progress, markers, notes, and viewport state.
 3. Import history, parser version, and diagnostics.
 
-Writes should be atomic or journaled, with migration code for schema changes. Include export/import of the normalized document plus progress as a portable backup. Test interrupted writes, corrupt files, duplicate imports, and insufficient storage.
+Use Drift over SQLite for the local application store. The normalized pattern document and mutable progress must remain separate at both the domain and persistence boundaries so progress updates do not rewrite imported pattern data. Index document IDs, pattern summaries, and populated grid coordinates for quick lookup; use transactions for document replacement and progress saves.
+
+SQLite is the operational format, not the long-term backup contract. Keep the existing versioned JSON codecs as the first portable export/import format, with the option to add compressed JSON, CBOR, or another binary representation later. Export/import must include the normalized document and progress as logically separate records, plus checksums and schema versions where needed.
+
+Writes should be atomic or journaled, with Drift migration code for schema changes. Test interrupted writes, corrupt databases and export files, duplicate imports, migration from each supported schema version, and insufficient storage.
 
 ## 9. Testing and acceptance criteria
 
