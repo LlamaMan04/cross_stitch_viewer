@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../domain/repositories.dart';
 import '../presentation/screens/library_screen.dart';
 import '../presentation/screens/settings_screen.dart';
+import 'sample_pattern_fixture.dart';
 
 /// Root Material application configuration for StitchScope.
 class StitchScopeApp extends StatelessWidget {
   /// Creates the application shell.
-  const StitchScopeApp({super.key});
+  const StitchScopeApp({
+    required this.patternDocuments,
+    required this.progress,
+    super.key,
+  });
+
+  /// Repository used by the library and workspace routes.
+  final PatternDocumentRepository patternDocuments;
+
+  /// Repository retained by the app composition for upcoming workspace state.
+  final ProgressRepository progress;
 
   /// Builds the app theme and responsive navigation shell.
   @override
@@ -29,7 +41,7 @@ class StitchScopeApp extends StatelessWidget {
           border: OutlineInputBorder(),
         ),
       ),
-      home: const _AppShell(),
+      home: _AppShell(patternDocuments: patternDocuments),
     );
   }
 }
@@ -37,7 +49,10 @@ class StitchScopeApp extends StatelessWidget {
 /// Responsive navigation container shared by compact and wide layouts.
 class _AppShell extends StatefulWidget {
   /// Creates the shell that owns the active destination.
-  const _AppShell();
+  const _AppShell({required this.patternDocuments});
+
+  /// Repository passed to the library screen.
+  final PatternDocumentRepository patternDocuments;
 
   /// Creates state for the selected navigation destination.
   @override
@@ -69,7 +84,13 @@ class _AppShellState extends State<_AppShell> {
     // Wide layouts use a permanent rail; narrow layouts use bottom navigation.
     final isWide = MediaQuery.sizeOf(context).width >= 700;
     // Keeping both screens mounted preserves each screen's local UI state.
-    final screens = <Widget>[const LibraryScreen(), const SettingsScreen()];
+    final screens = <Widget>[
+      LibraryScreen(
+        patternDocuments: widget.patternDocuments,
+        seedDocument: SamplePatternFixture.create(),
+      ),
+      const SettingsScreen(),
+    ];
 
     if (isWide) {
       return Scaffold(

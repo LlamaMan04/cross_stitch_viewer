@@ -94,11 +94,19 @@ Use a sparse representation for empty cells and a compact representation for pop
 
 Exit criteria: a fixture can be loaded through a repository backed by Drift, persisted and reopened through SQLite, and round-tripped through the versioned portable serialization format on every target platform.
 
-### Next slice — Fixture-backed library and workspace entry
+### Completed slice — Fixture-backed library and workspace entry
 
-Create one representative hand-authored `PatternDocument` fixture and a small application composition root that opens `AppDatabase` and injects the two Drift repositories. Update the library screen to seed the fixture only when the local library is empty, list repository summaries, and open a placeholder workspace route for a selected document.
+1. [x] Create one representative hand-authored `PatternDocument` fixture with symbols, exact thread definitions, sparse cells, provenance, metadata, and diagnostics.
+2. [x] Add an application composition root that opens `AppDatabase` and injects the document and progress repositories.
+3. [x] Update the library screen to seed the fixture only when the local library is empty and list repository summaries.
+4. [x] Open a placeholder workspace route that loads the selected persisted document.
+5. [x] Add widget coverage for empty and populated libraries and navigation to the workspace route.
 
-This slice establishes the real application data path before canvas work: fixture → document repository → library list → document load → workspace route. It should include widget tests for empty and populated library states plus repository integration coverage for reopening persisted data. Keep PDF/file import, portable JSON codecs, and state-management package selection outside this slice.
+This slice establishes the real application data path before canvas work: fixture → document repository → library list → document load → workspace route.
+
+### Next slice — Read-only pattern workspace canvas
+
+Replace the workspace placeholder with a custom-painted, read-only grid for the sample document. Render grid lines, symbol glyphs, thread-color fills, row/column coordinates, and page boundaries from the loaded `PatternDocument`. Start with fit-to-pattern and a static viewport; add pan, zoom, selection, and progress updates in later slices. Include widget tests for loaded, missing, and basic viewport states, plus a painter-focused test that confirms sparse cells and symbol/thread data are rendered.
 
 ### Phase 2 — Pattern workspace and rendering
 
