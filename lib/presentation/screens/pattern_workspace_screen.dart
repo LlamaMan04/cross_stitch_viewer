@@ -65,7 +65,7 @@ class PatternWorkspaceScreen extends StatelessWidget {
   }
 }
 
-/// Fits a normalized pattern grid into its available viewport without gestures.
+/// Fits a normalized pattern grid into a pannable and zoomable viewport.
 class PatternRenderView extends StatelessWidget {
   /// Creates a read-only custom-painted pattern grid.
   const PatternRenderView({required this.document, super.key});
@@ -84,16 +84,24 @@ class PatternRenderView extends StatelessWidget {
           border: Border.all(color: colors.outlineVariant),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: CustomPaint(
-          key: const ValueKey('pattern-grid-canvas'),
-          painter: PatternGridPainter(
-            document: document,
-            surfaceColor: colors.surfaceContainerLowest,
-            gridColor: colors.outlineVariant,
-            labelColor: colors.onSurfaceVariant,
-            regionColor: colors.primary,
+        child: InteractiveViewer(
+          key: const ValueKey('pattern-interactive-viewer'),
+          minScale: 1,
+          maxScale: 8,
+          panEnabled: true,
+          scaleEnabled: true,
+          trackpadScrollCausesScale: false,
+          child: CustomPaint(
+            key: const ValueKey('pattern-grid-canvas'),
+            painter: PatternGridPainter(
+              document: document,
+              surfaceColor: colors.surfaceContainerLowest,
+              gridColor: colors.outlineVariant,
+              labelColor: colors.onSurfaceVariant,
+              regionColor: colors.primary,
+            ),
+            child: const SizedBox.expand(),
           ),
-          child: const SizedBox.expand(),
         ),
       ),
     );

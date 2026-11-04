@@ -40,6 +40,13 @@ void main() {
     expect(find.text('Pattern Workspace'), findsOneWidget);
     expect(find.text('4 × 5'), findsOneWidget);
     expect(find.byKey(const ValueKey('pattern-grid-canvas')), findsOneWidget);
+    final interactiveViewer = tester.widget<InteractiveViewer>(
+      find.byKey(const ValueKey('pattern-interactive-viewer')),
+    );
+    expect(interactiveViewer.panEnabled, isTrue);
+    expect(interactiveViewer.scaleEnabled, isTrue);
+    expect(interactiveViewer.minScale, 1);
+    expect(interactiveViewer.maxScale, 8);
     final canvas = tester.widget<CustomPaint>(
       find.byKey(const ValueKey('pattern-grid-canvas')),
     );
