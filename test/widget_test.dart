@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/presentation/screens/library_screen.dart';
@@ -62,12 +63,39 @@ void main() {
     expect(painter.document.grid.cells, hasLength(3));
     expect(painter.document.symbolById('flower')?.thread.color, '#C72C41');
   });
+
+  testWidgets('replaces existing patterns with both seed patterns', (
+    tester,
+  ) async {
+    final repository = InMemoryPatternDocumentRepository();
+    await repository.save(SamplePatternFixture.create());
+
+    await tester.pumpWidget(
+      _libraryApp(
+        repository,
+        seedDocuments: [
+          SamplePatternFixture.create(),
+          LargeSamplePatternFixture.create(),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(await repository.listSummaries(), hasLength(2));
+    expect(find.text('Garden Sampler'), findsOneWidget);
+    expect(find.text('Large Test Pattern'), findsOneWidget);
+  });
 }
 
 /// Wraps a library screen in the Material context required by widget tests.
 Widget _libraryApp(
   InMemoryPatternDocumentRepository repository, {
+  List<PatternDocument> seedDocuments = const [],
   PatternDocument? seedDocument,
 }) => MaterialApp(
-  home: LibraryScreen(patternDocuments: repository, seedDocument: seedDocument),
+  home: LibraryScreen(
+    patternDocuments: repository,
+    seedDocuments: seedDocuments,
+    seedDocument: seedDocument,
+  ),
 );

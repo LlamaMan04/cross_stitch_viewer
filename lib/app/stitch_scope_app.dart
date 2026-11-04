@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../domain/repositories.dart';
 import '../presentation/screens/library_screen.dart';
 import '../presentation/screens/settings_screen.dart';
+import 'large_sample_pattern_fixture.dart';
 import 'sample_pattern_fixture.dart';
 
 /// Root Material application configuration for StitchScope.
@@ -87,7 +88,10 @@ class _AppShellState extends State<_AppShell> {
     final screens = <Widget>[
       LibraryScreen(
         patternDocuments: widget.patternDocuments,
-        seedDocument: SamplePatternFixture.create(),
+        seedDocuments: [
+          SamplePatternFixture.create(),
+          LargeSamplePatternFixture.create(),
+        ],
       ),
       const SettingsScreen(),
     ];

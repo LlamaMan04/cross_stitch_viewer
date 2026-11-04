@@ -4,11 +4,12 @@ import '../../domain/pattern_document.dart';
 import '../../domain/repositories.dart';
 import 'pattern_workspace_screen.dart';
 
-/// Lists persisted patterns and seeds the first-run sample when configured.
+/// Lists persisted patterns and replaces the configured seed library on load.
 class LibraryScreen extends StatefulWidget {
   /// Creates a pattern library screen over the supplied document repository.
   const LibraryScreen({
     required this.patternDocuments,
+    this.seedDocuments = const [],
     this.seedDocument,
     super.key,
   });
@@ -16,7 +17,10 @@ class LibraryScreen extends StatefulWidget {
   /// Repository providing document summaries and selected documents.
   final PatternDocumentRepository patternDocuments;
 
-  /// Optional first-run document inserted when the library is empty.
+  /// Documents used to repopulate the library when seeding is configured.
+  final List<PatternDocument> seedDocuments;
+
+  /// Legacy single-document seed accepted by focused tests and callers.
   final PatternDocument? seedDocument;
 
   /// Creates state that loads the library once while this screen remains mounted.
@@ -24,7 +28,7 @@ class LibraryScreen extends StatefulWidget {
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-/// Manages the asynchronous library summary query and first-run seed.
+/// Manages the asynchronous library summary query and seed replacement.
 class _LibraryScreenState extends State<LibraryScreen> {
   /// Pending library load retained across rebuilds.
   late Future<List<PatternSummary>> _summaries;
@@ -35,12 +39,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _summaries = _loadSummaries();
   }
 
-  /// Seeds the configured sample only when there are no existing documents.
+  /// Clears existing documents and imports every configured seed document.
   Future<List<PatternSummary>> _loadSummaries() async {
     final summaries = await widget.patternDocuments.listSummaries();
-    final sample = widget.seedDocument;
-    if (summaries.isNotEmpty || sample == null) return summaries;
-    await widget.patternDocuments.save(sample);
+    final seeds = [
+      ...widget.seedDocuments,
+      if (widget.seedDocument case final seed?) seed,
+    ];
+    if (seeds.isEmpty) return summaries;
+
+    for (final summary in summaries) {
+      await widget.patternDocuments.delete(summary.id);
+    }
+    for (final seed in seeds) {
+      await widget.patternDocuments.save(seed);
+    }
     return widget.patternDocuments.listSummaries();
   }
 
@@ -74,6 +87,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
             return _LibraryError(onRetry: _reload, error: snapshot.error!);
           }
           final summaries = snapshot.requireData;
+          // A seeded test pattern is a real library item, even when it is the
+          // only item on a fresh run.
           if (summaries.isEmpty) {
             return _LibraryEmpty(
               onImport: () => _showImportComingSoon(context),
