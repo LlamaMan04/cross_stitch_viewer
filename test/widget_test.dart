@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/presentation/screens/library_screen.dart';
+import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
 
 import 'domain/in_memory_repositories.dart';
 
@@ -37,7 +38,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Pattern Workspace'), findsOneWidget);
-    expect(find.text('4 rows × 5 columns'), findsOneWidget);
+    expect(find.text('4 × 5'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pattern-grid-canvas')), findsOneWidget);
+    final canvas = tester.widget<CustomPaint>(
+      find.byKey(const ValueKey('pattern-grid-canvas')),
+    );
+    final painter = canvas.painter! as PatternGridPainter;
+    expect(painter.document.grid.cells, hasLength(3));
+    expect(painter.document.symbolById('flower')?.thread.color, '#C72C41');
   });
 }
 

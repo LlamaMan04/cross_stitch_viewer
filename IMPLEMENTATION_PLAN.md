@@ -104,9 +104,15 @@ Exit criteria: a fixture can be loaded through a repository backed by Drift, per
 
 This slice establishes the real application data path before canvas work: fixture → document repository → library list → document load → workspace route.
 
-### Next slice — Read-only pattern workspace canvas
+### Completed slice — Read-only pattern workspace canvas
 
-Replace the workspace placeholder with a custom-painted, read-only grid for the sample document. Render grid lines, symbol glyphs, thread-color fills, row/column coordinates, and page boundaries from the loaded `PatternDocument`. Start with fit-to-pattern and a static viewport; add pan, zoom, selection, and progress updates in later slices. Include widget tests for loaded, missing, and basic viewport states, plus a painter-focused test that confirms sparse cells and symbol/thread data are rendered.
+1. [x] Replace the workspace placeholder with a custom-painted, read-only fitted grid.
+2. [x] Render sparse cells, symbol glyphs, thread-color fills, row and column coordinates, and page-region boundaries from the loaded `PatternDocument`.
+3. [x] Add widget coverage that confirms the workspace receives the selected document and its sparse cell and thread data.
+
+### Next slice — Viewport navigation and stitch inspection
+
+Add pan and zoom gestures while retaining a stable grid-coordinate transform. Tapping a populated cell should select it and display its row, column, symbol glyph, thread brand/catalog number/name/color, stitch type, provenance, and parser confidence. Keep this slice read-only: completion tracking and markers should follow once selection is established.
 
 ### Phase 2 — Pattern workspace and rendering
 
