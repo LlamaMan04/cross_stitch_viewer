@@ -73,6 +73,9 @@ class PatternRenderView extends StatelessWidget {
   /// Pattern data rendered by this view.
   final PatternDocument document;
 
+  /// Space retained around the grid while it is fitted into the viewport.
+  static const _patternInset = 24.0;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -91,16 +94,20 @@ class PatternRenderView extends StatelessWidget {
           panEnabled: true,
           scaleEnabled: true,
           trackpadScrollCausesScale: false,
-          child: CustomPaint(
-            key: const ValueKey('pattern-grid-canvas'),
-            painter: PatternGridPainter(
-              document: document,
-              surfaceColor: colors.surfaceContainerLowest,
-              gridColor: colors.outlineVariant,
-              labelColor: colors.onSurfaceVariant,
-              regionColor: colors.primary,
+          boundaryMargin: const EdgeInsets.all(_patternInset),
+          child: Padding(
+            padding: const EdgeInsets.all(_patternInset),
+            child: CustomPaint(
+              key: const ValueKey('pattern-grid-canvas'),
+              painter: PatternGridPainter(
+                document: document,
+                surfaceColor: colors.surfaceContainerLowest,
+                gridColor: colors.outlineVariant,
+                labelColor: colors.onSurfaceVariant,
+                regionColor: colors.primary,
+              ),
+              child: const SizedBox.expand(),
             ),
-            child: const SizedBox.expand(),
           ),
         ),
       ),

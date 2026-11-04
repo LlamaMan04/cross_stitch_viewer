@@ -47,6 +47,14 @@ void main() {
     expect(interactiveViewer.scaleEnabled, isTrue);
     expect(interactiveViewer.minScale, 1);
     expect(interactiveViewer.maxScale, 8);
+    expect(interactiveViewer.boundaryMargin, const EdgeInsets.all(24));
+    final padding = tester.widget<Padding>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Padding && widget.padding == const EdgeInsets.all(24),
+      ),
+    );
+    expect(padding.padding, const EdgeInsets.all(24));
     final canvas = tester.widget<CustomPaint>(
       find.byKey(const ValueKey('pattern-grid-canvas')),
     );
