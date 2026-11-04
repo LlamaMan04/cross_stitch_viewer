@@ -44,8 +44,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final summaries = await widget.patternDocuments.listSummaries();
     final seeds = [
       ...widget.seedDocuments,
-      if (widget.seedDocument case final seed?) seed,
     ];
+    final seed = widget.seedDocument;
+    if (seed != null) seeds.add(seed);
     if (seeds.isEmpty) return summaries;
 
     for (final summary in summaries) {
