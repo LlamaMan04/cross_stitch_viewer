@@ -56,6 +56,8 @@ dev_dependencies:
   # Generates Drift's typed database implementation.
   build_runner: ^2.4.15
   drift_dev: ^2.31.0
+  # Creates a legacy SQLite fixture for migration tests.
+  sqlite3: ^3.8.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

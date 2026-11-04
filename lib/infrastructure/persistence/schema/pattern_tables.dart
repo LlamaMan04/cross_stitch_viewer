@@ -51,7 +51,7 @@ class SourceMetadataEntries extends Table {
   /// Defines the metadata field name.
   TextColumn get key => text()();
 
-  /// Defines the textual metadata value.
+  /// Defines the JSON-encoded metadata value, including strings and null.
   TextColumn get value => text()();
 
   /// Allows one value for each metadata key in a document.
@@ -88,54 +88,6 @@ class LibraryMetadata extends Table {
   Set<Column<Object>> get primaryKey => {documentId};
 }
 
-/// Stores thread catalog entries belonging to a normalized pattern.
-@DataClassName('PatternThreadRow')
-class PatternThreads extends Table {
-  /// Defines the parent pattern document.
-  TextColumn get documentId => text()();
-
-  /// Defines the stable thread identifier within the document.
-  TextColumn get id => text()();
-
-  /// Preserves the thread's order in the portable document.
-  IntColumn get sortOrder => integer()();
-
-  /// Defines the optional thread manufacturer.
-  TextColumn get brand => text().nullable()();
-
-  /// Defines the optional manufacturer catalog number.
-  TextColumn get catalogNumber => text().nullable()();
-
-  /// Defines the optional human-readable color name.
-  TextColumn get name => text().nullable()();
-
-  /// Defines the canonical thread color in `#RRGGBB` notation.
-  TextColumn get color => text()();
-
-  /// Defines optional substitution or conversion notes.
-  TextColumn get conversionNotes => text().nullable()();
-
-  /// Defines whether the source color was explicit or inferred.
-  TextColumn get evidence => text()();
-
-  /// Uniquely identifies a thread within its parent document.
-  @override
-  Set<Column<Object>> get primaryKey => {documentId, id};
-
-  /// Links threads to their parent and enforces their portable wire values.
-  @override
-  List<String> get customConstraints => const [
-    'FOREIGN KEY (document_id) REFERENCES pattern_documents(id) '
-        'ON DELETE CASCADE',
-    'UNIQUE (document_id, sort_order)',
-    'CHECK (length(id) > 0)',
-    'CHECK (sort_order >= 0)',
-    "CHECK (color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
-        "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
-    "CHECK (evidence IN ('explicit', 'inferred'))",
-  ];
-}
-
 /// Stores symbol definitions belonging to a normalized pattern.
 @DataClassName('PatternSymbolRow')
 @TableIndex(
@@ -161,8 +113,26 @@ class PatternSymbols extends Table {
   /// Defines the glyph rendered in the pattern grid.
   TextColumn get displayGlyph => text()();
 
-  /// Defines the thread for the symbol.
+  /// Defines the exact thread identifier used by the symbol.
   TextColumn get threadId => text()();
+
+  /// Defines the optional thread manufacturer.
+  TextColumn get threadBrand => text().nullable()();
+
+  /// Defines the optional manufacturer catalog number.
+  TextColumn get threadCatalogNumber => text().nullable()();
+
+  /// Defines the optional human-readable thread color name.
+  TextColumn get threadName => text().nullable()();
+
+  /// Defines the canonical thread color in `#RRGGBB` notation.
+  TextColumn get threadColor => text()();
+
+  /// Defines optional substitution or conversion notes.
+  TextColumn get threadConversionNotes => text().nullable()();
+
+  /// Defines whether the thread color was explicit or inferred.
+  TextColumn get threadEvidence => text()();
 
   /// Defines optional source legend evidence for the mapping.
   TextColumn get legendEvidence => text().nullable()();
@@ -171,13 +141,11 @@ class PatternSymbols extends Table {
   @override
   Set<Column<Object>> get primaryKey => {documentId, id};
 
-  /// Links symbols to their document and optional thread definition.
+  /// Links symbols to their document and validates their embedded thread.
   @override
   List<String> get customConstraints => const [
     'FOREIGN KEY (document_id) REFERENCES pattern_documents(id) '
         'ON DELETE CASCADE',
-    'FOREIGN KEY (document_id, thread_id) '
-        'REFERENCES pattern_threads(document_id, id)',
     'UNIQUE (document_id, sort_order)',
     'CHECK (length(id) > 0)',
     'CHECK (sort_order >= 0)',
@@ -185,6 +153,9 @@ class PatternSymbols extends Table {
     'CHECK (length(normalized_key) > 0)',
     'CHECK (length(display_glyph) > 0)',
     'CHECK (length(thread_id) > 0)',
+    "CHECK (thread_color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
+        "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
+    "CHECK (thread_evidence IN ('explicit', 'inferred'))",
   ];
 }
 
@@ -252,6 +223,9 @@ class PatternCells extends Table {
   /// Defines the parent pattern document.
   TextColumn get documentId => text()();
 
+  /// Preserves sparse cell order in the portable document.
+  IntColumn get sortOrder => integer()();
+
   /// Defines the cell's zero-based global grid row.
   IntColumn get gridRow => integer()();
 
@@ -286,6 +260,8 @@ class PatternCells extends Table {
         'REFERENCES pattern_symbols(document_id, id)',
     'FOREIGN KEY (document_id, provenance_id) '
         'REFERENCES pattern_regions(document_id, id)',
+    'UNIQUE (document_id, sort_order)',
+    'CHECK (sort_order >= 0)',
     'CHECK (grid_row >= 0)',
     'CHECK (grid_column >= 0)',
     "CHECK (stitch_type IN ('full', 'half', 'quarter', 'threeQuarter', "

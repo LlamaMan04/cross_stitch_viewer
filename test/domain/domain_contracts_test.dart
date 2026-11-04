@@ -45,7 +45,6 @@ void main() {
         cells: [_cell(), _cell()],
       ),
       symbols: [_symbol()],
-      threads: [_thread()],
     );
     expect(document.validate, throwsA(isA<DocumentValidationException>()));
   });
@@ -63,7 +62,6 @@ PatternDocument _sampleDocument() => PatternDocument(
       const StitchCell(
         coordinate: GridCoordinate(2, 2),
         symbolId: 'leaf',
-        threadId: 'green',
         confidence: Confidence(0.62),
         needsReview: true,
         provenanceId: 'page-1-grid',
@@ -77,12 +75,8 @@ PatternDocument _sampleDocument() => PatternDocument(
       sourceSymbol: 'O',
       normalizedKey: 'o',
       displayGlyph: '○',
-      threadId: 'green',
+      thread: ThreadDefinition(id: 'green', color: '#27864A'),
     ),
-  ],
-  threads: [
-    _thread(),
-    const ThreadDefinition(id: 'green', color: '#27864A'),
   ],
   regions: const [
     PatternRegion(
@@ -113,7 +107,6 @@ PatternDocument _sampleDocument() => PatternDocument(
 StitchCell _cell() => const StitchCell(
   coordinate: GridCoordinate(0, 0),
   symbolId: 'flower',
-  threadId: 'red',
   provenanceId: 'page-0-grid',
 );
 
@@ -123,12 +116,8 @@ SymbolDefinition _symbol() => const SymbolDefinition(
   sourceSymbol: 'X',
   normalizedKey: 'x',
   displayGlyph: '×',
-  threadId: 'red',
+  thread: ThreadDefinition(id: 'red', color: '#C0392B'),
 );
-
-/// Creates one valid thread definition for validation tests.
-ThreadDefinition _thread() =>
-    const ThreadDefinition(id: 'red', color: '#C0392B');
 
 /// Creates mutable progress that refers to the representative source pattern.
 ProgressState _sampleProgress() => ProgressState(

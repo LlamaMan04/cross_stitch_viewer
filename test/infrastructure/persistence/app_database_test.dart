@@ -4,11 +4,11 @@ import '../../support/test_database.dart';
 
 /// Verifies the database boundary can create and configure the first schema.
 void main() {
-  test('creates the version 1 schema and enables foreign keys', () async {
+  test('creates the version 3 schema and enables foreign keys', () async {
     final database = openTestDatabase();
     addTearDown(database.close);
 
-    expect(database.schemaVersion, 1);
+    expect(database.schemaVersion, 3);
 
     final foreignKeys = await database
         .customSelect('PRAGMA foreign_keys')
@@ -18,7 +18,7 @@ void main() {
     final userVersion = await database
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(userVersion.data['user_version'], 1);
+    expect(userVersion.data['user_version'], 3);
   });
 
   test('creates every initial pattern and progress table', () async {
@@ -37,7 +37,6 @@ void main() {
         'pattern_documents',
         'source_metadata_entries',
         'library_metadata',
-        'pattern_threads',
         'pattern_symbols',
         'pattern_regions',
         'pattern_cells',
@@ -99,7 +98,7 @@ void main() {
     );
   });
 
-  test('stores an optional highlighted symbol with the viewport', () async {
+  test('stores the viewport fields defined by the domain model', () async {
     final database = openTestDatabase();
     addTearDown(database.close);
 
@@ -110,7 +109,8 @@ void main() {
         .map((row) => row.read<String>('name'))
         .toSet();
 
-    expect(columnNames, contains('highlighted_symbol_id'));
+    expect(columnNames, isNot(contains('highlighted_symbol_id')));
+    expect(columnNames, containsAll({'anchor_row', 'anchor_column', 'zoom'}));
   });
 
   test(
@@ -139,4 +139,56 @@ void main() {
       );
     },
   );
+
+  test('embeds complete thread definitions in each symbol', () async {
+    final database = openTestDatabase();
+    addTearDown(database.close);
+
+    final symbols = await database
+        .customSelect('PRAGMA table_info(pattern_symbols)')
+        .get();
+    final cells = await database
+        .customSelect('PRAGMA table_info(pattern_cells)')
+        .get();
+    expect(
+      symbols.map((row) => row.read<String>('name')),
+      containsAll({
+        'thread_id',
+        'thread_brand',
+        'thread_catalog_number',
+        'thread_name',
+        'thread_color',
+        'thread_conversion_notes',
+        'thread_evidence',
+      }),
+    );
+    expect(
+      cells.map((row) => row.read<String>('name')),
+      contains('sort_order'),
+    );
+    expect(
+      cells.map((row) => row.read<String>('name')),
+      isNot(contains('thread_id')),
+    );
+  });
+
+  test('uses coordinate-only markers from the domain contract', () async {
+    final database = openTestDatabase();
+    addTearDown(database.close);
+    final columns = await database
+        .customSelect('PRAGMA table_info(location_markers)')
+        .get();
+    final names = columns.map((row) => row.read<String>('name')).toSet();
+    expect(names, isNot(contains('region_id')));
+    expect(names, containsAll({'grid_row', 'grid_column'}));
+    expect(
+      columns
+          .where(
+            (row) =>
+                {'grid_row', 'grid_column'}.contains(row.read<String>('name')),
+          )
+          .every((row) => row.read<int>('notnull') == 1),
+      isTrue,
+    );
+  });
 }

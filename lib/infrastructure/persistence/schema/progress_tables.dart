@@ -62,14 +62,11 @@ class LocationMarkers extends Table {
   /// Preserves marker order in the portable progress document.
   IntColumn get sortOrder => integer()();
 
-  /// Defines an optional zero-based global anchor row.
-  IntColumn get gridRow => integer().nullable()();
+  /// Defines the zero-based global anchor row.
+  IntColumn get gridRow => integer()();
 
-  /// Defines an optional zero-based global anchor column.
-  IntColumn get gridColumn => integer().nullable()();
-
-  /// Defines an optional provenance region anchor for planned marker support.
-  TextColumn get regionId => text().nullable()();
+  /// Defines the zero-based global anchor column.
+  IntColumn get gridColumn => integer()();
 
   /// Defines the user-facing marker label.
   TextColumn get label => text()();
@@ -90,13 +87,11 @@ class LocationMarkers extends Table {
   @override
   Set<Column<Object>> get primaryKey => {documentId, id};
 
-  /// Links markers and requires exactly one coordinate or region anchor.
+  /// Links markers to progress and validates their grid coordinate.
   @override
   List<String> get customConstraints => const [
     'FOREIGN KEY (document_id) REFERENCES progress_states(document_id) '
         'ON DELETE CASCADE',
-    'FOREIGN KEY (document_id, region_id) '
-        'REFERENCES pattern_regions(document_id, id)',
     'UNIQUE (document_id, sort_order)',
     'CHECK (length(id) > 0)',
     'CHECK (sort_order >= 0)',
@@ -104,11 +99,8 @@ class LocationMarkers extends Table {
     "CHECK (color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
         "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
     'CHECK (opacity >= 0 AND opacity <= 1)',
-    'CHECK ((grid_row IS NULL) = (grid_column IS NULL))',
-    'CHECK (grid_row IS NULL OR grid_row >= 0)',
-    'CHECK (grid_column IS NULL OR grid_column >= 0)',
-    'CHECK (((grid_row IS NOT NULL) AND region_id IS NULL) OR '
-        '((grid_row IS NULL) AND region_id IS NOT NULL))',
+    'CHECK (grid_row >= 0)',
+    'CHECK (grid_column >= 0)',
   ];
 }
 
@@ -139,20 +131,15 @@ class ViewportStates extends Table {
   /// Defines the optional number of visible columns at save time.
   IntColumn get visibleColumns => integer().nullable()();
 
-  /// Defines the optional symbol currently highlighted in the workspace.
-  TextColumn get highlightedSymbolId => text().nullable()();
-
   /// Allows at most one viewport snapshot for a progress record.
   @override
   Set<Column<Object>> get primaryKey => {documentId};
 
-  /// Links the viewport to progress, symbols, and validates its numeric bounds.
+  /// Links the viewport to progress and validates its numeric bounds.
   @override
   List<String> get customConstraints => const [
     'FOREIGN KEY (document_id) REFERENCES progress_states(document_id) '
         'ON DELETE CASCADE',
-    'FOREIGN KEY (document_id, highlighted_symbol_id) '
-        'REFERENCES pattern_symbols(document_id, id)',
     'CHECK (zoom > 0)',
     'CHECK (anchor_row >= 0)',
     'CHECK (anchor_column >= 0)',
