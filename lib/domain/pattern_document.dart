@@ -12,26 +12,21 @@ class PatternDocument {
     required this.schemaVersion,
     required this.grid,
     required Iterable<SymbolDefinition> symbols,
-    required Iterable<ThreadDefinition> threads,
     Iterable<PatternRegion> regions = const [],
     Map<String, Object?> sourceMetadata = const {},
     this.sourceChecksum,
     Iterable<ParserDiagnostic> diagnostics = const [],
   }) {
     this.symbols = List.unmodifiable(symbols);
-    this.threads = List.unmodifiable(threads);
     this.regions = List.unmodifiable(regions);
     this.sourceMetadata = Map.unmodifiable(sourceMetadata);
     this.diagnostics = List.unmodifiable(diagnostics);
-    _symbolsById = Map.unmodifiable(
-      {for (final symbol in this.symbols) symbol.id: symbol},
-    );
-    _threadsById = Map.unmodifiable(
-      {for (final thread in this.threads) thread.id: thread},
-    );
-    _regionsById = Map.unmodifiable(
-      {for (final region in this.regions) region.id: region},
-    );
+    _symbolsById = Map.unmodifiable({
+      for (final symbol in this.symbols) symbol.id: symbol,
+    });
+    _regionsById = Map.unmodifiable({
+      for (final region in this.regions) region.id: region,
+    });
   }
 
   /// Stable document ID used by repositories and progress records.
@@ -52,12 +47,6 @@ class PatternDocument {
   /// Direct symbol lookup by stable ID.
   late final Map<String, SymbolDefinition> _symbolsById;
 
-  /// Thread catalog entries used by symbols and cells.
-  late final List<ThreadDefinition> threads;
-
-  /// Direct thread lookup by stable ID.
-  late final Map<String, ThreadDefinition> _threadsById;
-
   /// Source page or panel mappings into global grid coordinates.
   late final List<PatternRegion> regions;
 
@@ -76,9 +65,6 @@ class PatternDocument {
   /// Returns the symbol with [id], if the document defines one.
   SymbolDefinition? symbolById(String id) => _symbolsById[id];
 
-  /// Returns the thread with [id], if the document defines one.
-  ThreadDefinition? threadById(String id) => _threadsById[id];
-
   /// Returns the provenance region with [id], if the document defines one.
   PatternRegion? regionById(String id) => _regionsById[id];
 
@@ -96,14 +82,10 @@ class PatternDocument {
     }
     grid.validate();
     if (_symbolsById.length != symbols.length ||
-        _threadsById.length != threads.length ||
         _regionsById.length != regions.length) {
       throw const DocumentValidationException(
         'Definition and region IDs must be unique.',
       );
-    }
-    for (final thread in threads) {
-      thread.validate();
     }
     for (final region in regions) {
       if (region.sourcePage < 0 ||
@@ -119,21 +101,12 @@ class PatternDocument {
       }
     }
     for (final symbol in symbols) {
-      if (symbol.threadId != null && !_threadsById.containsKey(symbol.threadId)) {
-        throw DocumentValidationException(
-          'Symbol ${symbol.id} references missing thread ${symbol.threadId}.',
-        );
-      }
+      symbol.thread.validate();
     }
     for (final cell in grid.cells) {
       if (!_symbolsById.containsKey(cell.symbolId)) {
         throw DocumentValidationException(
           'Cell ${cell.coordinate} references missing symbol ${cell.symbolId}.',
-        );
-      }
-      if (cell.threadId != null && !_threadsById.containsKey(cell.threadId)) {
-        throw DocumentValidationException(
-          'Cell ${cell.coordinate} references missing thread ${cell.threadId}.',
         );
       }
       final provenanceId = cell.provenanceId;

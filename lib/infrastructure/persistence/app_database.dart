@@ -15,7 +15,6 @@ part 'app_database.g.dart';
     PatternDocuments,
     SourceMetadataEntries,
     LibraryMetadata,
-    PatternThreads,
     PatternSymbols,
     PatternRegions,
     PatternCells,
@@ -33,16 +32,17 @@ class AppDatabase extends _$AppDatabase {
   /// Opens the production database in the platform application-support directory.
   factory AppDatabase.open() => AppDatabase(openAppDatabaseConnection());
 
-  /// Creates the first version of the operational persistence schema.
+  /// Includes the domain-aligned pattern and progress table definitions.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   /// Defines creation, upgrade, and connection configuration for the database.
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (migrator) => migrator.createAll(),
-      onUpgrade: migrateAppDatabase,
+      onUpgrade: (migrator, from, to) =>
+          migrateAppDatabase(this, migrator, from, to),
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
       },

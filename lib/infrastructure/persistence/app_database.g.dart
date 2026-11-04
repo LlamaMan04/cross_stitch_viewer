@@ -777,7 +777,7 @@ class SourceMetadataEntryRow extends DataClass
   /// Defines the metadata field name.
   final String key;
 
-  /// Defines the textual metadata value.
+  /// Defines the JSON-encoded metadata value, including strings and null.
   final String value;
   const SourceMetadataEntryRow({
     required this.documentId,
@@ -1395,596 +1395,6 @@ class LibraryMetadataCompanion extends UpdateCompanion<LibraryMetadataRow> {
   }
 }
 
-class $PatternThreadsTable extends PatternThreads
-    with TableInfo<$PatternThreadsTable, PatternThreadRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $PatternThreadsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _documentIdMeta = const VerificationMeta(
-    'documentId',
-  );
-  @override
-  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
-    'document_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
-    'sortOrder',
-  );
-  @override
-  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
-    'sort_order',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _brandMeta = const VerificationMeta('brand');
-  @override
-  late final GeneratedColumn<String> brand = GeneratedColumn<String>(
-    'brand',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _catalogNumberMeta = const VerificationMeta(
-    'catalogNumber',
-  );
-  @override
-  late final GeneratedColumn<String> catalogNumber = GeneratedColumn<String>(
-    'catalog_number',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _colorMeta = const VerificationMeta('color');
-  @override
-  late final GeneratedColumn<String> color = GeneratedColumn<String>(
-    'color',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _conversionNotesMeta = const VerificationMeta(
-    'conversionNotes',
-  );
-  @override
-  late final GeneratedColumn<String> conversionNotes = GeneratedColumn<String>(
-    'conversion_notes',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _evidenceMeta = const VerificationMeta(
-    'evidence',
-  );
-  @override
-  late final GeneratedColumn<String> evidence = GeneratedColumn<String>(
-    'evidence',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    documentId,
-    id,
-    sortOrder,
-    brand,
-    catalogNumber,
-    name,
-    color,
-    conversionNotes,
-    evidence,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'pattern_threads';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<PatternThreadRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('document_id')) {
-      context.handle(
-        _documentIdMeta,
-        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_documentIdMeta);
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('sort_order')) {
-      context.handle(
-        _sortOrderMeta,
-        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_sortOrderMeta);
-    }
-    if (data.containsKey('brand')) {
-      context.handle(
-        _brandMeta,
-        brand.isAcceptableOrUnknown(data['brand']!, _brandMeta),
-      );
-    }
-    if (data.containsKey('catalog_number')) {
-      context.handle(
-        _catalogNumberMeta,
-        catalogNumber.isAcceptableOrUnknown(
-          data['catalog_number']!,
-          _catalogNumberMeta,
-        ),
-      );
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    }
-    if (data.containsKey('color')) {
-      context.handle(
-        _colorMeta,
-        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_colorMeta);
-    }
-    if (data.containsKey('conversion_notes')) {
-      context.handle(
-        _conversionNotesMeta,
-        conversionNotes.isAcceptableOrUnknown(
-          data['conversion_notes']!,
-          _conversionNotesMeta,
-        ),
-      );
-    }
-    if (data.containsKey('evidence')) {
-      context.handle(
-        _evidenceMeta,
-        evidence.isAcceptableOrUnknown(data['evidence']!, _evidenceMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_evidenceMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {documentId, id};
-  @override
-  PatternThreadRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return PatternThreadRow(
-      documentId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}document_id'],
-      )!,
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      sortOrder: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}sort_order'],
-      )!,
-      brand: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}brand'],
-      ),
-      catalogNumber: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}catalog_number'],
-      ),
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      ),
-      color: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}color'],
-      )!,
-      conversionNotes: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}conversion_notes'],
-      ),
-      evidence: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}evidence'],
-      )!,
-    );
-  }
-
-  @override
-  $PatternThreadsTable createAlias(String alias) {
-    return $PatternThreadsTable(attachedDatabase, alias);
-  }
-}
-
-class PatternThreadRow extends DataClass
-    implements Insertable<PatternThreadRow> {
-  /// Defines the parent pattern document.
-  final String documentId;
-
-  /// Defines the stable thread identifier within the document.
-  final String id;
-
-  /// Preserves the thread's order in the portable document.
-  final int sortOrder;
-
-  /// Defines the optional thread manufacturer.
-  final String? brand;
-
-  /// Defines the optional manufacturer catalog number.
-  final String? catalogNumber;
-
-  /// Defines the optional human-readable color name.
-  final String? name;
-
-  /// Defines the canonical thread color in `#RRGGBB` notation.
-  final String color;
-
-  /// Defines optional substitution or conversion notes.
-  final String? conversionNotes;
-
-  /// Defines whether the source color was explicit or inferred.
-  final String evidence;
-  const PatternThreadRow({
-    required this.documentId,
-    required this.id,
-    required this.sortOrder,
-    this.brand,
-    this.catalogNumber,
-    this.name,
-    required this.color,
-    this.conversionNotes,
-    required this.evidence,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['document_id'] = Variable<String>(documentId);
-    map['id'] = Variable<String>(id);
-    map['sort_order'] = Variable<int>(sortOrder);
-    if (!nullToAbsent || brand != null) {
-      map['brand'] = Variable<String>(brand);
-    }
-    if (!nullToAbsent || catalogNumber != null) {
-      map['catalog_number'] = Variable<String>(catalogNumber);
-    }
-    if (!nullToAbsent || name != null) {
-      map['name'] = Variable<String>(name);
-    }
-    map['color'] = Variable<String>(color);
-    if (!nullToAbsent || conversionNotes != null) {
-      map['conversion_notes'] = Variable<String>(conversionNotes);
-    }
-    map['evidence'] = Variable<String>(evidence);
-    return map;
-  }
-
-  PatternThreadsCompanion toCompanion(bool nullToAbsent) {
-    return PatternThreadsCompanion(
-      documentId: Value(documentId),
-      id: Value(id),
-      sortOrder: Value(sortOrder),
-      brand: brand == null && nullToAbsent
-          ? const Value.absent()
-          : Value(brand),
-      catalogNumber: catalogNumber == null && nullToAbsent
-          ? const Value.absent()
-          : Value(catalogNumber),
-      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
-      color: Value(color),
-      conversionNotes: conversionNotes == null && nullToAbsent
-          ? const Value.absent()
-          : Value(conversionNotes),
-      evidence: Value(evidence),
-    );
-  }
-
-  factory PatternThreadRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return PatternThreadRow(
-      documentId: serializer.fromJson<String>(json['documentId']),
-      id: serializer.fromJson<String>(json['id']),
-      sortOrder: serializer.fromJson<int>(json['sortOrder']),
-      brand: serializer.fromJson<String?>(json['brand']),
-      catalogNumber: serializer.fromJson<String?>(json['catalogNumber']),
-      name: serializer.fromJson<String?>(json['name']),
-      color: serializer.fromJson<String>(json['color']),
-      conversionNotes: serializer.fromJson<String?>(json['conversionNotes']),
-      evidence: serializer.fromJson<String>(json['evidence']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'documentId': serializer.toJson<String>(documentId),
-      'id': serializer.toJson<String>(id),
-      'sortOrder': serializer.toJson<int>(sortOrder),
-      'brand': serializer.toJson<String?>(brand),
-      'catalogNumber': serializer.toJson<String?>(catalogNumber),
-      'name': serializer.toJson<String?>(name),
-      'color': serializer.toJson<String>(color),
-      'conversionNotes': serializer.toJson<String?>(conversionNotes),
-      'evidence': serializer.toJson<String>(evidence),
-    };
-  }
-
-  PatternThreadRow copyWith({
-    String? documentId,
-    String? id,
-    int? sortOrder,
-    Value<String?> brand = const Value.absent(),
-    Value<String?> catalogNumber = const Value.absent(),
-    Value<String?> name = const Value.absent(),
-    String? color,
-    Value<String?> conversionNotes = const Value.absent(),
-    String? evidence,
-  }) => PatternThreadRow(
-    documentId: documentId ?? this.documentId,
-    id: id ?? this.id,
-    sortOrder: sortOrder ?? this.sortOrder,
-    brand: brand.present ? brand.value : this.brand,
-    catalogNumber: catalogNumber.present
-        ? catalogNumber.value
-        : this.catalogNumber,
-    name: name.present ? name.value : this.name,
-    color: color ?? this.color,
-    conversionNotes: conversionNotes.present
-        ? conversionNotes.value
-        : this.conversionNotes,
-    evidence: evidence ?? this.evidence,
-  );
-  PatternThreadRow copyWithCompanion(PatternThreadsCompanion data) {
-    return PatternThreadRow(
-      documentId: data.documentId.present
-          ? data.documentId.value
-          : this.documentId,
-      id: data.id.present ? data.id.value : this.id,
-      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
-      brand: data.brand.present ? data.brand.value : this.brand,
-      catalogNumber: data.catalogNumber.present
-          ? data.catalogNumber.value
-          : this.catalogNumber,
-      name: data.name.present ? data.name.value : this.name,
-      color: data.color.present ? data.color.value : this.color,
-      conversionNotes: data.conversionNotes.present
-          ? data.conversionNotes.value
-          : this.conversionNotes,
-      evidence: data.evidence.present ? data.evidence.value : this.evidence,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PatternThreadRow(')
-          ..write('documentId: $documentId, ')
-          ..write('id: $id, ')
-          ..write('sortOrder: $sortOrder, ')
-          ..write('brand: $brand, ')
-          ..write('catalogNumber: $catalogNumber, ')
-          ..write('name: $name, ')
-          ..write('color: $color, ')
-          ..write('conversionNotes: $conversionNotes, ')
-          ..write('evidence: $evidence')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    documentId,
-    id,
-    sortOrder,
-    brand,
-    catalogNumber,
-    name,
-    color,
-    conversionNotes,
-    evidence,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is PatternThreadRow &&
-          other.documentId == this.documentId &&
-          other.id == this.id &&
-          other.sortOrder == this.sortOrder &&
-          other.brand == this.brand &&
-          other.catalogNumber == this.catalogNumber &&
-          other.name == this.name &&
-          other.color == this.color &&
-          other.conversionNotes == this.conversionNotes &&
-          other.evidence == this.evidence);
-}
-
-class PatternThreadsCompanion extends UpdateCompanion<PatternThreadRow> {
-  final Value<String> documentId;
-  final Value<String> id;
-  final Value<int> sortOrder;
-  final Value<String?> brand;
-  final Value<String?> catalogNumber;
-  final Value<String?> name;
-  final Value<String> color;
-  final Value<String?> conversionNotes;
-  final Value<String> evidence;
-  final Value<int> rowid;
-  const PatternThreadsCompanion({
-    this.documentId = const Value.absent(),
-    this.id = const Value.absent(),
-    this.sortOrder = const Value.absent(),
-    this.brand = const Value.absent(),
-    this.catalogNumber = const Value.absent(),
-    this.name = const Value.absent(),
-    this.color = const Value.absent(),
-    this.conversionNotes = const Value.absent(),
-    this.evidence = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  PatternThreadsCompanion.insert({
-    required String documentId,
-    required String id,
-    required int sortOrder,
-    this.brand = const Value.absent(),
-    this.catalogNumber = const Value.absent(),
-    this.name = const Value.absent(),
-    required String color,
-    this.conversionNotes = const Value.absent(),
-    required String evidence,
-    this.rowid = const Value.absent(),
-  }) : documentId = Value(documentId),
-       id = Value(id),
-       sortOrder = Value(sortOrder),
-       color = Value(color),
-       evidence = Value(evidence);
-  static Insertable<PatternThreadRow> custom({
-    Expression<String>? documentId,
-    Expression<String>? id,
-    Expression<int>? sortOrder,
-    Expression<String>? brand,
-    Expression<String>? catalogNumber,
-    Expression<String>? name,
-    Expression<String>? color,
-    Expression<String>? conversionNotes,
-    Expression<String>? evidence,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (documentId != null) 'document_id': documentId,
-      if (id != null) 'id': id,
-      if (sortOrder != null) 'sort_order': sortOrder,
-      if (brand != null) 'brand': brand,
-      if (catalogNumber != null) 'catalog_number': catalogNumber,
-      if (name != null) 'name': name,
-      if (color != null) 'color': color,
-      if (conversionNotes != null) 'conversion_notes': conversionNotes,
-      if (evidence != null) 'evidence': evidence,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  PatternThreadsCompanion copyWith({
-    Value<String>? documentId,
-    Value<String>? id,
-    Value<int>? sortOrder,
-    Value<String?>? brand,
-    Value<String?>? catalogNumber,
-    Value<String?>? name,
-    Value<String>? color,
-    Value<String?>? conversionNotes,
-    Value<String>? evidence,
-    Value<int>? rowid,
-  }) {
-    return PatternThreadsCompanion(
-      documentId: documentId ?? this.documentId,
-      id: id ?? this.id,
-      sortOrder: sortOrder ?? this.sortOrder,
-      brand: brand ?? this.brand,
-      catalogNumber: catalogNumber ?? this.catalogNumber,
-      name: name ?? this.name,
-      color: color ?? this.color,
-      conversionNotes: conversionNotes ?? this.conversionNotes,
-      evidence: evidence ?? this.evidence,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (documentId.present) {
-      map['document_id'] = Variable<String>(documentId.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (sortOrder.present) {
-      map['sort_order'] = Variable<int>(sortOrder.value);
-    }
-    if (brand.present) {
-      map['brand'] = Variable<String>(brand.value);
-    }
-    if (catalogNumber.present) {
-      map['catalog_number'] = Variable<String>(catalogNumber.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (color.present) {
-      map['color'] = Variable<String>(color.value);
-    }
-    if (conversionNotes.present) {
-      map['conversion_notes'] = Variable<String>(conversionNotes.value);
-    }
-    if (evidence.present) {
-      map['evidence'] = Variable<String>(evidence.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('PatternThreadsCompanion(')
-          ..write('documentId: $documentId, ')
-          ..write('id: $id, ')
-          ..write('sortOrder: $sortOrder, ')
-          ..write('brand: $brand, ')
-          ..write('catalogNumber: $catalogNumber, ')
-          ..write('name: $name, ')
-          ..write('color: $color, ')
-          ..write('conversionNotes: $conversionNotes, ')
-          ..write('evidence: $evidence, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $PatternSymbolsTable extends PatternSymbols
     with TableInfo<$PatternSymbolsTable, PatternSymbolRow> {
   @override
@@ -2066,6 +1476,72 @@ class $PatternSymbolsTable extends PatternSymbols
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _threadBrandMeta = const VerificationMeta(
+    'threadBrand',
+  );
+  @override
+  late final GeneratedColumn<String> threadBrand = GeneratedColumn<String>(
+    'thread_brand',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _threadCatalogNumberMeta =
+      const VerificationMeta('threadCatalogNumber');
+  @override
+  late final GeneratedColumn<String> threadCatalogNumber =
+      GeneratedColumn<String>(
+        'thread_catalog_number',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _threadNameMeta = const VerificationMeta(
+    'threadName',
+  );
+  @override
+  late final GeneratedColumn<String> threadName = GeneratedColumn<String>(
+    'thread_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _threadColorMeta = const VerificationMeta(
+    'threadColor',
+  );
+  @override
+  late final GeneratedColumn<String> threadColor = GeneratedColumn<String>(
+    'thread_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _threadConversionNotesMeta =
+      const VerificationMeta('threadConversionNotes');
+  @override
+  late final GeneratedColumn<String> threadConversionNotes =
+      GeneratedColumn<String>(
+        'thread_conversion_notes',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _threadEvidenceMeta = const VerificationMeta(
+    'threadEvidence',
+  );
+  @override
+  late final GeneratedColumn<String> threadEvidence = GeneratedColumn<String>(
+    'thread_evidence',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _legendEvidenceMeta = const VerificationMeta(
     'legendEvidence',
   );
@@ -2086,6 +1562,12 @@ class $PatternSymbolsTable extends PatternSymbols
     normalizedKey,
     displayGlyph,
     threadId,
+    threadBrand,
+    threadCatalogNumber,
+    threadName,
+    threadColor,
+    threadConversionNotes,
+    threadEvidence,
     legendEvidence,
   ];
   @override
@@ -2162,6 +1644,61 @@ class $PatternSymbolsTable extends PatternSymbols
     } else if (isInserting) {
       context.missing(_threadIdMeta);
     }
+    if (data.containsKey('thread_brand')) {
+      context.handle(
+        _threadBrandMeta,
+        threadBrand.isAcceptableOrUnknown(
+          data['thread_brand']!,
+          _threadBrandMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thread_catalog_number')) {
+      context.handle(
+        _threadCatalogNumberMeta,
+        threadCatalogNumber.isAcceptableOrUnknown(
+          data['thread_catalog_number']!,
+          _threadCatalogNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thread_name')) {
+      context.handle(
+        _threadNameMeta,
+        threadName.isAcceptableOrUnknown(data['thread_name']!, _threadNameMeta),
+      );
+    }
+    if (data.containsKey('thread_color')) {
+      context.handle(
+        _threadColorMeta,
+        threadColor.isAcceptableOrUnknown(
+          data['thread_color']!,
+          _threadColorMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_threadColorMeta);
+    }
+    if (data.containsKey('thread_conversion_notes')) {
+      context.handle(
+        _threadConversionNotesMeta,
+        threadConversionNotes.isAcceptableOrUnknown(
+          data['thread_conversion_notes']!,
+          _threadConversionNotesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thread_evidence')) {
+      context.handle(
+        _threadEvidenceMeta,
+        threadEvidence.isAcceptableOrUnknown(
+          data['thread_evidence']!,
+          _threadEvidenceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_threadEvidenceMeta);
+    }
     if (data.containsKey('legend_evidence')) {
       context.handle(
         _legendEvidenceMeta,
@@ -2208,6 +1745,30 @@ class $PatternSymbolsTable extends PatternSymbols
         DriftSqlType.string,
         data['${effectivePrefix}thread_id'],
       )!,
+      threadBrand: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_brand'],
+      ),
+      threadCatalogNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_catalog_number'],
+      ),
+      threadName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_name'],
+      ),
+      threadColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_color'],
+      )!,
+      threadConversionNotes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_conversion_notes'],
+      ),
+      threadEvidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_evidence'],
+      )!,
       legendEvidence: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}legend_evidence'],
@@ -2241,8 +1802,26 @@ class PatternSymbolRow extends DataClass
   /// Defines the glyph rendered in the pattern grid.
   final String displayGlyph;
 
-  /// Defines the thread for the symbol.
+  /// Defines the exact thread identifier used by the symbol.
   final String threadId;
+
+  /// Defines the optional thread manufacturer.
+  final String? threadBrand;
+
+  /// Defines the optional manufacturer catalog number.
+  final String? threadCatalogNumber;
+
+  /// Defines the optional human-readable thread color name.
+  final String? threadName;
+
+  /// Defines the canonical thread color in `#RRGGBB` notation.
+  final String threadColor;
+
+  /// Defines optional substitution or conversion notes.
+  final String? threadConversionNotes;
+
+  /// Defines whether the thread color was explicit or inferred.
+  final String threadEvidence;
 
   /// Defines optional source legend evidence for the mapping.
   final String? legendEvidence;
@@ -2254,6 +1833,12 @@ class PatternSymbolRow extends DataClass
     required this.normalizedKey,
     required this.displayGlyph,
     required this.threadId,
+    this.threadBrand,
+    this.threadCatalogNumber,
+    this.threadName,
+    required this.threadColor,
+    this.threadConversionNotes,
+    required this.threadEvidence,
     this.legendEvidence,
   });
   @override
@@ -2266,6 +1851,20 @@ class PatternSymbolRow extends DataClass
     map['normalized_key'] = Variable<String>(normalizedKey);
     map['display_glyph'] = Variable<String>(displayGlyph);
     map['thread_id'] = Variable<String>(threadId);
+    if (!nullToAbsent || threadBrand != null) {
+      map['thread_brand'] = Variable<String>(threadBrand);
+    }
+    if (!nullToAbsent || threadCatalogNumber != null) {
+      map['thread_catalog_number'] = Variable<String>(threadCatalogNumber);
+    }
+    if (!nullToAbsent || threadName != null) {
+      map['thread_name'] = Variable<String>(threadName);
+    }
+    map['thread_color'] = Variable<String>(threadColor);
+    if (!nullToAbsent || threadConversionNotes != null) {
+      map['thread_conversion_notes'] = Variable<String>(threadConversionNotes);
+    }
+    map['thread_evidence'] = Variable<String>(threadEvidence);
     if (!nullToAbsent || legendEvidence != null) {
       map['legend_evidence'] = Variable<String>(legendEvidence);
     }
@@ -2281,6 +1880,20 @@ class PatternSymbolRow extends DataClass
       normalizedKey: Value(normalizedKey),
       displayGlyph: Value(displayGlyph),
       threadId: Value(threadId),
+      threadBrand: threadBrand == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadBrand),
+      threadCatalogNumber: threadCatalogNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadCatalogNumber),
+      threadName: threadName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadName),
+      threadColor: Value(threadColor),
+      threadConversionNotes: threadConversionNotes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadConversionNotes),
+      threadEvidence: Value(threadEvidence),
       legendEvidence: legendEvidence == null && nullToAbsent
           ? const Value.absent()
           : Value(legendEvidence),
@@ -2300,6 +1913,16 @@ class PatternSymbolRow extends DataClass
       normalizedKey: serializer.fromJson<String>(json['normalizedKey']),
       displayGlyph: serializer.fromJson<String>(json['displayGlyph']),
       threadId: serializer.fromJson<String>(json['threadId']),
+      threadBrand: serializer.fromJson<String?>(json['threadBrand']),
+      threadCatalogNumber: serializer.fromJson<String?>(
+        json['threadCatalogNumber'],
+      ),
+      threadName: serializer.fromJson<String?>(json['threadName']),
+      threadColor: serializer.fromJson<String>(json['threadColor']),
+      threadConversionNotes: serializer.fromJson<String?>(
+        json['threadConversionNotes'],
+      ),
+      threadEvidence: serializer.fromJson<String>(json['threadEvidence']),
       legendEvidence: serializer.fromJson<String?>(json['legendEvidence']),
     );
   }
@@ -2314,6 +1937,14 @@ class PatternSymbolRow extends DataClass
       'normalizedKey': serializer.toJson<String>(normalizedKey),
       'displayGlyph': serializer.toJson<String>(displayGlyph),
       'threadId': serializer.toJson<String>(threadId),
+      'threadBrand': serializer.toJson<String?>(threadBrand),
+      'threadCatalogNumber': serializer.toJson<String?>(threadCatalogNumber),
+      'threadName': serializer.toJson<String?>(threadName),
+      'threadColor': serializer.toJson<String>(threadColor),
+      'threadConversionNotes': serializer.toJson<String?>(
+        threadConversionNotes,
+      ),
+      'threadEvidence': serializer.toJson<String>(threadEvidence),
       'legendEvidence': serializer.toJson<String?>(legendEvidence),
     };
   }
@@ -2326,6 +1957,12 @@ class PatternSymbolRow extends DataClass
     String? normalizedKey,
     String? displayGlyph,
     String? threadId,
+    Value<String?> threadBrand = const Value.absent(),
+    Value<String?> threadCatalogNumber = const Value.absent(),
+    Value<String?> threadName = const Value.absent(),
+    String? threadColor,
+    Value<String?> threadConversionNotes = const Value.absent(),
+    String? threadEvidence,
     Value<String?> legendEvidence = const Value.absent(),
   }) => PatternSymbolRow(
     documentId: documentId ?? this.documentId,
@@ -2335,6 +1972,16 @@ class PatternSymbolRow extends DataClass
     normalizedKey: normalizedKey ?? this.normalizedKey,
     displayGlyph: displayGlyph ?? this.displayGlyph,
     threadId: threadId ?? this.threadId,
+    threadBrand: threadBrand.present ? threadBrand.value : this.threadBrand,
+    threadCatalogNumber: threadCatalogNumber.present
+        ? threadCatalogNumber.value
+        : this.threadCatalogNumber,
+    threadName: threadName.present ? threadName.value : this.threadName,
+    threadColor: threadColor ?? this.threadColor,
+    threadConversionNotes: threadConversionNotes.present
+        ? threadConversionNotes.value
+        : this.threadConversionNotes,
+    threadEvidence: threadEvidence ?? this.threadEvidence,
     legendEvidence: legendEvidence.present
         ? legendEvidence.value
         : this.legendEvidence,
@@ -2356,6 +2003,24 @@ class PatternSymbolRow extends DataClass
           ? data.displayGlyph.value
           : this.displayGlyph,
       threadId: data.threadId.present ? data.threadId.value : this.threadId,
+      threadBrand: data.threadBrand.present
+          ? data.threadBrand.value
+          : this.threadBrand,
+      threadCatalogNumber: data.threadCatalogNumber.present
+          ? data.threadCatalogNumber.value
+          : this.threadCatalogNumber,
+      threadName: data.threadName.present
+          ? data.threadName.value
+          : this.threadName,
+      threadColor: data.threadColor.present
+          ? data.threadColor.value
+          : this.threadColor,
+      threadConversionNotes: data.threadConversionNotes.present
+          ? data.threadConversionNotes.value
+          : this.threadConversionNotes,
+      threadEvidence: data.threadEvidence.present
+          ? data.threadEvidence.value
+          : this.threadEvidence,
       legendEvidence: data.legendEvidence.present
           ? data.legendEvidence.value
           : this.legendEvidence,
@@ -2372,6 +2037,12 @@ class PatternSymbolRow extends DataClass
           ..write('normalizedKey: $normalizedKey, ')
           ..write('displayGlyph: $displayGlyph, ')
           ..write('threadId: $threadId, ')
+          ..write('threadBrand: $threadBrand, ')
+          ..write('threadCatalogNumber: $threadCatalogNumber, ')
+          ..write('threadName: $threadName, ')
+          ..write('threadColor: $threadColor, ')
+          ..write('threadConversionNotes: $threadConversionNotes, ')
+          ..write('threadEvidence: $threadEvidence, ')
           ..write('legendEvidence: $legendEvidence')
           ..write(')'))
         .toString();
@@ -2386,6 +2057,12 @@ class PatternSymbolRow extends DataClass
     normalizedKey,
     displayGlyph,
     threadId,
+    threadBrand,
+    threadCatalogNumber,
+    threadName,
+    threadColor,
+    threadConversionNotes,
+    threadEvidence,
     legendEvidence,
   );
   @override
@@ -2399,6 +2076,12 @@ class PatternSymbolRow extends DataClass
           other.normalizedKey == this.normalizedKey &&
           other.displayGlyph == this.displayGlyph &&
           other.threadId == this.threadId &&
+          other.threadBrand == this.threadBrand &&
+          other.threadCatalogNumber == this.threadCatalogNumber &&
+          other.threadName == this.threadName &&
+          other.threadColor == this.threadColor &&
+          other.threadConversionNotes == this.threadConversionNotes &&
+          other.threadEvidence == this.threadEvidence &&
           other.legendEvidence == this.legendEvidence);
 }
 
@@ -2410,6 +2093,12 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
   final Value<String> normalizedKey;
   final Value<String> displayGlyph;
   final Value<String> threadId;
+  final Value<String?> threadBrand;
+  final Value<String?> threadCatalogNumber;
+  final Value<String?> threadName;
+  final Value<String> threadColor;
+  final Value<String?> threadConversionNotes;
+  final Value<String> threadEvidence;
   final Value<String?> legendEvidence;
   final Value<int> rowid;
   const PatternSymbolsCompanion({
@@ -2420,6 +2109,12 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     this.normalizedKey = const Value.absent(),
     this.displayGlyph = const Value.absent(),
     this.threadId = const Value.absent(),
+    this.threadBrand = const Value.absent(),
+    this.threadCatalogNumber = const Value.absent(),
+    this.threadName = const Value.absent(),
+    this.threadColor = const Value.absent(),
+    this.threadConversionNotes = const Value.absent(),
+    this.threadEvidence = const Value.absent(),
     this.legendEvidence = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -2431,6 +2126,12 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     required String normalizedKey,
     required String displayGlyph,
     required String threadId,
+    this.threadBrand = const Value.absent(),
+    this.threadCatalogNumber = const Value.absent(),
+    this.threadName = const Value.absent(),
+    required String threadColor,
+    this.threadConversionNotes = const Value.absent(),
+    required String threadEvidence,
     this.legendEvidence = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : documentId = Value(documentId),
@@ -2439,7 +2140,9 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
        sourceSymbol = Value(sourceSymbol),
        normalizedKey = Value(normalizedKey),
        displayGlyph = Value(displayGlyph),
-       threadId = Value(threadId);
+       threadId = Value(threadId),
+       threadColor = Value(threadColor),
+       threadEvidence = Value(threadEvidence);
   static Insertable<PatternSymbolRow> custom({
     Expression<String>? documentId,
     Expression<String>? id,
@@ -2448,6 +2151,12 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     Expression<String>? normalizedKey,
     Expression<String>? displayGlyph,
     Expression<String>? threadId,
+    Expression<String>? threadBrand,
+    Expression<String>? threadCatalogNumber,
+    Expression<String>? threadName,
+    Expression<String>? threadColor,
+    Expression<String>? threadConversionNotes,
+    Expression<String>? threadEvidence,
     Expression<String>? legendEvidence,
     Expression<int>? rowid,
   }) {
@@ -2459,6 +2168,14 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
       if (normalizedKey != null) 'normalized_key': normalizedKey,
       if (displayGlyph != null) 'display_glyph': displayGlyph,
       if (threadId != null) 'thread_id': threadId,
+      if (threadBrand != null) 'thread_brand': threadBrand,
+      if (threadCatalogNumber != null)
+        'thread_catalog_number': threadCatalogNumber,
+      if (threadName != null) 'thread_name': threadName,
+      if (threadColor != null) 'thread_color': threadColor,
+      if (threadConversionNotes != null)
+        'thread_conversion_notes': threadConversionNotes,
+      if (threadEvidence != null) 'thread_evidence': threadEvidence,
       if (legendEvidence != null) 'legend_evidence': legendEvidence,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2472,6 +2189,12 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     Value<String>? normalizedKey,
     Value<String>? displayGlyph,
     Value<String>? threadId,
+    Value<String?>? threadBrand,
+    Value<String?>? threadCatalogNumber,
+    Value<String?>? threadName,
+    Value<String>? threadColor,
+    Value<String?>? threadConversionNotes,
+    Value<String>? threadEvidence,
     Value<String?>? legendEvidence,
     Value<int>? rowid,
   }) {
@@ -2483,6 +2206,13 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
       normalizedKey: normalizedKey ?? this.normalizedKey,
       displayGlyph: displayGlyph ?? this.displayGlyph,
       threadId: threadId ?? this.threadId,
+      threadBrand: threadBrand ?? this.threadBrand,
+      threadCatalogNumber: threadCatalogNumber ?? this.threadCatalogNumber,
+      threadName: threadName ?? this.threadName,
+      threadColor: threadColor ?? this.threadColor,
+      threadConversionNotes:
+          threadConversionNotes ?? this.threadConversionNotes,
+      threadEvidence: threadEvidence ?? this.threadEvidence,
       legendEvidence: legendEvidence ?? this.legendEvidence,
       rowid: rowid ?? this.rowid,
     );
@@ -2512,6 +2242,28 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     if (threadId.present) {
       map['thread_id'] = Variable<String>(threadId.value);
     }
+    if (threadBrand.present) {
+      map['thread_brand'] = Variable<String>(threadBrand.value);
+    }
+    if (threadCatalogNumber.present) {
+      map['thread_catalog_number'] = Variable<String>(
+        threadCatalogNumber.value,
+      );
+    }
+    if (threadName.present) {
+      map['thread_name'] = Variable<String>(threadName.value);
+    }
+    if (threadColor.present) {
+      map['thread_color'] = Variable<String>(threadColor.value);
+    }
+    if (threadConversionNotes.present) {
+      map['thread_conversion_notes'] = Variable<String>(
+        threadConversionNotes.value,
+      );
+    }
+    if (threadEvidence.present) {
+      map['thread_evidence'] = Variable<String>(threadEvidence.value);
+    }
     if (legendEvidence.present) {
       map['legend_evidence'] = Variable<String>(legendEvidence.value);
     }
@@ -2531,6 +2283,12 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
           ..write('normalizedKey: $normalizedKey, ')
           ..write('displayGlyph: $displayGlyph, ')
           ..write('threadId: $threadId, ')
+          ..write('threadBrand: $threadBrand, ')
+          ..write('threadCatalogNumber: $threadCatalogNumber, ')
+          ..write('threadName: $threadName, ')
+          ..write('threadColor: $threadColor, ')
+          ..write('threadConversionNotes: $threadConversionNotes, ')
+          ..write('threadEvidence: $threadEvidence, ')
           ..write('legendEvidence: $legendEvidence, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3146,6 +2904,17 @@ class $PatternCellsTable extends PatternCells
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _gridRowMeta = const VerificationMeta(
     'gridRow',
   );
@@ -3230,6 +2999,7 @@ class $PatternCellsTable extends PatternCells
   @override
   List<GeneratedColumn> get $columns => [
     documentId,
+    sortOrder,
     gridRow,
     gridColumn,
     symbolId,
@@ -3257,6 +3027,14 @@ class $PatternCellsTable extends PatternCells
       );
     } else if (isInserting) {
       context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
     }
     if (data.containsKey('grid_row')) {
       context.handle(
@@ -3327,6 +3105,10 @@ class $PatternCellsTable extends PatternCells
         DriftSqlType.string,
         data['${effectivePrefix}document_id'],
       )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
       gridRow: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}grid_row'],
@@ -3368,6 +3150,9 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   /// Defines the parent pattern document.
   final String documentId;
 
+  /// Preserves sparse cell order in the portable document.
+  final int sortOrder;
+
   /// Defines the cell's zero-based global grid row.
   final int gridRow;
 
@@ -3390,6 +3175,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   final String? provenanceId;
   const PatternCellRow({
     required this.documentId,
+    required this.sortOrder,
     required this.gridRow,
     required this.gridColumn,
     required this.symbolId,
@@ -3402,6 +3188,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['document_id'] = Variable<String>(documentId);
+    map['sort_order'] = Variable<int>(sortOrder);
     map['grid_row'] = Variable<int>(gridRow);
     map['grid_column'] = Variable<int>(gridColumn);
     map['symbol_id'] = Variable<String>(symbolId);
@@ -3419,6 +3206,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   PatternCellsCompanion toCompanion(bool nullToAbsent) {
     return PatternCellsCompanion(
       documentId: Value(documentId),
+      sortOrder: Value(sortOrder),
       gridRow: Value(gridRow),
       gridColumn: Value(gridColumn),
       symbolId: Value(symbolId),
@@ -3440,6 +3228,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return PatternCellRow(
       documentId: serializer.fromJson<String>(json['documentId']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
       gridRow: serializer.fromJson<int>(json['gridRow']),
       gridColumn: serializer.fromJson<int>(json['gridColumn']),
       symbolId: serializer.fromJson<String>(json['symbolId']),
@@ -3454,6 +3243,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'documentId': serializer.toJson<String>(documentId),
+      'sortOrder': serializer.toJson<int>(sortOrder),
       'gridRow': serializer.toJson<int>(gridRow),
       'gridColumn': serializer.toJson<int>(gridColumn),
       'symbolId': serializer.toJson<String>(symbolId),
@@ -3466,6 +3256,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
 
   PatternCellRow copyWith({
     String? documentId,
+    int? sortOrder,
     int? gridRow,
     int? gridColumn,
     String? symbolId,
@@ -3475,6 +3266,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     Value<String?> provenanceId = const Value.absent(),
   }) => PatternCellRow(
     documentId: documentId ?? this.documentId,
+    sortOrder: sortOrder ?? this.sortOrder,
     gridRow: gridRow ?? this.gridRow,
     gridColumn: gridColumn ?? this.gridColumn,
     symbolId: symbolId ?? this.symbolId,
@@ -3488,6 +3280,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       documentId: data.documentId.present
           ? data.documentId.value
           : this.documentId,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       gridRow: data.gridRow.present ? data.gridRow.value : this.gridRow,
       gridColumn: data.gridColumn.present
           ? data.gridColumn.value
@@ -3512,6 +3305,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   String toString() {
     return (StringBuffer('PatternCellRow(')
           ..write('documentId: $documentId, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('gridRow: $gridRow, ')
           ..write('gridColumn: $gridColumn, ')
           ..write('symbolId: $symbolId, ')
@@ -3526,6 +3320,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   @override
   int get hashCode => Object.hash(
     documentId,
+    sortOrder,
     gridRow,
     gridColumn,
     symbolId,
@@ -3539,6 +3334,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       identical(this, other) ||
       (other is PatternCellRow &&
           other.documentId == this.documentId &&
+          other.sortOrder == this.sortOrder &&
           other.gridRow == this.gridRow &&
           other.gridColumn == this.gridColumn &&
           other.symbolId == this.symbolId &&
@@ -3550,6 +3346,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
 
 class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   final Value<String> documentId;
+  final Value<int> sortOrder;
   final Value<int> gridRow;
   final Value<int> gridColumn;
   final Value<String> symbolId;
@@ -3560,6 +3357,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   final Value<int> rowid;
   const PatternCellsCompanion({
     this.documentId = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.gridRow = const Value.absent(),
     this.gridColumn = const Value.absent(),
     this.symbolId = const Value.absent(),
@@ -3571,6 +3369,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   });
   PatternCellsCompanion.insert({
     required String documentId,
+    required int sortOrder,
     required int gridRow,
     required int gridColumn,
     required String symbolId,
@@ -3580,12 +3379,14 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     this.provenanceId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : documentId = Value(documentId),
+       sortOrder = Value(sortOrder),
        gridRow = Value(gridRow),
        gridColumn = Value(gridColumn),
        symbolId = Value(symbolId),
        stitchType = Value(stitchType);
   static Insertable<PatternCellRow> custom({
     Expression<String>? documentId,
+    Expression<int>? sortOrder,
     Expression<int>? gridRow,
     Expression<int>? gridColumn,
     Expression<String>? symbolId,
@@ -3597,6 +3398,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   }) {
     return RawValuesInsertable({
       if (documentId != null) 'document_id': documentId,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (gridRow != null) 'grid_row': gridRow,
       if (gridColumn != null) 'grid_column': gridColumn,
       if (symbolId != null) 'symbol_id': symbolId,
@@ -3610,6 +3412,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
 
   PatternCellsCompanion copyWith({
     Value<String>? documentId,
+    Value<int>? sortOrder,
     Value<int>? gridRow,
     Value<int>? gridColumn,
     Value<String>? symbolId,
@@ -3621,6 +3424,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   }) {
     return PatternCellsCompanion(
       documentId: documentId ?? this.documentId,
+      sortOrder: sortOrder ?? this.sortOrder,
       gridRow: gridRow ?? this.gridRow,
       gridColumn: gridColumn ?? this.gridColumn,
       symbolId: symbolId ?? this.symbolId,
@@ -3637,6 +3441,9 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     final map = <String, Expression>{};
     if (documentId.present) {
       map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
     }
     if (gridRow.present) {
       map['grid_row'] = Variable<int>(gridRow.value);
@@ -3669,6 +3476,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   String toString() {
     return (StringBuffer('PatternCellsCompanion(')
           ..write('documentId: $documentId, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('gridRow: $gridRow, ')
           ..write('gridColumn: $gridColumn, ')
           ..write('symbolId: $symbolId, ')
@@ -5012,9 +4820,9 @@ class $LocationMarkersTable extends LocationMarkers
   late final GeneratedColumn<int> gridRow = GeneratedColumn<int>(
     'grid_row',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.int,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _gridColumnMeta = const VerificationMeta(
     'gridColumn',
@@ -5023,20 +4831,9 @@ class $LocationMarkersTable extends LocationMarkers
   late final GeneratedColumn<int> gridColumn = GeneratedColumn<int>(
     'grid_column',
     aliasedName,
-    true,
+    false,
     type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _regionIdMeta = const VerificationMeta(
-    'regionId',
-  );
-  @override
-  late final GeneratedColumn<String> regionId = GeneratedColumn<String>(
-    'region_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
+    requiredDuringInsert: true,
   );
   static const VerificationMeta _labelMeta = const VerificationMeta('label');
   @override
@@ -5098,7 +4895,6 @@ class $LocationMarkersTable extends LocationMarkers
     sortOrder,
     gridRow,
     gridColumn,
-    regionId,
     label,
     color,
     opacity,
@@ -5143,18 +4939,16 @@ class $LocationMarkersTable extends LocationMarkers
         _gridRowMeta,
         gridRow.isAcceptableOrUnknown(data['grid_row']!, _gridRowMeta),
       );
+    } else if (isInserting) {
+      context.missing(_gridRowMeta);
     }
     if (data.containsKey('grid_column')) {
       context.handle(
         _gridColumnMeta,
         gridColumn.isAcceptableOrUnknown(data['grid_column']!, _gridColumnMeta),
       );
-    }
-    if (data.containsKey('region_id')) {
-      context.handle(
-        _regionIdMeta,
-        regionId.isAcceptableOrUnknown(data['region_id']!, _regionIdMeta),
-      );
+    } else if (isInserting) {
+      context.missing(_gridColumnMeta);
     }
     if (data.containsKey('label')) {
       context.handle(
@@ -5216,15 +5010,11 @@ class $LocationMarkersTable extends LocationMarkers
       gridRow: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}grid_row'],
-      ),
+      )!,
       gridColumn: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}grid_column'],
-      ),
-      regionId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}region_id'],
-      ),
+      )!,
       label: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}label'],
@@ -5265,14 +5055,11 @@ class LocationMarkerRow extends DataClass
   /// Preserves marker order in the portable progress document.
   final int sortOrder;
 
-  /// Defines an optional zero-based global anchor row.
-  final int? gridRow;
+  /// Defines the zero-based global anchor row.
+  final int gridRow;
 
-  /// Defines an optional zero-based global anchor column.
-  final int? gridColumn;
-
-  /// Defines an optional provenance region anchor for planned marker support.
-  final String? regionId;
+  /// Defines the zero-based global anchor column.
+  final int gridColumn;
 
   /// Defines the user-facing marker label.
   final String label;
@@ -5292,9 +5079,8 @@ class LocationMarkerRow extends DataClass
     required this.documentId,
     required this.id,
     required this.sortOrder,
-    this.gridRow,
-    this.gridColumn,
-    this.regionId,
+    required this.gridRow,
+    required this.gridColumn,
     required this.label,
     required this.color,
     required this.opacity,
@@ -5307,15 +5093,8 @@ class LocationMarkerRow extends DataClass
     map['document_id'] = Variable<String>(documentId);
     map['id'] = Variable<String>(id);
     map['sort_order'] = Variable<int>(sortOrder);
-    if (!nullToAbsent || gridRow != null) {
-      map['grid_row'] = Variable<int>(gridRow);
-    }
-    if (!nullToAbsent || gridColumn != null) {
-      map['grid_column'] = Variable<int>(gridColumn);
-    }
-    if (!nullToAbsent || regionId != null) {
-      map['region_id'] = Variable<String>(regionId);
-    }
+    map['grid_row'] = Variable<int>(gridRow);
+    map['grid_column'] = Variable<int>(gridColumn);
     map['label'] = Variable<String>(label);
     map['color'] = Variable<String>(color);
     map['opacity'] = Variable<double>(opacity);
@@ -5331,15 +5110,8 @@ class LocationMarkerRow extends DataClass
       documentId: Value(documentId),
       id: Value(id),
       sortOrder: Value(sortOrder),
-      gridRow: gridRow == null && nullToAbsent
-          ? const Value.absent()
-          : Value(gridRow),
-      gridColumn: gridColumn == null && nullToAbsent
-          ? const Value.absent()
-          : Value(gridColumn),
-      regionId: regionId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(regionId),
+      gridRow: Value(gridRow),
+      gridColumn: Value(gridColumn),
       label: Value(label),
       color: Value(color),
       opacity: Value(opacity),
@@ -5357,9 +5129,8 @@ class LocationMarkerRow extends DataClass
       documentId: serializer.fromJson<String>(json['documentId']),
       id: serializer.fromJson<String>(json['id']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
-      gridRow: serializer.fromJson<int?>(json['gridRow']),
-      gridColumn: serializer.fromJson<int?>(json['gridColumn']),
-      regionId: serializer.fromJson<String?>(json['regionId']),
+      gridRow: serializer.fromJson<int>(json['gridRow']),
+      gridColumn: serializer.fromJson<int>(json['gridColumn']),
       label: serializer.fromJson<String>(json['label']),
       color: serializer.fromJson<String>(json['color']),
       opacity: serializer.fromJson<double>(json['opacity']),
@@ -5374,9 +5145,8 @@ class LocationMarkerRow extends DataClass
       'documentId': serializer.toJson<String>(documentId),
       'id': serializer.toJson<String>(id),
       'sortOrder': serializer.toJson<int>(sortOrder),
-      'gridRow': serializer.toJson<int?>(gridRow),
-      'gridColumn': serializer.toJson<int?>(gridColumn),
-      'regionId': serializer.toJson<String?>(regionId),
+      'gridRow': serializer.toJson<int>(gridRow),
+      'gridColumn': serializer.toJson<int>(gridColumn),
       'label': serializer.toJson<String>(label),
       'color': serializer.toJson<String>(color),
       'opacity': serializer.toJson<double>(opacity),
@@ -5389,9 +5159,8 @@ class LocationMarkerRow extends DataClass
     String? documentId,
     String? id,
     int? sortOrder,
-    Value<int?> gridRow = const Value.absent(),
-    Value<int?> gridColumn = const Value.absent(),
-    Value<String?> regionId = const Value.absent(),
+    int? gridRow,
+    int? gridColumn,
     String? label,
     String? color,
     double? opacity,
@@ -5401,9 +5170,8 @@ class LocationMarkerRow extends DataClass
     documentId: documentId ?? this.documentId,
     id: id ?? this.id,
     sortOrder: sortOrder ?? this.sortOrder,
-    gridRow: gridRow.present ? gridRow.value : this.gridRow,
-    gridColumn: gridColumn.present ? gridColumn.value : this.gridColumn,
-    regionId: regionId.present ? regionId.value : this.regionId,
+    gridRow: gridRow ?? this.gridRow,
+    gridColumn: gridColumn ?? this.gridColumn,
     label: label ?? this.label,
     color: color ?? this.color,
     opacity: opacity ?? this.opacity,
@@ -5421,7 +5189,6 @@ class LocationMarkerRow extends DataClass
       gridColumn: data.gridColumn.present
           ? data.gridColumn.value
           : this.gridColumn,
-      regionId: data.regionId.present ? data.regionId.value : this.regionId,
       label: data.label.present ? data.label.value : this.label,
       color: data.color.present ? data.color.value : this.color,
       opacity: data.opacity.present ? data.opacity.value : this.opacity,
@@ -5438,7 +5205,6 @@ class LocationMarkerRow extends DataClass
           ..write('sortOrder: $sortOrder, ')
           ..write('gridRow: $gridRow, ')
           ..write('gridColumn: $gridColumn, ')
-          ..write('regionId: $regionId, ')
           ..write('label: $label, ')
           ..write('color: $color, ')
           ..write('opacity: $opacity, ')
@@ -5455,7 +5221,6 @@ class LocationMarkerRow extends DataClass
     sortOrder,
     gridRow,
     gridColumn,
-    regionId,
     label,
     color,
     opacity,
@@ -5471,7 +5236,6 @@ class LocationMarkerRow extends DataClass
           other.sortOrder == this.sortOrder &&
           other.gridRow == this.gridRow &&
           other.gridColumn == this.gridColumn &&
-          other.regionId == this.regionId &&
           other.label == this.label &&
           other.color == this.color &&
           other.opacity == this.opacity &&
@@ -5483,9 +5247,8 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
   final Value<String> documentId;
   final Value<String> id;
   final Value<int> sortOrder;
-  final Value<int?> gridRow;
-  final Value<int?> gridColumn;
-  final Value<String?> regionId;
+  final Value<int> gridRow;
+  final Value<int> gridColumn;
   final Value<String> label;
   final Value<String> color;
   final Value<double> opacity;
@@ -5498,7 +5261,6 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
     this.sortOrder = const Value.absent(),
     this.gridRow = const Value.absent(),
     this.gridColumn = const Value.absent(),
-    this.regionId = const Value.absent(),
     this.label = const Value.absent(),
     this.color = const Value.absent(),
     this.opacity = const Value.absent(),
@@ -5510,9 +5272,8 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
     required String documentId,
     required String id,
     required int sortOrder,
-    this.gridRow = const Value.absent(),
-    this.gridColumn = const Value.absent(),
-    this.regionId = const Value.absent(),
+    required int gridRow,
+    required int gridColumn,
     required String label,
     required String color,
     required double opacity,
@@ -5522,6 +5283,8 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
   }) : documentId = Value(documentId),
        id = Value(id),
        sortOrder = Value(sortOrder),
+       gridRow = Value(gridRow),
+       gridColumn = Value(gridColumn),
        label = Value(label),
        color = Value(color),
        opacity = Value(opacity);
@@ -5531,7 +5294,6 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
     Expression<int>? sortOrder,
     Expression<int>? gridRow,
     Expression<int>? gridColumn,
-    Expression<String>? regionId,
     Expression<String>? label,
     Expression<String>? color,
     Expression<double>? opacity,
@@ -5545,7 +5307,6 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (gridRow != null) 'grid_row': gridRow,
       if (gridColumn != null) 'grid_column': gridColumn,
-      if (regionId != null) 'region_id': regionId,
       if (label != null) 'label': label,
       if (color != null) 'color': color,
       if (opacity != null) 'opacity': opacity,
@@ -5559,9 +5320,8 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
     Value<String>? documentId,
     Value<String>? id,
     Value<int>? sortOrder,
-    Value<int?>? gridRow,
-    Value<int?>? gridColumn,
-    Value<String?>? regionId,
+    Value<int>? gridRow,
+    Value<int>? gridColumn,
     Value<String>? label,
     Value<String>? color,
     Value<double>? opacity,
@@ -5575,7 +5335,6 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
       sortOrder: sortOrder ?? this.sortOrder,
       gridRow: gridRow ?? this.gridRow,
       gridColumn: gridColumn ?? this.gridColumn,
-      regionId: regionId ?? this.regionId,
       label: label ?? this.label,
       color: color ?? this.color,
       opacity: opacity ?? this.opacity,
@@ -5602,9 +5361,6 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
     }
     if (gridColumn.present) {
       map['grid_column'] = Variable<int>(gridColumn.value);
-    }
-    if (regionId.present) {
-      map['region_id'] = Variable<String>(regionId.value);
     }
     if (label.present) {
       map['label'] = Variable<String>(label.value);
@@ -5635,7 +5391,6 @@ class LocationMarkersCompanion extends UpdateCompanion<LocationMarkerRow> {
           ..write('sortOrder: $sortOrder, ')
           ..write('gridRow: $gridRow, ')
           ..write('gridColumn: $gridColumn, ')
-          ..write('regionId: $regionId, ')
           ..write('label: $label, ')
           ..write('color: $color, ')
           ..write('opacity: $opacity, ')
@@ -5735,17 +5490,6 @@ class $ViewportStatesTable extends ViewportStates
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _highlightedSymbolIdMeta =
-      const VerificationMeta('highlightedSymbolId');
-  @override
-  late final GeneratedColumn<String> highlightedSymbolId =
-      GeneratedColumn<String>(
-        'highlighted_symbol_id',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
   @override
   List<GeneratedColumn> get $columns => [
     documentId,
@@ -5756,7 +5500,6 @@ class $ViewportStatesTable extends ViewportStates
     anchorColumn,
     visibleRows,
     visibleColumns,
-    highlightedSymbolId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5839,15 +5582,6 @@ class $ViewportStatesTable extends ViewportStates
         ),
       );
     }
-    if (data.containsKey('highlighted_symbol_id')) {
-      context.handle(
-        _highlightedSymbolIdMeta,
-        highlightedSymbolId.isAcceptableOrUnknown(
-          data['highlighted_symbol_id']!,
-          _highlightedSymbolIdMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -5889,10 +5623,6 @@ class $ViewportStatesTable extends ViewportStates
         DriftSqlType.int,
         data['${effectivePrefix}visible_columns'],
       ),
-      highlightedSymbolId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}highlighted_symbol_id'],
-      ),
     );
   }
 
@@ -5927,9 +5657,6 @@ class ViewportStateRow extends DataClass
 
   /// Defines the optional number of visible columns at save time.
   final int? visibleColumns;
-
-  /// Defines the optional symbol currently highlighted in the workspace.
-  final String? highlightedSymbolId;
   const ViewportStateRow({
     required this.documentId,
     required this.zoom,
@@ -5939,7 +5666,6 @@ class ViewportStateRow extends DataClass
     required this.anchorColumn,
     this.visibleRows,
     this.visibleColumns,
-    this.highlightedSymbolId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5955,9 +5681,6 @@ class ViewportStateRow extends DataClass
     }
     if (!nullToAbsent || visibleColumns != null) {
       map['visible_columns'] = Variable<int>(visibleColumns);
-    }
-    if (!nullToAbsent || highlightedSymbolId != null) {
-      map['highlighted_symbol_id'] = Variable<String>(highlightedSymbolId);
     }
     return map;
   }
@@ -5976,9 +5699,6 @@ class ViewportStateRow extends DataClass
       visibleColumns: visibleColumns == null && nullToAbsent
           ? const Value.absent()
           : Value(visibleColumns),
-      highlightedSymbolId: highlightedSymbolId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(highlightedSymbolId),
     );
   }
 
@@ -5996,9 +5716,6 @@ class ViewportStateRow extends DataClass
       anchorColumn: serializer.fromJson<int>(json['anchorColumn']),
       visibleRows: serializer.fromJson<int?>(json['visibleRows']),
       visibleColumns: serializer.fromJson<int?>(json['visibleColumns']),
-      highlightedSymbolId: serializer.fromJson<String?>(
-        json['highlightedSymbolId'],
-      ),
     );
   }
   @override
@@ -6013,7 +5730,6 @@ class ViewportStateRow extends DataClass
       'anchorColumn': serializer.toJson<int>(anchorColumn),
       'visibleRows': serializer.toJson<int?>(visibleRows),
       'visibleColumns': serializer.toJson<int?>(visibleColumns),
-      'highlightedSymbolId': serializer.toJson<String?>(highlightedSymbolId),
     };
   }
 
@@ -6026,7 +5742,6 @@ class ViewportStateRow extends DataClass
     int? anchorColumn,
     Value<int?> visibleRows = const Value.absent(),
     Value<int?> visibleColumns = const Value.absent(),
-    Value<String?> highlightedSymbolId = const Value.absent(),
   }) => ViewportStateRow(
     documentId: documentId ?? this.documentId,
     zoom: zoom ?? this.zoom,
@@ -6038,9 +5753,6 @@ class ViewportStateRow extends DataClass
     visibleColumns: visibleColumns.present
         ? visibleColumns.value
         : this.visibleColumns,
-    highlightedSymbolId: highlightedSymbolId.present
-        ? highlightedSymbolId.value
-        : this.highlightedSymbolId,
   );
   ViewportStateRow copyWithCompanion(ViewportStatesCompanion data) {
     return ViewportStateRow(
@@ -6060,9 +5772,6 @@ class ViewportStateRow extends DataClass
       visibleColumns: data.visibleColumns.present
           ? data.visibleColumns.value
           : this.visibleColumns,
-      highlightedSymbolId: data.highlightedSymbolId.present
-          ? data.highlightedSymbolId.value
-          : this.highlightedSymbolId,
     );
   }
 
@@ -6076,8 +5785,7 @@ class ViewportStateRow extends DataClass
           ..write('anchorRow: $anchorRow, ')
           ..write('anchorColumn: $anchorColumn, ')
           ..write('visibleRows: $visibleRows, ')
-          ..write('visibleColumns: $visibleColumns, ')
-          ..write('highlightedSymbolId: $highlightedSymbolId')
+          ..write('visibleColumns: $visibleColumns')
           ..write(')'))
         .toString();
   }
@@ -6092,7 +5800,6 @@ class ViewportStateRow extends DataClass
     anchorColumn,
     visibleRows,
     visibleColumns,
-    highlightedSymbolId,
   );
   @override
   bool operator ==(Object other) =>
@@ -6105,8 +5812,7 @@ class ViewportStateRow extends DataClass
           other.anchorRow == this.anchorRow &&
           other.anchorColumn == this.anchorColumn &&
           other.visibleRows == this.visibleRows &&
-          other.visibleColumns == this.visibleColumns &&
-          other.highlightedSymbolId == this.highlightedSymbolId);
+          other.visibleColumns == this.visibleColumns);
 }
 
 class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
@@ -6118,7 +5824,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
   final Value<int> anchorColumn;
   final Value<int?> visibleRows;
   final Value<int?> visibleColumns;
-  final Value<String?> highlightedSymbolId;
   final Value<int> rowid;
   const ViewportStatesCompanion({
     this.documentId = const Value.absent(),
@@ -6129,7 +5834,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     this.anchorColumn = const Value.absent(),
     this.visibleRows = const Value.absent(),
     this.visibleColumns = const Value.absent(),
-    this.highlightedSymbolId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ViewportStatesCompanion.insert({
@@ -6141,7 +5845,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     required int anchorColumn,
     this.visibleRows = const Value.absent(),
     this.visibleColumns = const Value.absent(),
-    this.highlightedSymbolId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : documentId = Value(documentId),
        zoom = Value(zoom),
@@ -6158,7 +5861,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Expression<int>? anchorColumn,
     Expression<int>? visibleRows,
     Expression<int>? visibleColumns,
-    Expression<String>? highlightedSymbolId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -6170,8 +5872,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       if (anchorColumn != null) 'anchor_column': anchorColumn,
       if (visibleRows != null) 'visible_rows': visibleRows,
       if (visibleColumns != null) 'visible_columns': visibleColumns,
-      if (highlightedSymbolId != null)
-        'highlighted_symbol_id': highlightedSymbolId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -6185,7 +5885,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Value<int>? anchorColumn,
     Value<int?>? visibleRows,
     Value<int?>? visibleColumns,
-    Value<String?>? highlightedSymbolId,
     Value<int>? rowid,
   }) {
     return ViewportStatesCompanion(
@@ -6197,7 +5896,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       anchorColumn: anchorColumn ?? this.anchorColumn,
       visibleRows: visibleRows ?? this.visibleRows,
       visibleColumns: visibleColumns ?? this.visibleColumns,
-      highlightedSymbolId: highlightedSymbolId ?? this.highlightedSymbolId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -6229,11 +5927,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     if (visibleColumns.present) {
       map['visible_columns'] = Variable<int>(visibleColumns.value);
     }
-    if (highlightedSymbolId.present) {
-      map['highlighted_symbol_id'] = Variable<String>(
-        highlightedSymbolId.value,
-      );
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -6251,7 +5944,6 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
           ..write('anchorColumn: $anchorColumn, ')
           ..write('visibleRows: $visibleRows, ')
           ..write('visibleColumns: $visibleColumns, ')
-          ..write('highlightedSymbolId: $highlightedSymbolId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -6271,7 +5963,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LibraryMetadataTable libraryMetadata = $LibraryMetadataTable(
     this,
   );
-  late final $PatternThreadsTable patternThreads = $PatternThreadsTable(this);
   late final $PatternSymbolsTable patternSymbols = $PatternSymbolsTable(this);
   late final $PatternRegionsTable patternRegions = $PatternRegionsTable(this);
   late final $PatternCellsTable patternCells = $PatternCellsTable(this);
@@ -6320,7 +6011,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     patternDocuments,
     sourceMetadataEntries,
     libraryMetadata,
-    patternThreads,
     patternSymbols,
     patternRegions,
     patternCells,
@@ -7733,303 +7423,6 @@ typedef $$LibraryMetadataTableProcessedTableManager =
       LibraryMetadataRow,
       PrefetchHooks Function({bool documentId})
     >;
-typedef $$PatternThreadsTableCreateCompanionBuilder =
-    PatternThreadsCompanion Function({
-      required String documentId,
-      required String id,
-      required int sortOrder,
-      Value<String?> brand,
-      Value<String?> catalogNumber,
-      Value<String?> name,
-      required String color,
-      Value<String?> conversionNotes,
-      required String evidence,
-      Value<int> rowid,
-    });
-typedef $$PatternThreadsTableUpdateCompanionBuilder =
-    PatternThreadsCompanion Function({
-      Value<String> documentId,
-      Value<String> id,
-      Value<int> sortOrder,
-      Value<String?> brand,
-      Value<String?> catalogNumber,
-      Value<String?> name,
-      Value<String> color,
-      Value<String?> conversionNotes,
-      Value<String> evidence,
-      Value<int> rowid,
-    });
-
-class $$PatternThreadsTableFilterComposer
-    extends Composer<_$AppDatabase, $PatternThreadsTable> {
-  $$PatternThreadsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get documentId => $composableBuilder(
-    column: $table.documentId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get sortOrder => $composableBuilder(
-    column: $table.sortOrder,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get brand => $composableBuilder(
-    column: $table.brand,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get catalogNumber => $composableBuilder(
-    column: $table.catalogNumber,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get color => $composableBuilder(
-    column: $table.color,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get conversionNotes => $composableBuilder(
-    column: $table.conversionNotes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get evidence => $composableBuilder(
-    column: $table.evidence,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$PatternThreadsTableOrderingComposer
-    extends Composer<_$AppDatabase, $PatternThreadsTable> {
-  $$PatternThreadsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get documentId => $composableBuilder(
-    column: $table.documentId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get sortOrder => $composableBuilder(
-    column: $table.sortOrder,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get brand => $composableBuilder(
-    column: $table.brand,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get catalogNumber => $composableBuilder(
-    column: $table.catalogNumber,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get color => $composableBuilder(
-    column: $table.color,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get conversionNotes => $composableBuilder(
-    column: $table.conversionNotes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get evidence => $composableBuilder(
-    column: $table.evidence,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$PatternThreadsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $PatternThreadsTable> {
-  $$PatternThreadsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get documentId => $composableBuilder(
-    column: $table.documentId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<int> get sortOrder =>
-      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
-
-  GeneratedColumn<String> get brand =>
-      $composableBuilder(column: $table.brand, builder: (column) => column);
-
-  GeneratedColumn<String> get catalogNumber => $composableBuilder(
-    column: $table.catalogNumber,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get color =>
-      $composableBuilder(column: $table.color, builder: (column) => column);
-
-  GeneratedColumn<String> get conversionNotes => $composableBuilder(
-    column: $table.conversionNotes,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get evidence =>
-      $composableBuilder(column: $table.evidence, builder: (column) => column);
-}
-
-class $$PatternThreadsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $PatternThreadsTable,
-          PatternThreadRow,
-          $$PatternThreadsTableFilterComposer,
-          $$PatternThreadsTableOrderingComposer,
-          $$PatternThreadsTableAnnotationComposer,
-          $$PatternThreadsTableCreateCompanionBuilder,
-          $$PatternThreadsTableUpdateCompanionBuilder,
-          (
-            PatternThreadRow,
-            BaseReferences<
-              _$AppDatabase,
-              $PatternThreadsTable,
-              PatternThreadRow
-            >,
-          ),
-          PatternThreadRow,
-          PrefetchHooks Function()
-        > {
-  $$PatternThreadsTableTableManager(
-    _$AppDatabase db,
-    $PatternThreadsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$PatternThreadsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$PatternThreadsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$PatternThreadsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<String> documentId = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<int> sortOrder = const Value.absent(),
-                Value<String?> brand = const Value.absent(),
-                Value<String?> catalogNumber = const Value.absent(),
-                Value<String?> name = const Value.absent(),
-                Value<String> color = const Value.absent(),
-                Value<String?> conversionNotes = const Value.absent(),
-                Value<String> evidence = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => PatternThreadsCompanion(
-                documentId: documentId,
-                id: id,
-                sortOrder: sortOrder,
-                brand: brand,
-                catalogNumber: catalogNumber,
-                name: name,
-                color: color,
-                conversionNotes: conversionNotes,
-                evidence: evidence,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String documentId,
-                required String id,
-                required int sortOrder,
-                Value<String?> brand = const Value.absent(),
-                Value<String?> catalogNumber = const Value.absent(),
-                Value<String?> name = const Value.absent(),
-                required String color,
-                Value<String?> conversionNotes = const Value.absent(),
-                required String evidence,
-                Value<int> rowid = const Value.absent(),
-              }) => PatternThreadsCompanion.insert(
-                documentId: documentId,
-                id: id,
-                sortOrder: sortOrder,
-                brand: brand,
-                catalogNumber: catalogNumber,
-                name: name,
-                color: color,
-                conversionNotes: conversionNotes,
-                evidence: evidence,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable<$PatternThreadsTable, PatternThreadRow>(table),
-                  BaseReferences<
-                    _$AppDatabase,
-                    $PatternThreadsTable,
-                    PatternThreadRow
-                  >(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$PatternThreadsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $PatternThreadsTable,
-      PatternThreadRow,
-      $$PatternThreadsTableFilterComposer,
-      $$PatternThreadsTableOrderingComposer,
-      $$PatternThreadsTableAnnotationComposer,
-      $$PatternThreadsTableCreateCompanionBuilder,
-      $$PatternThreadsTableUpdateCompanionBuilder,
-      (
-        PatternThreadRow,
-        BaseReferences<_$AppDatabase, $PatternThreadsTable, PatternThreadRow>,
-      ),
-      PatternThreadRow,
-      PrefetchHooks Function()
-    >;
 typedef $$PatternSymbolsTableCreateCompanionBuilder =
     PatternSymbolsCompanion Function({
       required String documentId,
@@ -8039,6 +7432,12 @@ typedef $$PatternSymbolsTableCreateCompanionBuilder =
       required String normalizedKey,
       required String displayGlyph,
       required String threadId,
+      Value<String?> threadBrand,
+      Value<String?> threadCatalogNumber,
+      Value<String?> threadName,
+      required String threadColor,
+      Value<String?> threadConversionNotes,
+      required String threadEvidence,
       Value<String?> legendEvidence,
       Value<int> rowid,
     });
@@ -8051,6 +7450,12 @@ typedef $$PatternSymbolsTableUpdateCompanionBuilder =
       Value<String> normalizedKey,
       Value<String> displayGlyph,
       Value<String> threadId,
+      Value<String?> threadBrand,
+      Value<String?> threadCatalogNumber,
+      Value<String?> threadName,
+      Value<String> threadColor,
+      Value<String?> threadConversionNotes,
+      Value<String> threadEvidence,
       Value<String?> legendEvidence,
       Value<int> rowid,
     });
@@ -8096,6 +7501,36 @@ class $$PatternSymbolsTableFilterComposer
 
   ColumnFilters<String> get threadId => $composableBuilder(
     column: $table.threadId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadBrand => $composableBuilder(
+    column: $table.threadBrand,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadCatalogNumber => $composableBuilder(
+    column: $table.threadCatalogNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadName => $composableBuilder(
+    column: $table.threadName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadColor => $composableBuilder(
+    column: $table.threadColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadConversionNotes => $composableBuilder(
+    column: $table.threadConversionNotes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadEvidence => $composableBuilder(
+    column: $table.threadEvidence,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8149,6 +7584,36 @@ class $$PatternSymbolsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get threadBrand => $composableBuilder(
+    column: $table.threadBrand,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadCatalogNumber => $composableBuilder(
+    column: $table.threadCatalogNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadName => $composableBuilder(
+    column: $table.threadName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadColor => $composableBuilder(
+    column: $table.threadColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadConversionNotes => $composableBuilder(
+    column: $table.threadConversionNotes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadEvidence => $composableBuilder(
+    column: $table.threadEvidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get legendEvidence => $composableBuilder(
     column: $table.legendEvidence,
     builder: (column) => ColumnOrderings(column),
@@ -8192,6 +7657,36 @@ class $$PatternSymbolsTableAnnotationComposer
 
   GeneratedColumn<String> get threadId =>
       $composableBuilder(column: $table.threadId, builder: (column) => column);
+
+  GeneratedColumn<String> get threadBrand => $composableBuilder(
+    column: $table.threadBrand,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadCatalogNumber => $composableBuilder(
+    column: $table.threadCatalogNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadName => $composableBuilder(
+    column: $table.threadName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadColor => $composableBuilder(
+    column: $table.threadColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadConversionNotes => $composableBuilder(
+    column: $table.threadConversionNotes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadEvidence => $composableBuilder(
+    column: $table.threadEvidence,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get legendEvidence => $composableBuilder(
     column: $table.legendEvidence,
@@ -8243,6 +7738,12 @@ class $$PatternSymbolsTableTableManager
                 Value<String> normalizedKey = const Value.absent(),
                 Value<String> displayGlyph = const Value.absent(),
                 Value<String> threadId = const Value.absent(),
+                Value<String?> threadBrand = const Value.absent(),
+                Value<String?> threadCatalogNumber = const Value.absent(),
+                Value<String?> threadName = const Value.absent(),
+                Value<String> threadColor = const Value.absent(),
+                Value<String?> threadConversionNotes = const Value.absent(),
+                Value<String> threadEvidence = const Value.absent(),
                 Value<String?> legendEvidence = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PatternSymbolsCompanion(
@@ -8253,6 +7754,12 @@ class $$PatternSymbolsTableTableManager
                 normalizedKey: normalizedKey,
                 displayGlyph: displayGlyph,
                 threadId: threadId,
+                threadBrand: threadBrand,
+                threadCatalogNumber: threadCatalogNumber,
+                threadName: threadName,
+                threadColor: threadColor,
+                threadConversionNotes: threadConversionNotes,
+                threadEvidence: threadEvidence,
                 legendEvidence: legendEvidence,
                 rowid: rowid,
               ),
@@ -8265,6 +7772,12 @@ class $$PatternSymbolsTableTableManager
                 required String normalizedKey,
                 required String displayGlyph,
                 required String threadId,
+                Value<String?> threadBrand = const Value.absent(),
+                Value<String?> threadCatalogNumber = const Value.absent(),
+                Value<String?> threadName = const Value.absent(),
+                required String threadColor,
+                Value<String?> threadConversionNotes = const Value.absent(),
+                required String threadEvidence,
                 Value<String?> legendEvidence = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PatternSymbolsCompanion.insert(
@@ -8275,6 +7788,12 @@ class $$PatternSymbolsTableTableManager
                 normalizedKey: normalizedKey,
                 displayGlyph: displayGlyph,
                 threadId: threadId,
+                threadBrand: threadBrand,
+                threadCatalogNumber: threadCatalogNumber,
+                threadName: threadName,
+                threadColor: threadColor,
+                threadConversionNotes: threadConversionNotes,
+                threadEvidence: threadEvidence,
                 legendEvidence: legendEvidence,
                 rowid: rowid,
               ),
@@ -8614,6 +8133,7 @@ typedef $$PatternRegionsTableProcessedTableManager =
 typedef $$PatternCellsTableCreateCompanionBuilder =
     PatternCellsCompanion Function({
       required String documentId,
+      required int sortOrder,
       required int gridRow,
       required int gridColumn,
       required String symbolId,
@@ -8626,6 +8146,7 @@ typedef $$PatternCellsTableCreateCompanionBuilder =
 typedef $$PatternCellsTableUpdateCompanionBuilder =
     PatternCellsCompanion Function({
       Value<String> documentId,
+      Value<int> sortOrder,
       Value<int> gridRow,
       Value<int> gridColumn,
       Value<String> symbolId,
@@ -8647,6 +8168,11 @@ class $$PatternCellsTableFilterComposer
   });
   ColumnFilters<String> get documentId => $composableBuilder(
     column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8700,6 +8226,11 @@ class $$PatternCellsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get gridRow => $composableBuilder(
     column: $table.gridRow,
     builder: (column) => ColumnOrderings(column),
@@ -8749,6 +8280,9 @@ class $$PatternCellsTableAnnotationComposer
     column: $table.documentId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 
   GeneratedColumn<int> get gridRow =>
       $composableBuilder(column: $table.gridRow, builder: (column) => column);
@@ -8814,6 +8348,7 @@ class $$PatternCellsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> documentId = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<int> gridRow = const Value.absent(),
                 Value<int> gridColumn = const Value.absent(),
                 Value<String> symbolId = const Value.absent(),
@@ -8824,6 +8359,7 @@ class $$PatternCellsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => PatternCellsCompanion(
                 documentId: documentId,
+                sortOrder: sortOrder,
                 gridRow: gridRow,
                 gridColumn: gridColumn,
                 symbolId: symbolId,
@@ -8836,6 +8372,7 @@ class $$PatternCellsTableTableManager
           createCompanionCallback:
               ({
                 required String documentId,
+                required int sortOrder,
                 required int gridRow,
                 required int gridColumn,
                 required String symbolId,
@@ -8846,6 +8383,7 @@ class $$PatternCellsTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => PatternCellsCompanion.insert(
                 documentId: documentId,
+                sortOrder: sortOrder,
                 gridRow: gridRow,
                 gridColumn: gridColumn,
                 symbolId: symbolId,
@@ -9714,9 +9252,8 @@ typedef $$LocationMarkersTableCreateCompanionBuilder =
       required String documentId,
       required String id,
       required int sortOrder,
-      Value<int?> gridRow,
-      Value<int?> gridColumn,
-      Value<String?> regionId,
+      required int gridRow,
+      required int gridColumn,
       required String label,
       required String color,
       required double opacity,
@@ -9729,9 +9266,8 @@ typedef $$LocationMarkersTableUpdateCompanionBuilder =
       Value<String> documentId,
       Value<String> id,
       Value<int> sortOrder,
-      Value<int?> gridRow,
-      Value<int?> gridColumn,
-      Value<String?> regionId,
+      Value<int> gridRow,
+      Value<int> gridColumn,
       Value<String> label,
       Value<String> color,
       Value<double> opacity,
@@ -9771,11 +9307,6 @@ class $$LocationMarkersTableFilterComposer
 
   ColumnFilters<int> get gridColumn => $composableBuilder(
     column: $table.gridColumn,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get regionId => $composableBuilder(
-    column: $table.regionId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9839,11 +9370,6 @@ class $$LocationMarkersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get regionId => $composableBuilder(
-    column: $table.regionId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get label => $composableBuilder(
     column: $table.label,
     builder: (column) => ColumnOrderings(column),
@@ -9897,9 +9423,6 @@ class $$LocationMarkersTableAnnotationComposer
     column: $table.gridColumn,
     builder: (column) => column,
   );
-
-  GeneratedColumn<String> get regionId =>
-      $composableBuilder(column: $table.regionId, builder: (column) => column);
 
   GeneratedColumn<String> get label =>
       $composableBuilder(column: $table.label, builder: (column) => column);
@@ -9957,9 +9480,8 @@ class $$LocationMarkersTableTableManager
                 Value<String> documentId = const Value.absent(),
                 Value<String> id = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
-                Value<int?> gridRow = const Value.absent(),
-                Value<int?> gridColumn = const Value.absent(),
-                Value<String?> regionId = const Value.absent(),
+                Value<int> gridRow = const Value.absent(),
+                Value<int> gridColumn = const Value.absent(),
                 Value<String> label = const Value.absent(),
                 Value<String> color = const Value.absent(),
                 Value<double> opacity = const Value.absent(),
@@ -9972,7 +9494,6 @@ class $$LocationMarkersTableTableManager
                 sortOrder: sortOrder,
                 gridRow: gridRow,
                 gridColumn: gridColumn,
-                regionId: regionId,
                 label: label,
                 color: color,
                 opacity: opacity,
@@ -9985,9 +9506,8 @@ class $$LocationMarkersTableTableManager
                 required String documentId,
                 required String id,
                 required int sortOrder,
-                Value<int?> gridRow = const Value.absent(),
-                Value<int?> gridColumn = const Value.absent(),
-                Value<String?> regionId = const Value.absent(),
+                required int gridRow,
+                required int gridColumn,
                 required String label,
                 required String color,
                 required double opacity,
@@ -10000,7 +9520,6 @@ class $$LocationMarkersTableTableManager
                 sortOrder: sortOrder,
                 gridRow: gridRow,
                 gridColumn: gridColumn,
-                regionId: regionId,
                 label: label,
                 color: color,
                 opacity: opacity,
@@ -10052,7 +9571,6 @@ typedef $$ViewportStatesTableCreateCompanionBuilder =
       required int anchorColumn,
       Value<int?> visibleRows,
       Value<int?> visibleColumns,
-      Value<String?> highlightedSymbolId,
       Value<int> rowid,
     });
 typedef $$ViewportStatesTableUpdateCompanionBuilder =
@@ -10065,7 +9583,6 @@ typedef $$ViewportStatesTableUpdateCompanionBuilder =
       Value<int> anchorColumn,
       Value<int?> visibleRows,
       Value<int?> visibleColumns,
-      Value<String?> highlightedSymbolId,
       Value<int> rowid,
     });
 
@@ -10115,11 +9632,6 @@ class $$ViewportStatesTableFilterComposer
 
   ColumnFilters<int> get visibleColumns => $composableBuilder(
     column: $table.visibleColumns,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get highlightedSymbolId => $composableBuilder(
-    column: $table.highlightedSymbolId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -10172,11 +9684,6 @@ class $$ViewportStatesTableOrderingComposer
     column: $table.visibleColumns,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<String> get highlightedSymbolId => $composableBuilder(
-    column: $table.highlightedSymbolId,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$ViewportStatesTableAnnotationComposer
@@ -10217,11 +9724,6 @@ class $$ViewportStatesTableAnnotationComposer
 
   GeneratedColumn<int> get visibleColumns => $composableBuilder(
     column: $table.visibleColumns,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get highlightedSymbolId => $composableBuilder(
-    column: $table.highlightedSymbolId,
     builder: (column) => column,
   );
 }
@@ -10271,7 +9773,6 @@ class $$ViewportStatesTableTableManager
                 Value<int> anchorColumn = const Value.absent(),
                 Value<int?> visibleRows = const Value.absent(),
                 Value<int?> visibleColumns = const Value.absent(),
-                Value<String?> highlightedSymbolId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion(
                 documentId: documentId,
@@ -10282,7 +9783,6 @@ class $$ViewportStatesTableTableManager
                 anchorColumn: anchorColumn,
                 visibleRows: visibleRows,
                 visibleColumns: visibleColumns,
-                highlightedSymbolId: highlightedSymbolId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -10295,7 +9795,6 @@ class $$ViewportStatesTableTableManager
                 required int anchorColumn,
                 Value<int?> visibleRows = const Value.absent(),
                 Value<int?> visibleColumns = const Value.absent(),
-                Value<String?> highlightedSymbolId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion.insert(
                 documentId: documentId,
@@ -10306,7 +9805,6 @@ class $$ViewportStatesTableTableManager
                 anchorColumn: anchorColumn,
                 visibleRows: visibleRows,
                 visibleColumns: visibleColumns,
-                highlightedSymbolId: highlightedSymbolId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -10355,8 +9853,6 @@ class $AppDatabaseManager {
       $$SourceMetadataEntriesTableTableManager(_db, _db.sourceMetadataEntries);
   $$LibraryMetadataTableTableManager get libraryMetadata =>
       $$LibraryMetadataTableTableManager(_db, _db.libraryMetadata);
-  $$PatternThreadsTableTableManager get patternThreads =>
-      $$PatternThreadsTableTableManager(_db, _db.patternThreads);
   $$PatternSymbolsTableTableManager get patternSymbols =>
       $$PatternSymbolsTableTableManager(_db, _db.patternSymbols);
   $$PatternRegionsTableTableManager get patternRegions =>

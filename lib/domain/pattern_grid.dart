@@ -31,7 +31,6 @@ class StitchCell {
   const StitchCell({
     required this.coordinate,
     required this.symbolId,
-    this.threadId,
     this.stitchType = StitchType.full,
     this.confidence,
     this.needsReview = false,
@@ -43,9 +42,6 @@ class StitchCell {
 
   /// ID of the symbol definition used to render this stitch.
   final String symbolId;
-
-  /// Optional thread override for this cell.
-  final String? threadId;
 
   /// Technique used for this stitch.
   final StitchType stitchType;

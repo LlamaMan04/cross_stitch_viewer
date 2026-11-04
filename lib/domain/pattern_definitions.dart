@@ -17,7 +17,7 @@ class SymbolDefinition {
     required this.sourceSymbol,
     required this.normalizedKey,
     required this.displayGlyph,
-    this.threadId,
+    required this.thread,
     this.legendEvidence,
   });
 
@@ -33,14 +33,14 @@ class SymbolDefinition {
   /// Glyph displayed in the pattern grid.
   final String displayGlyph;
 
-  /// Default thread ID for stitches using this symbol, if known.
-  final String? threadId;
+  /// Exact thread definition rendered for stitches using this symbol.
+  final ThreadDefinition thread;
 
   /// Original legend text or other evidence supporting the mapping.
   final String? legendEvidence;
 }
 
-/// Thread catalog entry and canonical color associated with symbols or stitches.
+/// Thread catalog entry and canonical color associated with a symbol.
 class ThreadDefinition {
   /// Creates a thread entry; [color] must use canonical `#RRGGBB` notation.
   const ThreadDefinition({
@@ -53,7 +53,7 @@ class ThreadDefinition {
     this.evidence = ColorEvidence.explicit,
   });
 
-  /// Stable ID referenced by symbols and stitches.
+  /// Stable ID supplied by the pattern source or thread catalog.
   final String id;
 
   /// Canonical RGB color in `#RRGGBB` notation.
