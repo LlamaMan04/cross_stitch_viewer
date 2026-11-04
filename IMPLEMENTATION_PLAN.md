@@ -83,13 +83,22 @@ Use a sparse representation for empty cells and a compact representation for pop
 
 ### Phase 1 — Foundation and domain contracts
 
-1. Replace the starter app with a basic application shell and navigation, and establish Drift as the app's local persistence stack. Add the Drift/SQLite dependencies, database lifecycle boundary, development database configuration, migration entry point, and test-database configuration. Keep the database layer behind repository interfaces and out of the domain models.
-2. Add domain models, JSON serialization, schema versioning, and repository interfaces.
-3. Add sample normalized pattern fixtures, including empty cells, multiple colors, page boundaries, symbols, and malformed/ambiguous cells.
-4. Implement the Drift repository adapters and document file-picker and state-management boundaries after validating all five target platform builds. Map normalized pattern data, progress, markers, viewport state, import history, parser versions, and diagnostics to separate tables or related table groups. Add indexed lookup by document ID and grid coordinate, atomic replacement/save behavior, and migration tests.
-5. Add formatting, linting, unit-test, database migration-test, and CI commands.
+1. [x] Replace the starter app with a basic application shell and navigation, and establish Drift as the app's local persistence stack. Drift/SQLite dependencies, the database lifecycle boundary, development configuration, migrations, and an in-memory test database are present. Repository interfaces keep persistence outside the domain layer.
+2. [x] Add the domain models, schema versioning, and repository interfaces. Symbols now embed their exact thread definition; cells reference only their symbol.
+3. [ ] Add versioned JSON serialization and portable import/export codecs for the normalized document and progress graphs.
+4. [ ] Add sample normalized pattern fixtures, including empty cells, multiple colors, page boundaries, symbols, and malformed/ambiguous cells.
+5. [x] Implement Drift adapters for documents and progress. Document, progress, marker, viewport, provenance, diagnostics, and metadata are mapped through separate tables. Saves replace each graph atomically, and the document/progress graphs remain independent.
+6. [x] Add focused unit, repository round-trip, foreign-key, rollback, deletion-cascade, and schema-migration tests. Schema version 3 migrates prior thread catalog data into symbol-owned thread definitions.
+7. [ ] Validate production persistence on Android, iOS, Windows, macOS, and Linux; add file-picker and state-management boundaries after those checks.
+8. [ ] Add project-wide formatting, linting, test, migration-test, and CI commands.
 
 Exit criteria: a fixture can be loaded through a repository backed by Drift, persisted and reopened through SQLite, and round-tripped through the versioned portable serialization format on every target platform.
+
+### Next slice — Fixture-backed library and workspace entry
+
+Create one representative hand-authored `PatternDocument` fixture and a small application composition root that opens `AppDatabase` and injects the two Drift repositories. Update the library screen to seed the fixture only when the local library is empty, list repository summaries, and open a placeholder workspace route for a selected document.
+
+This slice establishes the real application data path before canvas work: fixture → document repository → library list → document load → workspace route. It should include widget tests for empty and populated library states plus repository integration coverage for reopening persisted data. Keep PDF/file import, portable JSON codecs, and state-management package selection outside this slice.
 
 ### Phase 2 — Pattern workspace and rendering
 
