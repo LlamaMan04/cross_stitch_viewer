@@ -26,12 +26,16 @@ class PatternWorkspaceScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Pattern Workspace')),
       body: FutureBuilder<PatternDocument?>(
+        // Load only the selected document so the workspace does not duplicate
+        // the library's summary query or keep a second copy of every pattern.
         future: patternDocuments.getById(documentId),
         builder: (context, snapshot) {
+          // Keep loading visible while the repository completes its read.
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
           final document = snapshot.data;
+          // A document can disappear after its library row was opened.
           if (document == null) {
             return const Center(
               child: Text('This pattern is no longer available.'),
@@ -43,6 +47,8 @@ class PatternWorkspaceScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Row(
                   children: [
+                    // Let long titles use the available space beside the
+                    // compact dimensions summary.
                     Expanded(
                       child: Text(
                         document.title,
@@ -79,6 +85,8 @@ class PatternRenderView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    // The border and padding separate the canvas from the workspace while
+    // allowing the grid to expand with its parent.
     return Padding(
       padding: const EdgeInsets.all(16),
       child: DecoratedBox(
@@ -90,10 +98,11 @@ class PatternRenderView extends StatelessWidget {
         child: InteractiveViewer(
           key: const ValueKey('pattern-interactive-viewer'),
           minScale: 1,
-          maxScale: 8,
+          maxScale: 40,
           panEnabled: true,
           scaleEnabled: true,
           trackpadScrollCausesScale: false,
+          // Keep room around the fitted grid while the user pans it.
           boundaryMargin: const EdgeInsets.all(_patternInset),
           child: Padding(
             padding: const EdgeInsets.all(_patternInset),
@@ -106,6 +115,8 @@ class PatternRenderView extends StatelessWidget {
                 labelColor: colors.onSurfaceVariant,
                 regionColor: colors.primary,
               ),
+              // Fill the available viewport; the painter calculates a square
+              // cell size that fits inside this area.
               child: const SizedBox.expand(),
             ),
           ),
@@ -144,17 +155,22 @@ class PatternGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final dimensions = document.grid.dimensions;
+    // Reserve a label row and column around the grid. All later geometry uses
+    // the same origin so labels stay aligned with their cells.
     const labelExtent = 28.0;
     const minimumExtent = 1.0;
     final gridWidth = size.width - labelExtent;
     final gridHeight = size.height - labelExtent;
+    // Layout can briefly provide a very small size; avoid invalid geometry.
     if (gridWidth <= minimumExtent || gridHeight <= minimumExtent) return;
 
+    // Keep cells square by fitting the grid to the tighter available axis.
     final cellSize = (gridWidth / dimensions.columns).clamp(
       0.0,
       gridHeight / dimensions.rows,
     );
     if (cellSize <= minimumExtent) return;
+    // Center the fitted grid in the remaining space after reserving labels.
     final renderedWidth = cellSize * dimensions.columns;
     final renderedHeight = cellSize * dimensions.rows;
     final origin = Offset(
@@ -168,10 +184,16 @@ class PatternGridPainter extends CustomPainter {
       renderedHeight,
     );
 
+    // Paint from back to front so each layer remains visible and predictable.
     canvas.drawRect(gridRect, Paint()..color = surfaceColor);
+    // Draw sparse stitch data before the rules so cell boundaries stay clear.
     _paintCells(canvas, origin, cellSize);
+    // Empty cells are meaningful, so draw the complete grid separately from
+    // the sparse cell data stored in the domain model.
     _paintGrid(canvas, gridRect, cellSize);
+    // Region outlines show source boundaries without hiding stitch content.
     _paintRegions(canvas, origin, cellSize);
+    // Coordinates are drawn last so they stay legible above the other layers.
     _paintLabels(canvas, origin, cellSize);
   }
 
@@ -179,9 +201,12 @@ class PatternGridPainter extends CustomPainter {
   void _paintCells(Canvas canvas, Offset origin, double cellSize) {
     for (final cell in document.grid.cells) {
       final symbol = document.symbolById(cell.symbolId);
+      // Skip incomplete source references without preventing other cells from
+      // being rendered.
       if (symbol == null) continue;
       final rect = _cellRect(cell, origin, cellSize);
       final color = _parseColor(symbol.thread.color);
+      // A translucent fill preserves the grid while showing the thread color.
       canvas.drawRect(rect, Paint()..color = color.withValues(alpha: 0.22));
       _paintGlyph(canvas, rect, symbol, color, cellSize);
     }
@@ -189,10 +214,12 @@ class PatternGridPainter extends CustomPainter {
 
   /// Paints all row and column rules in one pass.
   void _paintGrid(Canvas canvas, Rect gridRect, double cellSize) {
+    // Reuse one paint object for all rules in this frequently called path.
     final paint = Paint()
       ..color = gridColor
       ..strokeWidth = 1;
     for (var row = 0; row <= document.grid.dimensions.rows; row++) {
+      // Include both endpoints to close the outer border as well as internals.
       final y = gridRect.top + row * cellSize;
       canvas.drawLine(
         Offset(gridRect.left, y),
@@ -201,6 +228,7 @@ class PatternGridPainter extends CustomPainter {
       );
     }
     for (var column = 0; column <= document.grid.dimensions.columns; column++) {
+      // The inclusive range closes the left and right borders.
       final x = gridRect.left + column * cellSize;
       canvas.drawLine(
         Offset(x, gridRect.top),
@@ -212,11 +240,14 @@ class PatternGridPainter extends CustomPainter {
 
   /// Paints source-region extents over the cell grid.
   void _paintRegions(Canvas canvas, Offset origin, double cellSize) {
+    // Use outlines only so provenance boundaries do not obscure grid content.
     final paint = Paint()
       ..color = regionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     for (final region in document.regions) {
+      // Regions use grid-cell coordinates, so convert origin and extent with
+      // the same cell-size transform used by the grid.
       canvas.drawRect(
         Rect.fromLTWH(
           origin.dx + region.origin.column * cellSize,
@@ -231,8 +262,10 @@ class PatternGridPainter extends CustomPainter {
 
   /// Paints one-based row and column coordinates when cells are large enough.
   void _paintLabels(Canvas canvas, Offset origin, double cellSize) {
+    // At smaller scales labels overlap; the threshold keeps them readable.
     if (cellSize < 16) return;
     for (var column = 0; column < document.grid.dimensions.columns; column++) {
+      // Column numbers are centered in the reserved top label row.
       _paintCenteredText(
         canvas,
         '${column + 1}',
@@ -242,6 +275,7 @@ class PatternGridPainter extends CustomPainter {
       );
     }
     for (var row = 0; row < document.grid.dimensions.rows; row++) {
+      // Row numbers are centered in the reserved left label column.
       _paintCenteredText(
         canvas,
         '${row + 1}',
@@ -260,8 +294,10 @@ class PatternGridPainter extends CustomPainter {
     Color color,
     double cellSize,
   ) {
+    // The fill remains useful at small scales, but glyphs would collide.
     if (cellSize < 12) return;
     final luminance = color.computeLuminance();
+    // Choose a contrasting foreground for dark and light thread colors.
     _paintCenteredText(
       canvas,
       symbol.displayGlyph,
@@ -281,6 +317,8 @@ class PatternGridPainter extends CustomPainter {
     required Color color,
     FontWeight fontWeight = FontWeight.normal,
   }) {
+    // TextPainter supplies font metrics so labels can be centered by their
+    // measured size rather than approximated from a fixed character width.
     final painter = TextPainter(
       text: TextSpan(
         text: text,
@@ -292,6 +330,7 @@ class PatternGridPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
+    // Move from the text painter's top-left origin to the requested center.
     painter.paint(
       canvas,
       center - Offset(painter.width / 2, painter.height / 2),
@@ -300,6 +339,7 @@ class PatternGridPainter extends CustomPainter {
 
   /// Calculates the rendered bounds of one populated sparse cell.
   Rect _cellRect(StitchCell cell, Offset origin, double cellSize) =>
+      // Convert zero-based domain coordinates into canvas pixels.
       Rect.fromLTWH(
         origin.dx + cell.coordinate.column * cellSize,
         origin.dy + cell.coordinate.row * cellSize,
@@ -309,10 +349,13 @@ class PatternGridPainter extends CustomPainter {
 
   /// Converts a validated domain `#RRGGBB` value into a Flutter color.
   Color _parseColor(String value) =>
+      // Prefix FF because the domain value contains RGB, not an alpha byte.
       Color(int.parse('FF${value.substring(1)}', radix: 16));
 
   @override
   bool shouldRepaint(PatternGridPainter oldDelegate) =>
+      // Repaint when document data or any theme color used by the painter
+      // changes; otherwise Flutter can safely reuse the existing picture.
       oldDelegate.document != document ||
       oldDelegate.surfaceColor != surfaceColor ||
       oldDelegate.gridColor != gridColor ||
