@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 import 'package:stitch_scope/presentation/screens/library_screen.dart';
 import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
 
@@ -40,28 +41,54 @@ void main() {
 
     expect(find.text('Pattern Workspace'), findsOneWidget);
     expect(find.text('4 × 5'), findsOneWidget);
+    expect(find.byKey(const ValueKey('pattern-viewport')), findsOneWidget);
     expect(find.byKey(const ValueKey('pattern-grid-canvas')), findsOneWidget);
-    final interactiveViewer = tester.widget<InteractiveViewer>(
-      find.byKey(const ValueKey('pattern-interactive-viewer')),
-    );
-    expect(interactiveViewer.panEnabled, isTrue);
-    expect(interactiveViewer.scaleEnabled, isTrue);
-    expect(interactiveViewer.minScale, 1);
-    expect(interactiveViewer.maxScale, 8);
-    expect(interactiveViewer.boundaryMargin, const EdgeInsets.all(24));
-    final padding = tester.widget<Padding>(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Padding && widget.padding == const EdgeInsets.all(24),
-      ),
-    );
-    expect(padding.padding, const EdgeInsets.all(24));
+    expect(find.byType(InteractiveViewer), findsNothing);
     final canvas = tester.widget<CustomPaint>(
       find.byKey(const ValueKey('pattern-grid-canvas')),
     );
-    final painter = canvas.painter! as PatternGridPainter;
+    final painter = canvas.painter! as ViewportPatternPainter;
     expect(painter.document.grid.cells, hasLength(3));
     expect(painter.document.symbolById('flower')?.thread.color, '#C72C41');
+    expect(
+      painter.document.grid.cellsIntersecting(painter.visibleBounds),
+      hasLength(3),
+    );
+  });
+
+  testWidgets('pans the large pattern with a direct camera transform', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 400,
+          height: 300,
+          child: PatternRenderView(
+            document: LargeSamplePatternFixture.create(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final before =
+        (tester.widget<CustomPaint>(canvasFinder).painter!
+                as ViewportPatternPainter)
+            .camera;
+    await tester.drag(
+      find.byKey(const ValueKey('pattern-viewport')),
+      const Offset(0, -20),
+    );
+    await tester.pump();
+    final after =
+        (tester.widget<CustomPaint>(canvasFinder).painter!
+                as ViewportPatternPainter)
+            .camera;
+
+    expect(after.origin.dy, lessThan(before.origin.dy));
+    expect(after.cellSize, before.cellSize);
   });
 
   testWidgets('replaces existing patterns with both seed patterns', (
