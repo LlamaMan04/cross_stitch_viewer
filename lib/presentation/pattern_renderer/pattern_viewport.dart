@@ -95,10 +95,33 @@ class _PatternViewportState extends State<PatternViewport> {
         viewportSize: viewportSize,
       );
     } else if (_viewportSize != viewportSize) {
-      _camera = _camera!.clampTo(
+      // A larger layout can raise the fitted minimum scale.
+      final minimumCellSize = PatternCamera.minimumCellSizeFor(
         dimensions: widget.document.grid.dimensions,
         viewportSize: viewportSize,
       );
+      final maximumCellSize = PatternCamera.maximumCellSizeFor(
+        dimensions: widget.document.grid.dimensions,
+        viewportSize: viewportSize,
+      );
+      if (_camera!.cellSize < minimumCellSize) {
+        _camera = PatternCamera.fit(
+          dimensions: widget.document.grid.dimensions,
+          viewportSize: viewportSize,
+        );
+      } else {
+        _camera =
+            PatternCamera(
+              cellSize: _camera!.cellSize.clamp(
+                minimumCellSize,
+                maximumCellSize,
+              ),
+              origin: _camera!.origin,
+            ).clampTo(
+              dimensions: widget.document.grid.dimensions,
+              viewportSize: viewportSize,
+            );
+      }
     }
     _viewportSize = viewportSize;
   }
@@ -118,9 +141,18 @@ class _PatternViewportState extends State<PatternViewport> {
 
     // Preserve the initial grid point beneath the moving focal position.
     final gridPoint = startCamera.screenToGrid(_gestureStartFocalPoint);
+    // The fit scale is the interaction floor for this exact viewport size.
+    final minimumCellSize = PatternCamera.minimumCellSizeFor(
+      dimensions: widget.document.grid.dimensions,
+      viewportSize: viewportSize,
+    );
+    final maximumCellSize = PatternCamera.maximumCellSizeFor(
+      dimensions: widget.document.grid.dimensions,
+      viewportSize: viewportSize,
+    );
     final nextCellSize = (startCamera.cellSize * details.scale).clamp(
-      PatternCamera.minimumCellSize,
-      PatternCamera.maximumCellSize,
+      minimumCellSize,
+      maximumCellSize,
     );
     // Combined focal movement and scale support both drag and pinch.
     final nextOrigin = Offset(

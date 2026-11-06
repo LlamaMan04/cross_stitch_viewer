@@ -50,6 +50,28 @@ void main() {
     expect(zoomed.cellSize, 20);
   });
 
+  test('zooming out stops at the fitted viewport scale', () {
+    const dimensions = PatternDimensions(100, 200);
+    const viewportSize = Size(1000, 500);
+    const camera = PatternCamera(cellSize: 10, origin: Offset.zero);
+
+    final zoomed = camera.zoomAround(
+      focalPoint: const Offset(500, 250),
+      scale: 0.01,
+      dimensions: dimensions,
+      viewportSize: viewportSize,
+    );
+
+    expect(zoomed.cellSize, closeTo(4.52, 0.000001));
+    expect(
+      zoomed.cellSize * dimensions.rows,
+      closeTo(
+        viewportSize.height - PatternCamera.viewportPadding * 2,
+        0.000001,
+      ),
+    );
+  });
+
   test('pan remains bounded around the document', () {
     const dimensions = PatternDimensions(100, 100);
     const viewportSize = Size(500, 500);

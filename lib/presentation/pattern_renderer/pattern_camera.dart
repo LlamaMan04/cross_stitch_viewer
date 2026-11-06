@@ -10,11 +10,11 @@ class PatternCamera {
   /// Creates a camera with a logical-pixel cell size and screen-space origin.
   const PatternCamera({required this.cellSize, required this.origin});
 
-  /// Smallest supported on-screen cell extent.
-  static const double minimumCellSize = 1;
-
-  /// Largest supported on-screen cell extent.
+  /// Default largest supported on-screen cell extent.
   static const double maximumCellSize = 80;
+
+  /// Inset preserved between the fitted pattern and the viewport edges.
+  static const double viewportPadding = 24;
 
   /// Logical pixels occupied by one grid cell.
   final double cellSize;
@@ -26,18 +26,14 @@ class PatternCamera {
   factory PatternCamera.fit({
     required PatternDimensions dimensions,
     required Size viewportSize,
-    double padding = 24,
+    double padding = viewportPadding,
   }) {
-    // Retain the requested inset while tolerating transient tiny layouts.
-    final availableWidth = math.max(1, viewportSize.width - padding * 2);
-    final availableHeight = math.max(1, viewportSize.height - padding * 2);
-    // Fit against the tighter axis and keep zoom within interaction limits.
-    final fittedCellSize = math
-        .min(
-          availableWidth / dimensions.columns,
-          availableHeight / dimensions.rows,
-        )
-        .clamp(minimumCellSize, maximumCellSize);
+    // Fit against the tighter axis so one document axis fills the viewport.
+    final fittedCellSize = minimumCellSizeFor(
+      dimensions: dimensions,
+      viewportSize: viewportSize,
+      padding: padding,
+    );
     // Rendered extents center the fitted document in each available axis.
     final renderedWidth = dimensions.columns * fittedCellSize;
     final renderedHeight = dimensions.rows * fittedCellSize;
@@ -49,6 +45,30 @@ class PatternCamera {
       ),
     ).clampTo(dimensions: dimensions, viewportSize: viewportSize);
   }
+
+  /// Returns the smallest cell size that fits [dimensions] into [viewportSize].
+  static double minimumCellSizeFor({
+    required PatternDimensions dimensions,
+    required Size viewportSize,
+    double padding = viewportPadding,
+  }) {
+    // Retain the requested inset while tolerating transient tiny layouts.
+    final availableWidth = math.max(1, viewportSize.width - padding * 2);
+    final availableHeight = math.max(1, viewportSize.height - padding * 2);
+    return math.min(
+      availableWidth / dimensions.columns,
+      availableHeight / dimensions.rows,
+    );
+  }
+
+  /// Returns a maximum that remains above the fitted minimum for small grids.
+  static double maximumCellSizeFor({
+    required PatternDimensions dimensions,
+    required Size viewportSize,
+  }) => math.max(
+    maximumCellSize,
+    minimumCellSizeFor(dimensions: dimensions, viewportSize: viewportSize),
+  );
 
   /// Converts a grid-line coordinate into a screen-space point.
   Offset gridToScreen({required double row, required double column}) =>
@@ -110,6 +130,15 @@ class PatternCamera {
   }) {
     // Capture the fractional grid coordinate before changing scale.
     final gridPoint = screenToGrid(focalPoint);
+    // Do not permit zooming out beyond the fitted viewport scale.
+    final minimumCellSize = minimumCellSizeFor(
+      dimensions: dimensions,
+      viewportSize: viewportSize,
+    );
+    final maximumCellSize = maximumCellSizeFor(
+      dimensions: dimensions,
+      viewportSize: viewportSize,
+    );
     final nextCellSize = (cellSize * scale).clamp(
       minimumCellSize,
       maximumCellSize,
