@@ -22,46 +22,51 @@ class PatternWorkspaceScreen extends StatelessWidget {
   /// Builds the loading, missing-document, and pattern-rendering states.
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Pattern Workspace')),
-      body: FutureBuilder<PatternDocument?>(
-        future: patternDocuments.getById(documentId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          // A document can disappear after its library entry was opened.
-          final document = snapshot.data;
-          if (document == null) {
-            return const Center(
-              child: Text('This pattern is no longer available.'),
-            );
-          }
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        document.title,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
-                    Text(
+    return FutureBuilder<PatternDocument?>(
+      future: patternDocuments.getById(documentId),
+      builder: (context, snapshot) {
+        // The loaded document drives both the app-bar title and viewport body.
+        final document = snapshot.data;
+        return Scaffold(
+          appBar: AppBar(
+            // A shorter toolbar prioritizes vertical space for the renderer.
+            toolbarHeight: 48,
+            title: Text(
+              document?.title ?? 'Pattern Workspace',
+              overflow: TextOverflow.ellipsis,
+            ),
+            actions: [
+              if (document != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Center(
+                    child: Text(
                       '${document.grid.dimensions.rows} × '
                       '${document.grid.dimensions.columns}',
+                      style: Theme.of(context).textTheme.labelLarge,
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              Expanded(child: PatternRenderView(document: document)),
             ],
-          );
-        },
-      ),
+          ),
+          body: _buildBody(snapshot.connectionState, document),
+        );
+      },
     );
+  }
+
+  /// Builds the workspace body once the document read has completed.
+  Widget _buildBody(
+    ConnectionState connectionState,
+    PatternDocument? document,
+  ) {
+    if (connectionState != ConnectionState.done) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (document == null) {
+      return const Center(child: Text('This pattern is no longer available.'));
+    }
+    return PatternRenderView(document: document);
   }
 }
 

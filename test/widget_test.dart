@@ -39,8 +39,11 @@ void main() {
     await tester.tap(find.text('Garden Sampler'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Pattern Workspace'), findsOneWidget);
+    expect(find.text('Pattern Workspace'), findsNothing);
     expect(find.text('4 × 5'), findsOneWidget);
+    expect(find.text('Garden Sampler'), findsOneWidget);
+    final appBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect(appBar.toolbarHeight, 48);
     expect(find.byKey(const ValueKey('pattern-viewport')), findsOneWidget);
     expect(find.byKey(const ValueKey('pattern-grid-canvas')), findsOneWidget);
     expect(find.byType(InteractiveViewer), findsNothing);
