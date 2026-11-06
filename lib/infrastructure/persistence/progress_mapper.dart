@@ -54,6 +54,12 @@ abstract final class ProgressMapper {
       anchorColumn: viewport.anchor.column,
       visibleRows: Value(viewport.visibleRows),
       visibleColumns: Value(viewport.visibleColumns),
+      showCellColor: Value(viewport.renderSettings.showCellColor),
+      showSymbols: Value(viewport.renderSettings.showSymbols),
+      showGrid: Value(viewport.renderSettings.showGrid),
+      cellColorOpacity: Value(viewport.renderSettings.cellColorOpacity),
+      gridColor: Value(viewport.renderSettings.gridColor.colorHex),
+      showRegions: Value(viewport.renderSettings.showRegions),
     );
   }
 
@@ -92,6 +98,14 @@ abstract final class ProgressMapper {
               anchor: GridCoordinate(viewport.anchorRow, viewport.anchorColumn),
               visibleRows: viewport.visibleRows,
               visibleColumns: viewport.visibleColumns,
+              renderSettings: PatternRenderSettings(
+                showCellColor: viewport.showCellColor,
+                showSymbols: viewport.showSymbols,
+                showGrid: viewport.showGrid,
+                cellColorOpacity: viewport.cellColorOpacity,
+                gridColor: GridColorPreset.fromColorHex(viewport.gridColor),
+                showRegions: viewport.showRegions,
+              ),
             ),
       lastInteractionAt: progress.lastInteractionAt.toUtc(),
     );

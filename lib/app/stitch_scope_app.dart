@@ -18,7 +18,7 @@ class StitchScopeApp extends StatelessWidget {
   /// Repository used by the library and workspace routes.
   final PatternDocumentRepository patternDocuments;
 
-  /// Repository retained by the app composition for upcoming workspace state.
+  /// Repository used for persisted workspace state and render settings.
   final ProgressRepository progress;
 
   /// Builds the app theme and responsive navigation shell.
@@ -42,7 +42,7 @@ class StitchScopeApp extends StatelessWidget {
           border: OutlineInputBorder(),
         ),
       ),
-      home: _AppShell(patternDocuments: patternDocuments),
+      home: _AppShell(patternDocuments: patternDocuments, progress: progress),
     );
   }
 }
@@ -50,10 +50,13 @@ class StitchScopeApp extends StatelessWidget {
 /// Responsive navigation container shared by compact and wide layouts.
 class _AppShell extends StatefulWidget {
   /// Creates the shell that owns the active destination.
-  const _AppShell({required this.patternDocuments});
+  const _AppShell({required this.patternDocuments, required this.progress});
 
   /// Repository passed to the library screen.
   final PatternDocumentRepository patternDocuments;
+
+  /// Repository passed through to pattern workspaces.
+  final ProgressRepository progress;
 
   /// Creates state for the selected navigation destination.
   @override
@@ -88,6 +91,7 @@ class _AppShellState extends State<_AppShell> {
     final screens = <Widget>[
       LibraryScreen(
         patternDocuments: widget.patternDocuments,
+        progress: widget.progress,
         seedDocuments: [
           SamplePatternFixture.create(),
           LargeSamplePatternFixture.create(),

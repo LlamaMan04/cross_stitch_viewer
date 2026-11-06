@@ -4,11 +4,12 @@ import '../../domain/pattern_document.dart';
 import '../../domain/repositories.dart';
 import 'pattern_workspace_screen.dart';
 
-/// Lists persisted patterns and replaces the configured seed library on load.
+/// Lists persisted patterns and upserts configured development fixtures.
 class LibraryScreen extends StatefulWidget {
   /// Creates a pattern library screen over the supplied document repository.
   const LibraryScreen({
     required this.patternDocuments,
+    required this.progress,
     this.seedDocuments = const [],
     this.seedDocument,
     super.key,
@@ -16,6 +17,9 @@ class LibraryScreen extends StatefulWidget {
 
   /// Repository providing document summaries and selected documents.
   final PatternDocumentRepository patternDocuments;
+
+  /// Repository providing mutable viewport and render settings.
+  final ProgressRepository progress;
 
   /// Documents used to repopulate the library when seeding is configured.
   final List<PatternDocument> seedDocuments;
@@ -39,19 +43,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _summaries = _loadSummaries();
   }
 
-  /// Clears existing documents and imports every configured seed document.
+  /// Upserts configured seed documents without deleting their progress graphs.
   Future<List<PatternSummary>> _loadSummaries() async {
     final summaries = await widget.patternDocuments.listSummaries();
-    final seeds = [
-      ...widget.seedDocuments,
-    ];
+    final seeds = [...widget.seedDocuments];
     final seed = widget.seedDocument;
     if (seed != null) seeds.add(seed);
     if (seeds.isEmpty) return summaries;
 
-    for (final summary in summaries) {
-      await widget.patternDocuments.delete(summary.id);
-    }
     for (final seed in seeds) {
       await widget.patternDocuments.save(seed);
     }
@@ -116,6 +115,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         builder: (_) => PatternWorkspaceScreen(
           documentId: summary.id,
           patternDocuments: widget.patternDocuments,
+          progress: widget.progress,
         ),
       ),
     );

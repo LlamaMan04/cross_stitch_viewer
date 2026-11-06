@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../domain/pattern_definitions.dart';
 import '../../domain/pattern_document.dart';
 import '../../domain/pattern_grid.dart';
+import '../../domain/progress_models.dart';
 import 'pattern_camera.dart';
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
@@ -14,8 +15,9 @@ class ViewportPatternPainter extends CustomPainter {
     required this.document,
     required this.camera,
     required this.visibleBounds,
+    required this.settings,
     required this.surfaceColor,
-    required this.gridColor,
+    required this.regionColor,
   });
 
   /// Normalized source document rendered by this painter.
@@ -27,11 +29,14 @@ class ViewportPatternPainter extends CustomPainter {
   /// Half-open grid range that this paint pass may inspect.
   final GridBounds visibleBounds;
 
+  /// Persisted visual switches and colors for this paint pass.
+  final PatternRenderSettings settings;
+
   /// Background color used for the viewport and empty cells.
   final Color surfaceColor;
 
-  /// Color used for all grid-rule classes.
-  final Color gridColor;
+  /// Theme color used for enabled source-region outlines.
+  final Color regionColor;
 
   /// Paints the visible document background, cells, glyphs, and grid rules.
   @override
@@ -41,7 +46,8 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.clipRect(Offset.zero & size);
     _paintDocumentBackground(canvas);
     _paintCells(canvas);
-    _paintGrid(canvas);
+    if (settings.showGrid) _paintGrid(canvas);
+    if (settings.showRegions) _paintRegions(canvas);
     canvas.restore();
   }
 
@@ -60,6 +66,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints populated cells returned by the grid's spatial range query.
   void _paintCells(Canvas canvas) {
+    if (!settings.showCellColor && !settings.showSymbols) return;
     for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
       // Resolve symbol metadata only for cells returned by the spatial query.
       final symbol = document.symbolById(cell.symbolId);
@@ -67,13 +74,39 @@ class ViewportPatternPainter extends CustomPainter {
       // Cell and color values are reused by both fill and glyph layers.
       final cellRect = _cellRect(cell);
       final threadColor = _parseColor(symbol.thread.color);
-      canvas.drawRect(
-        cellRect,
-        Paint()..color = threadColor.withValues(alpha: 0.22),
-      );
-      if (camera.cellSize >= 12) {
-        _paintGlyph(canvas, cellRect, symbol, threadColor);
+      final effectiveBackground = settings.showCellColor
+          ? Color.alphaBlend(
+              threadColor.withValues(alpha: settings.cellColorOpacity),
+              surfaceColor,
+            )
+          : surfaceColor;
+      if (settings.showCellColor) {
+        canvas.drawRect(
+          cellRect,
+          Paint()
+            ..color = threadColor.withValues(alpha: settings.cellColorOpacity),
+        );
       }
+      if (settings.showSymbols && camera.cellSize >= 12) {
+        _paintGlyph(canvas, cellRect, symbol, effectiveBackground);
+      }
+    }
+  }
+
+  /// Paints outlines for source regions intersecting the visible grid range.
+  void _paintRegions(Canvas canvas) {
+    final paint = Paint()
+      ..color = regionColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    for (final region in document.regionsIntersecting(visibleBounds)) {
+      final regionRect = Rect.fromLTWH(
+        camera.origin.dx + region.origin.column * camera.cellSize,
+        camera.origin.dy + region.origin.row * camera.cellSize,
+        region.columns * camera.cellSize,
+        region.rows * camera.cellSize,
+      );
+      canvas.drawRect(regionRect, paint);
     }
   }
 
@@ -120,7 +153,7 @@ class ViewportPatternPainter extends CustomPainter {
         ? math.min(2.0, camera.cellSize * 0.3)
         : math.min(1.0, camera.cellSize * 0.18);
     return Paint()
-      ..color = gridColor
+      ..color = _parseColor(settings.gridColor.colorHex)
       ..strokeWidth = strokeWidth;
   }
 
@@ -137,10 +170,10 @@ class ViewportPatternPainter extends CustomPainter {
     Canvas canvas,
     Rect rect,
     SymbolDefinition symbol,
-    Color threadColor,
+    Color backgroundColor,
   ) {
     // Choose a non-color-dependent foreground contrast for each glyph.
-    final foreground = threadColor.computeLuminance() > 0.45
+    final foreground = backgroundColor.computeLuminance() > 0.45
         ? Colors.black87
         : Colors.white;
     // Text metrics provide exact centering within the screen-space cell.
@@ -171,6 +204,7 @@ class ViewportPatternPainter extends CustomPainter {
       oldDelegate.document != document ||
       oldDelegate.camera != camera ||
       oldDelegate.visibleBounds != visibleBounds ||
+      oldDelegate.settings != settings ||
       oldDelegate.surfaceColor != surfaceColor ||
-      oldDelegate.gridColor != gridColor;
+      oldDelegate.regionColor != regionColor;
 }

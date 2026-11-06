@@ -15,6 +15,12 @@ abstract final class LargeSamplePatternFixture {
   /// Number of populated cells in the generated test pattern.
   static const int populatedCellCount = 19000;
 
+  /// Number of rows contained in each fixture source region.
+  static const int regionRows = 50;
+
+  /// Number of columns contained in each fixture source region.
+  static const int regionColumns = 100;
+
   /// Creates a 100-by-200 pattern with 95% of its cells populated.
   static PatternDocument create() => PatternDocument(
     id: 'sample-large-test-pattern',
@@ -27,12 +33,36 @@ abstract final class LargeSamplePatternFixture {
     symbols: _symbols,
     regions: const [
       PatternRegion(
-        id: 'large-test-grid',
+        id: 'large-top-left',
         sourcePage: 0,
         origin: GridCoordinate(0, 0),
-        rows: rows,
-        columns: columns,
-        label: 'Large test grid',
+        rows: regionRows,
+        columns: regionColumns,
+        label: 'Large test grid: top left',
+      ),
+      PatternRegion(
+        id: 'large-top-right',
+        sourcePage: 1,
+        origin: GridCoordinate(0, regionColumns),
+        rows: regionRows,
+        columns: regionColumns,
+        label: 'Large test grid: top right',
+      ),
+      PatternRegion(
+        id: 'large-bottom-left',
+        sourcePage: 2,
+        origin: GridCoordinate(regionRows, 0),
+        rows: regionRows,
+        columns: regionColumns,
+        label: 'Large test grid: bottom left',
+      ),
+      PatternRegion(
+        id: 'large-bottom-right',
+        sourcePage: 3,
+        origin: GridCoordinate(regionRows, regionColumns),
+        rows: regionRows,
+        columns: regionColumns,
+        label: 'Large test grid: bottom right',
       ),
     ],
     sourceMetadata: const {
@@ -58,11 +88,21 @@ abstract final class LargeSamplePatternFixture {
         yield StitchCell(
           coordinate: GridCoordinate(row, column),
           symbolId: _symbols[populated % _symbols.length].id,
-          provenanceId: 'large-test-grid',
+          provenanceId: _regionIdFor(row, column),
         );
         populated++;
       }
     }
+  }
+
+  /// Returns the source region that contains one generated grid coordinate.
+  static String _regionIdFor(int row, int column) {
+    final isBottom = row >= regionRows;
+    final isRight = column >= regionColumns;
+    if (isBottom && isRight) return 'large-bottom-right';
+    if (isBottom) return 'large-bottom-left';
+    if (isRight) return 'large-top-right';
+    return 'large-top-left';
   }
 
   /// Thread and glyph definitions used by the generated cells.

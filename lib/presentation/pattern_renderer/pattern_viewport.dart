@@ -4,16 +4,24 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/pattern_document.dart';
+import '../../domain/progress_models.dart';
 import 'pattern_camera.dart';
 import 'viewport_pattern_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
 class PatternViewport extends StatefulWidget {
   /// Creates a viewport for an immutable normalized pattern document.
-  const PatternViewport({required this.document, super.key});
+  const PatternViewport({
+    required this.document,
+    required this.settings,
+    super.key,
+  });
 
   /// Pattern document displayed by the viewport.
   final PatternDocument document;
+
+  /// Persisted visual settings applied without replacing camera state.
+  final PatternRenderSettings settings;
 
   /// Creates the mutable camera state for this viewport.
   @override
@@ -76,8 +84,9 @@ class _PatternViewportState extends State<PatternViewport> {
                 document: widget.document,
                 camera: camera,
                 visibleBounds: visibleBounds,
+                settings: widget.settings,
                 surfaceColor: colors.surfaceContainerLowest,
-                gridColor: Colors.black,
+                regionColor: colors.primary,
               ),
               child: const SizedBox.expand(),
             ),

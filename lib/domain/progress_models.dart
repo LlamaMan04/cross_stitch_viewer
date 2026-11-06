@@ -1,6 +1,113 @@
 import 'domain_error.dart';
 import 'value_objects.dart';
 
+/// Allowed solid colors for pattern grid rules.
+enum GridColorPreset {
+  /// Solid black grid rules.
+  black('#000000'),
+
+  /// Dark-gray grid rules for reduced contrast.
+  darkGray('#444444'),
+
+  /// Light-gray grid rules for a softer appearance.
+  lightGray('#A0A0A0');
+
+  /// Creates a preset with its canonical persisted RGB value.
+  const GridColorPreset(this.colorHex);
+
+  /// Canonical `#RRGGBB` value persisted for this preset.
+  final String colorHex;
+
+  /// Resolves a persisted RGB value to its supported preset.
+  static GridColorPreset fromColorHex(String value) => values.firstWhere(
+    (preset) => preset.colorHex == value,
+    orElse: () => throw const DocumentValidationException(
+      'Unsupported grid color preset.',
+    ),
+  );
+}
+
+/// Immutable visual settings stored with one pattern viewport.
+class PatternRenderSettings {
+  /// Creates settings with the documented initial renderer behavior.
+  const PatternRenderSettings({
+    this.showCellColor = false,
+    this.showSymbols = true,
+    this.showGrid = true,
+    this.cellColorOpacity = 0.22,
+    this.gridColor = GridColorPreset.black,
+    this.showRegions = false,
+  });
+
+  /// Whether populated cells use their imported thread colors.
+  final bool showCellColor;
+
+  /// Whether legible cells display their symbol glyphs.
+  final bool showSymbols;
+
+  /// Whether minor, major, and outside grid rules are visible.
+  final bool showGrid;
+
+  /// Alpha applied to enabled thread-color cell fills.
+  final double cellColorOpacity;
+
+  /// Preset color used for every visible grid rule.
+  final GridColorPreset gridColor;
+
+  /// Whether visible source-region outlines are displayed.
+  final bool showRegions;
+
+  /// Returns settings with only explicitly supplied fields replaced.
+  PatternRenderSettings copyWith({
+    bool? showCellColor,
+    bool? showSymbols,
+    bool? showGrid,
+    double? cellColorOpacity,
+    GridColorPreset? gridColor,
+    bool? showRegions,
+  }) => PatternRenderSettings(
+    showCellColor: showCellColor ?? this.showCellColor,
+    showSymbols: showSymbols ?? this.showSymbols,
+    showGrid: showGrid ?? this.showGrid,
+    cellColorOpacity: cellColorOpacity ?? this.cellColorOpacity,
+    gridColor: gridColor ?? this.gridColor,
+    showRegions: showRegions ?? this.showRegions,
+  );
+
+  /// Rejects non-finite or out-of-range opacity values.
+  void validate() {
+    if (!cellColorOpacity.isFinite ||
+        cellColorOpacity < 0 ||
+        cellColorOpacity > 1) {
+      throw const DocumentValidationException(
+        'Cell color opacity must be from zero through one.',
+      );
+    }
+  }
+
+  /// Compares settings by every persisted visual field.
+  @override
+  bool operator ==(Object other) =>
+      other is PatternRenderSettings &&
+      showCellColor == other.showCellColor &&
+      showSymbols == other.showSymbols &&
+      showGrid == other.showGrid &&
+      cellColorOpacity == other.cellColorOpacity &&
+      gridColor == other.gridColor &&
+      showRegions == other.showRegions;
+
+  /// Hash code consistent with [operator ==].
+  @override
+  int get hashCode => Object.hash(
+    showCellColor,
+    showSymbols,
+    showGrid,
+    cellColorOpacity,
+    gridColor,
+    showRegions,
+  );
+}
+
 /// Saved zoom and pan information used to restore the pattern workspace.
 class ViewportState {
   /// Creates a viewport snapshot anchored to a stable grid coordinate.
@@ -11,6 +118,7 @@ class ViewportState {
     required this.anchor,
     this.visibleRows,
     this.visibleColumns,
+    this.renderSettings = const PatternRenderSettings(),
   });
 
   /// Scale factor used to draw each grid cell.
@@ -31,6 +139,28 @@ class ViewportState {
   /// Optional count of visible grid columns at save time.
   final int? visibleColumns;
 
+  /// Persisted visual settings for this pattern viewport.
+  final PatternRenderSettings renderSettings;
+
+  /// Returns a snapshot with supplied camera or render fields replaced.
+  ViewportState copyWith({
+    double? zoom,
+    double? panX,
+    double? panY,
+    GridCoordinate? anchor,
+    int? visibleRows,
+    int? visibleColumns,
+    PatternRenderSettings? renderSettings,
+  }) => ViewportState(
+    zoom: zoom ?? this.zoom,
+    panX: panX ?? this.panX,
+    panY: panY ?? this.panY,
+    anchor: anchor ?? this.anchor,
+    visibleRows: visibleRows ?? this.visibleRows,
+    visibleColumns: visibleColumns ?? this.visibleColumns,
+    renderSettings: renderSettings ?? this.renderSettings,
+  );
+
   /// Rejects non-finite offsets, non-positive zoom, and invalid bounds.
   void validate() {
     if (!zoom.isFinite ||
@@ -42,6 +172,7 @@ class ViewportState {
       throw const DocumentValidationException('Invalid viewport values.');
     }
     anchor.validate();
+    renderSettings.validate();
   }
 }
 
@@ -107,9 +238,9 @@ class ProgressState {
     this.completedCells = List.unmodifiable(completedCells);
     this.markers = List.unmodifiable(markers);
     _completedCellSet = Set.unmodifiable(this.completedCells);
-    _markersById = Map.unmodifiable(
-      {for (final marker in this.markers) marker.id: marker},
-    );
+    _markersById = Map.unmodifiable({
+      for (final marker in this.markers) marker.id: marker,
+    });
   }
 
   /// ID of the pattern document this progress belongs to.

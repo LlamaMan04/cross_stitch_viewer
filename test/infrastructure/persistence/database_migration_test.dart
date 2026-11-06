@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/infrastructure/persistence/app_database.dart';
 import 'package:stitch_scope/infrastructure/persistence/drift_pattern_document_repository.dart';
 import 'package:stitch_scope/infrastructure/persistence/drift_progress_repository.dart';
@@ -27,10 +28,11 @@ void main() {
       expect(progress.markers.single.coordinate.row, 1);
       expect(progress.markers.single.coordinate.column, 2);
       expect(progress.viewport?.zoom, 2);
+      expect(progress.viewport?.renderSettings, const PatternRenderSettings());
       expect(
         (await database.customSelect('PRAGMA user_version').getSingle())
             .read<int>('user_version'),
-        3,
+        4,
       );
       expect(
         await database.customSelect('PRAGMA foreign_key_check').get(),

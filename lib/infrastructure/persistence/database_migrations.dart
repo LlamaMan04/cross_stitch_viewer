@@ -102,8 +102,35 @@ Future<void> migrateAppDatabase(
       ),
     );
     if (from < 2) {
-      await migrator.alterTable(TableMigration(database.viewportStates));
+      await migrator.alterTable(
+        TableMigration(
+          database.viewportStates,
+          newColumns: [
+            database.viewportStates.showCellColor,
+            database.viewportStates.showSymbols,
+            database.viewportStates.showGrid,
+            database.viewportStates.cellColorOpacity,
+            database.viewportStates.gridColor,
+            database.viewportStates.showRegions,
+          ],
+        ),
+      );
     }
     await database.customStatement('DROP TABLE pattern_threads');
+  }
+  if (from >= 2 && from < 4 && to >= 4) {
+    await migrator.alterTable(
+      TableMigration(
+        database.viewportStates,
+        newColumns: [
+          database.viewportStates.showCellColor,
+          database.viewportStates.showSymbols,
+          database.viewportStates.showGrid,
+          database.viewportStates.cellColorOpacity,
+          database.viewportStates.gridColor,
+          database.viewportStates.showRegions,
+        ],
+      ),
+    );
   }
 }

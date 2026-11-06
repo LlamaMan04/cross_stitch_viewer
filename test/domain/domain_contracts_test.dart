@@ -48,6 +48,66 @@ void main() {
     );
     expect(document.validate, throwsA(isA<DocumentValidationException>()));
   });
+
+  test('render settings use safe defaults and validate opacity', () {
+    const defaults = PatternRenderSettings();
+    expect(defaults.showSymbols, isTrue);
+    expect(defaults.showGrid, isTrue);
+    expect(defaults.showCellColor, isFalse);
+    expect(defaults.showRegions, isFalse);
+    expect(defaults.gridColor, GridColorPreset.black);
+    expect(defaults.cellColorOpacity, 0.22);
+
+    expect(
+      () => const PatternRenderSettings(cellColorOpacity: 1.1).validate(),
+      throwsA(isA<DocumentValidationException>()),
+    );
+  });
+
+  test(
+    'source-region range queries cross tile boundaries without duplicates',
+    () {
+      final document = PatternDocument(
+        id: 'regions',
+        title: 'Regions',
+        schemaVersion: 1,
+        grid: PatternGrid(
+          dimensions: const PatternDimensions(80, 80),
+          cells: const [],
+        ),
+        symbols: const [],
+        regions: const [
+          PatternRegion(
+            id: 'across-tiles',
+            sourcePage: 0,
+            origin: GridCoordinate(30, 30),
+            rows: 8,
+            columns: 8,
+          ),
+          PatternRegion(
+            id: 'offscreen',
+            sourcePage: 1,
+            origin: GridCoordinate(60, 60),
+            rows: 5,
+            columns: 5,
+          ),
+        ],
+      );
+
+      final regions = document
+          .regionsIntersecting(
+            const GridBounds(
+              startRow: 31,
+              endRow: 34,
+              startColumn: 31,
+              endColumn: 34,
+            ),
+          )
+          .toList();
+
+      expect(regions.map((region) => region.id), ['across-tiles']);
+    },
+  );
 }
 
 /// Creates the representative source pattern used by the domain tests.

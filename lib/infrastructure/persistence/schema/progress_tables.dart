@@ -131,6 +131,25 @@ class ViewportStates extends Table {
   /// Defines the optional number of visible columns at save time.
   IntColumn get visibleColumns => integer().nullable()();
 
+  /// Defines whether populated cells use their imported thread colors.
+  BoolColumn get showCellColor =>
+      boolean().withDefault(const Constant(false))();
+
+  /// Defines whether legible populated cells display symbol glyphs.
+  BoolColumn get showSymbols => boolean().withDefault(const Constant(true))();
+
+  /// Defines whether grid rules are visible.
+  BoolColumn get showGrid => boolean().withDefault(const Constant(true))();
+
+  /// Defines thread-color fill opacity from zero through one.
+  RealColumn get cellColorOpacity => real().withDefault(const Constant(0.22))();
+
+  /// Defines the canonical RGB value of the selected grid-color preset.
+  TextColumn get gridColor => text().withDefault(const Constant('#000000'))();
+
+  /// Defines whether source-region outlines are visible.
+  BoolColumn get showRegions => boolean().withDefault(const Constant(false))();
+
   /// Allows at most one viewport snapshot for a progress record.
   @override
   Set<Column<Object>> get primaryKey => {documentId};
@@ -145,5 +164,7 @@ class ViewportStates extends Table {
     'CHECK (anchor_column >= 0)',
     'CHECK (visible_rows IS NULL OR visible_rows > 0)',
     'CHECK (visible_columns IS NULL OR visible_columns > 0)',
+    'CHECK (cell_color_opacity >= 0 AND cell_color_opacity <= 1)',
+    "CHECK (grid_color IN ('#000000', '#444444', '#A0A0A0'))",
   ];
 }

@@ -27,6 +27,31 @@ class PatternDocument {
     _regionsById = Map.unmodifiable({
       for (final region in this.regions) region.id: region,
     });
+    // Build a spatial index once so painting regions never scans the document.
+    final mutableRegionTiles = <(int, int), List<PatternRegion>>{};
+    for (final region in this.regions) {
+      final firstTileRow = region.origin.row ~/ PatternGrid.tileSize;
+      final lastTileRow =
+          (region.origin.row + region.rows - 1) ~/ PatternGrid.tileSize;
+      final firstTileColumn = region.origin.column ~/ PatternGrid.tileSize;
+      final lastTileColumn =
+          (region.origin.column + region.columns - 1) ~/ PatternGrid.tileSize;
+      for (var tileRow = firstTileRow; tileRow <= lastTileRow; tileRow++) {
+        for (
+          var tileColumn = firstTileColumn;
+          tileColumn <= lastTileColumn;
+          tileColumn++
+        ) {
+          mutableRegionTiles
+              .putIfAbsent((tileRow, tileColumn), () => <PatternRegion>[])
+              .add(region);
+        }
+      }
+    }
+    _regionsByTile = Map.unmodifiable({
+      for (final entry in mutableRegionTiles.entries)
+        entry.key: List<PatternRegion>.unmodifiable(entry.value),
+    });
   }
 
   /// Stable document ID used by repositories and progress records.
@@ -53,6 +78,9 @@ class PatternDocument {
   /// Direct provenance-region lookup by stable ID.
   late final Map<String, PatternRegion> _regionsById;
 
+  /// Immutable source regions grouped by every spatial tile they intersect.
+  late final Map<(int, int), List<PatternRegion>> _regionsByTile;
+
   /// Source details such as the original filename.
   late final Map<String, Object?> sourceMetadata;
 
@@ -67,6 +95,37 @@ class PatternDocument {
 
   /// Returns the provenance region with [id], if the document defines one.
   PatternRegion? regionById(String id) => _regionsById[id];
+
+  /// Yields source regions intersecting [bounds] without scanning all regions.
+  Iterable<PatternRegion> regionsIntersecting(GridBounds bounds) sync* {
+    final query = bounds.clampTo(grid.dimensions);
+    if (query.isEmpty) return;
+    final firstTileRow = query.startRow ~/ PatternGrid.tileSize;
+    final lastTileRow = (query.endRow - 1) ~/ PatternGrid.tileSize;
+    final firstTileColumn = query.startColumn ~/ PatternGrid.tileSize;
+    final lastTileColumn = (query.endColumn - 1) ~/ PatternGrid.tileSize;
+    final yieldedIds = <String>{};
+    for (var tileRow = firstTileRow; tileRow <= lastTileRow; tileRow++) {
+      for (
+        var tileColumn = firstTileColumn;
+        tileColumn <= lastTileColumn;
+        tileColumn++
+      ) {
+        final tileRegions = _regionsByTile[(tileRow, tileColumn)];
+        if (tileRegions == null) continue;
+        for (final region in tileRegions) {
+          final regionEndRow = region.origin.row + region.rows;
+          final regionEndColumn = region.origin.column + region.columns;
+          final intersects =
+              region.origin.row < query.endRow &&
+              regionEndRow > query.startRow &&
+              region.origin.column < query.endColumn &&
+              regionEndColumn > query.startColumn;
+          if (intersects && yieldedIds.add(region.id)) yield region;
+        }
+      }
+    }
+  }
 
   /// Validates dimensions, IDs, references, color formats, and provenance.
   void validate() {

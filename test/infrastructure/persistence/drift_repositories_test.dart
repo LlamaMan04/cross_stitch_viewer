@@ -94,6 +94,15 @@ void main() {
       expect(loaded.viewport?.zoom, 2.5);
       expect(loaded.viewport?.anchor, const GridCoordinate(0, 1));
       expect(loaded.viewport?.visibleRows, 2);
+      expect(loaded.viewport?.renderSettings.showCellColor, isTrue);
+      expect(loaded.viewport?.renderSettings.showSymbols, isFalse);
+      expect(loaded.viewport?.renderSettings.showGrid, isFalse);
+      expect(loaded.viewport?.renderSettings.cellColorOpacity, 0.45);
+      expect(
+        loaded.viewport?.renderSettings.gridColor,
+        GridColorPreset.darkGray,
+      );
+      expect(loaded.viewport?.renderSettings.showRegions, isTrue);
       expect(loaded.lastInteractionAt, DateTime.utc(2026, 11, 3, 12));
 
       await repository.save(
@@ -284,6 +293,14 @@ ProgressState _progress() => ProgressState(
     anchor: GridCoordinate(0, 1),
     visibleRows: 2,
     visibleColumns: 3,
+    renderSettings: PatternRenderSettings(
+      showCellColor: true,
+      showSymbols: false,
+      showGrid: false,
+      cellColorOpacity: 0.45,
+      gridColor: GridColorPreset.darkGray,
+      showRegions: true,
+    ),
   ),
   lastInteractionAt: DateTime.utc(2026, 11, 3, 12),
 );

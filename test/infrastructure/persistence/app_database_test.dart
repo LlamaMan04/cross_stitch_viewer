@@ -4,11 +4,11 @@ import '../../support/test_database.dart';
 
 /// Verifies the database boundary can create and configure the first schema.
 void main() {
-  test('creates the version 3 schema and enables foreign keys', () async {
+  test('creates the version 4 schema and enables foreign keys', () async {
     final database = openTestDatabase();
     addTearDown(database.close);
 
-    expect(database.schemaVersion, 3);
+    expect(database.schemaVersion, 4);
 
     final foreignKeys = await database
         .customSelect('PRAGMA foreign_keys')
@@ -18,7 +18,7 @@ void main() {
     final userVersion = await database
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(userVersion.data['user_version'], 3);
+    expect(userVersion.data['user_version'], 4);
   });
 
   test('creates every initial pattern and progress table', () async {
@@ -110,7 +110,20 @@ void main() {
         .toSet();
 
     expect(columnNames, isNot(contains('highlighted_symbol_id')));
-    expect(columnNames, containsAll({'anchor_row', 'anchor_column', 'zoom'}));
+    expect(
+      columnNames,
+      containsAll({
+        'anchor_row',
+        'anchor_column',
+        'zoom',
+        'show_cell_color',
+        'show_symbols',
+        'show_grid',
+        'cell_color_opacity',
+        'grid_color',
+        'show_regions',
+      }),
+    );
   });
 
   test(

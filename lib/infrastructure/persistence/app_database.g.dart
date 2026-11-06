@@ -5490,6 +5490,90 @@ class $ViewportStatesTable extends ViewportStates
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _showCellColorMeta = const VerificationMeta(
+    'showCellColor',
+  );
+  @override
+  late final GeneratedColumn<bool> showCellColor = GeneratedColumn<bool>(
+    'show_cell_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_cell_color" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _showSymbolsMeta = const VerificationMeta(
+    'showSymbols',
+  );
+  @override
+  late final GeneratedColumn<bool> showSymbols = GeneratedColumn<bool>(
+    'show_symbols',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_symbols" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showGridMeta = const VerificationMeta(
+    'showGrid',
+  );
+  @override
+  late final GeneratedColumn<bool> showGrid = GeneratedColumn<bool>(
+    'show_grid',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_grid" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _cellColorOpacityMeta = const VerificationMeta(
+    'cellColorOpacity',
+  );
+  @override
+  late final GeneratedColumn<double> cellColorOpacity = GeneratedColumn<double>(
+    'cell_color_opacity',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.22),
+  );
+  static const VerificationMeta _gridColorMeta = const VerificationMeta(
+    'gridColor',
+  );
+  @override
+  late final GeneratedColumn<String> gridColor = GeneratedColumn<String>(
+    'grid_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('#000000'),
+  );
+  static const VerificationMeta _showRegionsMeta = const VerificationMeta(
+    'showRegions',
+  );
+  @override
+  late final GeneratedColumn<bool> showRegions = GeneratedColumn<bool>(
+    'show_regions',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_regions" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     documentId,
@@ -5500,6 +5584,12 @@ class $ViewportStatesTable extends ViewportStates
     anchorColumn,
     visibleRows,
     visibleColumns,
+    showCellColor,
+    showSymbols,
+    showGrid,
+    cellColorOpacity,
+    gridColor,
+    showRegions,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5582,6 +5672,54 @@ class $ViewportStatesTable extends ViewportStates
         ),
       );
     }
+    if (data.containsKey('show_cell_color')) {
+      context.handle(
+        _showCellColorMeta,
+        showCellColor.isAcceptableOrUnknown(
+          data['show_cell_color']!,
+          _showCellColorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_symbols')) {
+      context.handle(
+        _showSymbolsMeta,
+        showSymbols.isAcceptableOrUnknown(
+          data['show_symbols']!,
+          _showSymbolsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_grid')) {
+      context.handle(
+        _showGridMeta,
+        showGrid.isAcceptableOrUnknown(data['show_grid']!, _showGridMeta),
+      );
+    }
+    if (data.containsKey('cell_color_opacity')) {
+      context.handle(
+        _cellColorOpacityMeta,
+        cellColorOpacity.isAcceptableOrUnknown(
+          data['cell_color_opacity']!,
+          _cellColorOpacityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('grid_color')) {
+      context.handle(
+        _gridColorMeta,
+        gridColor.isAcceptableOrUnknown(data['grid_color']!, _gridColorMeta),
+      );
+    }
+    if (data.containsKey('show_regions')) {
+      context.handle(
+        _showRegionsMeta,
+        showRegions.isAcceptableOrUnknown(
+          data['show_regions']!,
+          _showRegionsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -5623,6 +5761,30 @@ class $ViewportStatesTable extends ViewportStates
         DriftSqlType.int,
         data['${effectivePrefix}visible_columns'],
       ),
+      showCellColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_cell_color'],
+      )!,
+      showSymbols: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_symbols'],
+      )!,
+      showGrid: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_grid'],
+      )!,
+      cellColorOpacity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}cell_color_opacity'],
+      )!,
+      gridColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}grid_color'],
+      )!,
+      showRegions: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_regions'],
+      )!,
     );
   }
 
@@ -5657,6 +5819,24 @@ class ViewportStateRow extends DataClass
 
   /// Defines the optional number of visible columns at save time.
   final int? visibleColumns;
+
+  /// Defines whether populated cells use their imported thread colors.
+  final bool showCellColor;
+
+  /// Defines whether legible populated cells display symbol glyphs.
+  final bool showSymbols;
+
+  /// Defines whether grid rules are visible.
+  final bool showGrid;
+
+  /// Defines thread-color fill opacity from zero through one.
+  final double cellColorOpacity;
+
+  /// Defines the canonical RGB value of the selected grid-color preset.
+  final String gridColor;
+
+  /// Defines whether source-region outlines are visible.
+  final bool showRegions;
   const ViewportStateRow({
     required this.documentId,
     required this.zoom,
@@ -5666,6 +5846,12 @@ class ViewportStateRow extends DataClass
     required this.anchorColumn,
     this.visibleRows,
     this.visibleColumns,
+    required this.showCellColor,
+    required this.showSymbols,
+    required this.showGrid,
+    required this.cellColorOpacity,
+    required this.gridColor,
+    required this.showRegions,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5682,6 +5868,12 @@ class ViewportStateRow extends DataClass
     if (!nullToAbsent || visibleColumns != null) {
       map['visible_columns'] = Variable<int>(visibleColumns);
     }
+    map['show_cell_color'] = Variable<bool>(showCellColor);
+    map['show_symbols'] = Variable<bool>(showSymbols);
+    map['show_grid'] = Variable<bool>(showGrid);
+    map['cell_color_opacity'] = Variable<double>(cellColorOpacity);
+    map['grid_color'] = Variable<String>(gridColor);
+    map['show_regions'] = Variable<bool>(showRegions);
     return map;
   }
 
@@ -5699,6 +5891,12 @@ class ViewportStateRow extends DataClass
       visibleColumns: visibleColumns == null && nullToAbsent
           ? const Value.absent()
           : Value(visibleColumns),
+      showCellColor: Value(showCellColor),
+      showSymbols: Value(showSymbols),
+      showGrid: Value(showGrid),
+      cellColorOpacity: Value(cellColorOpacity),
+      gridColor: Value(gridColor),
+      showRegions: Value(showRegions),
     );
   }
 
@@ -5716,6 +5914,12 @@ class ViewportStateRow extends DataClass
       anchorColumn: serializer.fromJson<int>(json['anchorColumn']),
       visibleRows: serializer.fromJson<int?>(json['visibleRows']),
       visibleColumns: serializer.fromJson<int?>(json['visibleColumns']),
+      showCellColor: serializer.fromJson<bool>(json['showCellColor']),
+      showSymbols: serializer.fromJson<bool>(json['showSymbols']),
+      showGrid: serializer.fromJson<bool>(json['showGrid']),
+      cellColorOpacity: serializer.fromJson<double>(json['cellColorOpacity']),
+      gridColor: serializer.fromJson<String>(json['gridColor']),
+      showRegions: serializer.fromJson<bool>(json['showRegions']),
     );
   }
   @override
@@ -5730,6 +5934,12 @@ class ViewportStateRow extends DataClass
       'anchorColumn': serializer.toJson<int>(anchorColumn),
       'visibleRows': serializer.toJson<int?>(visibleRows),
       'visibleColumns': serializer.toJson<int?>(visibleColumns),
+      'showCellColor': serializer.toJson<bool>(showCellColor),
+      'showSymbols': serializer.toJson<bool>(showSymbols),
+      'showGrid': serializer.toJson<bool>(showGrid),
+      'cellColorOpacity': serializer.toJson<double>(cellColorOpacity),
+      'gridColor': serializer.toJson<String>(gridColor),
+      'showRegions': serializer.toJson<bool>(showRegions),
     };
   }
 
@@ -5742,6 +5952,12 @@ class ViewportStateRow extends DataClass
     int? anchorColumn,
     Value<int?> visibleRows = const Value.absent(),
     Value<int?> visibleColumns = const Value.absent(),
+    bool? showCellColor,
+    bool? showSymbols,
+    bool? showGrid,
+    double? cellColorOpacity,
+    String? gridColor,
+    bool? showRegions,
   }) => ViewportStateRow(
     documentId: documentId ?? this.documentId,
     zoom: zoom ?? this.zoom,
@@ -5753,6 +5969,12 @@ class ViewportStateRow extends DataClass
     visibleColumns: visibleColumns.present
         ? visibleColumns.value
         : this.visibleColumns,
+    showCellColor: showCellColor ?? this.showCellColor,
+    showSymbols: showSymbols ?? this.showSymbols,
+    showGrid: showGrid ?? this.showGrid,
+    cellColorOpacity: cellColorOpacity ?? this.cellColorOpacity,
+    gridColor: gridColor ?? this.gridColor,
+    showRegions: showRegions ?? this.showRegions,
   );
   ViewportStateRow copyWithCompanion(ViewportStatesCompanion data) {
     return ViewportStateRow(
@@ -5772,6 +5994,20 @@ class ViewportStateRow extends DataClass
       visibleColumns: data.visibleColumns.present
           ? data.visibleColumns.value
           : this.visibleColumns,
+      showCellColor: data.showCellColor.present
+          ? data.showCellColor.value
+          : this.showCellColor,
+      showSymbols: data.showSymbols.present
+          ? data.showSymbols.value
+          : this.showSymbols,
+      showGrid: data.showGrid.present ? data.showGrid.value : this.showGrid,
+      cellColorOpacity: data.cellColorOpacity.present
+          ? data.cellColorOpacity.value
+          : this.cellColorOpacity,
+      gridColor: data.gridColor.present ? data.gridColor.value : this.gridColor,
+      showRegions: data.showRegions.present
+          ? data.showRegions.value
+          : this.showRegions,
     );
   }
 
@@ -5785,7 +6021,13 @@ class ViewportStateRow extends DataClass
           ..write('anchorRow: $anchorRow, ')
           ..write('anchorColumn: $anchorColumn, ')
           ..write('visibleRows: $visibleRows, ')
-          ..write('visibleColumns: $visibleColumns')
+          ..write('visibleColumns: $visibleColumns, ')
+          ..write('showCellColor: $showCellColor, ')
+          ..write('showSymbols: $showSymbols, ')
+          ..write('showGrid: $showGrid, ')
+          ..write('cellColorOpacity: $cellColorOpacity, ')
+          ..write('gridColor: $gridColor, ')
+          ..write('showRegions: $showRegions')
           ..write(')'))
         .toString();
   }
@@ -5800,6 +6042,12 @@ class ViewportStateRow extends DataClass
     anchorColumn,
     visibleRows,
     visibleColumns,
+    showCellColor,
+    showSymbols,
+    showGrid,
+    cellColorOpacity,
+    gridColor,
+    showRegions,
   );
   @override
   bool operator ==(Object other) =>
@@ -5812,7 +6060,13 @@ class ViewportStateRow extends DataClass
           other.anchorRow == this.anchorRow &&
           other.anchorColumn == this.anchorColumn &&
           other.visibleRows == this.visibleRows &&
-          other.visibleColumns == this.visibleColumns);
+          other.visibleColumns == this.visibleColumns &&
+          other.showCellColor == this.showCellColor &&
+          other.showSymbols == this.showSymbols &&
+          other.showGrid == this.showGrid &&
+          other.cellColorOpacity == this.cellColorOpacity &&
+          other.gridColor == this.gridColor &&
+          other.showRegions == this.showRegions);
 }
 
 class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
@@ -5824,6 +6078,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
   final Value<int> anchorColumn;
   final Value<int?> visibleRows;
   final Value<int?> visibleColumns;
+  final Value<bool> showCellColor;
+  final Value<bool> showSymbols;
+  final Value<bool> showGrid;
+  final Value<double> cellColorOpacity;
+  final Value<String> gridColor;
+  final Value<bool> showRegions;
   final Value<int> rowid;
   const ViewportStatesCompanion({
     this.documentId = const Value.absent(),
@@ -5834,6 +6094,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     this.anchorColumn = const Value.absent(),
     this.visibleRows = const Value.absent(),
     this.visibleColumns = const Value.absent(),
+    this.showCellColor = const Value.absent(),
+    this.showSymbols = const Value.absent(),
+    this.showGrid = const Value.absent(),
+    this.cellColorOpacity = const Value.absent(),
+    this.gridColor = const Value.absent(),
+    this.showRegions = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ViewportStatesCompanion.insert({
@@ -5845,6 +6111,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     required int anchorColumn,
     this.visibleRows = const Value.absent(),
     this.visibleColumns = const Value.absent(),
+    this.showCellColor = const Value.absent(),
+    this.showSymbols = const Value.absent(),
+    this.showGrid = const Value.absent(),
+    this.cellColorOpacity = const Value.absent(),
+    this.gridColor = const Value.absent(),
+    this.showRegions = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : documentId = Value(documentId),
        zoom = Value(zoom),
@@ -5861,6 +6133,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Expression<int>? anchorColumn,
     Expression<int>? visibleRows,
     Expression<int>? visibleColumns,
+    Expression<bool>? showCellColor,
+    Expression<bool>? showSymbols,
+    Expression<bool>? showGrid,
+    Expression<double>? cellColorOpacity,
+    Expression<String>? gridColor,
+    Expression<bool>? showRegions,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5872,6 +6150,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       if (anchorColumn != null) 'anchor_column': anchorColumn,
       if (visibleRows != null) 'visible_rows': visibleRows,
       if (visibleColumns != null) 'visible_columns': visibleColumns,
+      if (showCellColor != null) 'show_cell_color': showCellColor,
+      if (showSymbols != null) 'show_symbols': showSymbols,
+      if (showGrid != null) 'show_grid': showGrid,
+      if (cellColorOpacity != null) 'cell_color_opacity': cellColorOpacity,
+      if (gridColor != null) 'grid_color': gridColor,
+      if (showRegions != null) 'show_regions': showRegions,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5885,6 +6169,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Value<int>? anchorColumn,
     Value<int?>? visibleRows,
     Value<int?>? visibleColumns,
+    Value<bool>? showCellColor,
+    Value<bool>? showSymbols,
+    Value<bool>? showGrid,
+    Value<double>? cellColorOpacity,
+    Value<String>? gridColor,
+    Value<bool>? showRegions,
     Value<int>? rowid,
   }) {
     return ViewportStatesCompanion(
@@ -5896,6 +6186,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       anchorColumn: anchorColumn ?? this.anchorColumn,
       visibleRows: visibleRows ?? this.visibleRows,
       visibleColumns: visibleColumns ?? this.visibleColumns,
+      showCellColor: showCellColor ?? this.showCellColor,
+      showSymbols: showSymbols ?? this.showSymbols,
+      showGrid: showGrid ?? this.showGrid,
+      cellColorOpacity: cellColorOpacity ?? this.cellColorOpacity,
+      gridColor: gridColor ?? this.gridColor,
+      showRegions: showRegions ?? this.showRegions,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5927,6 +6223,24 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     if (visibleColumns.present) {
       map['visible_columns'] = Variable<int>(visibleColumns.value);
     }
+    if (showCellColor.present) {
+      map['show_cell_color'] = Variable<bool>(showCellColor.value);
+    }
+    if (showSymbols.present) {
+      map['show_symbols'] = Variable<bool>(showSymbols.value);
+    }
+    if (showGrid.present) {
+      map['show_grid'] = Variable<bool>(showGrid.value);
+    }
+    if (cellColorOpacity.present) {
+      map['cell_color_opacity'] = Variable<double>(cellColorOpacity.value);
+    }
+    if (gridColor.present) {
+      map['grid_color'] = Variable<String>(gridColor.value);
+    }
+    if (showRegions.present) {
+      map['show_regions'] = Variable<bool>(showRegions.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5944,6 +6258,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
           ..write('anchorColumn: $anchorColumn, ')
           ..write('visibleRows: $visibleRows, ')
           ..write('visibleColumns: $visibleColumns, ')
+          ..write('showCellColor: $showCellColor, ')
+          ..write('showSymbols: $showSymbols, ')
+          ..write('showGrid: $showGrid, ')
+          ..write('cellColorOpacity: $cellColorOpacity, ')
+          ..write('gridColor: $gridColor, ')
+          ..write('showRegions: $showRegions, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -9571,6 +9891,12 @@ typedef $$ViewportStatesTableCreateCompanionBuilder =
       required int anchorColumn,
       Value<int?> visibleRows,
       Value<int?> visibleColumns,
+      Value<bool> showCellColor,
+      Value<bool> showSymbols,
+      Value<bool> showGrid,
+      Value<double> cellColorOpacity,
+      Value<String> gridColor,
+      Value<bool> showRegions,
       Value<int> rowid,
     });
 typedef $$ViewportStatesTableUpdateCompanionBuilder =
@@ -9583,6 +9909,12 @@ typedef $$ViewportStatesTableUpdateCompanionBuilder =
       Value<int> anchorColumn,
       Value<int?> visibleRows,
       Value<int?> visibleColumns,
+      Value<bool> showCellColor,
+      Value<bool> showSymbols,
+      Value<bool> showGrid,
+      Value<double> cellColorOpacity,
+      Value<String> gridColor,
+      Value<bool> showRegions,
       Value<int> rowid,
     });
 
@@ -9632,6 +9964,36 @@ class $$ViewportStatesTableFilterComposer
 
   ColumnFilters<int> get visibleColumns => $composableBuilder(
     column: $table.visibleColumns,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showCellColor => $composableBuilder(
+    column: $table.showCellColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showSymbols => $composableBuilder(
+    column: $table.showSymbols,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showGrid => $composableBuilder(
+    column: $table.showGrid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get cellColorOpacity => $composableBuilder(
+    column: $table.cellColorOpacity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gridColor => $composableBuilder(
+    column: $table.gridColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showRegions => $composableBuilder(
+    column: $table.showRegions,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -9684,6 +10046,36 @@ class $$ViewportStatesTableOrderingComposer
     column: $table.visibleColumns,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get showCellColor => $composableBuilder(
+    column: $table.showCellColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showSymbols => $composableBuilder(
+    column: $table.showSymbols,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showGrid => $composableBuilder(
+    column: $table.showGrid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get cellColorOpacity => $composableBuilder(
+    column: $table.cellColorOpacity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get gridColor => $composableBuilder(
+    column: $table.gridColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showRegions => $composableBuilder(
+    column: $table.showRegions,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ViewportStatesTableAnnotationComposer
@@ -9724,6 +10116,32 @@ class $$ViewportStatesTableAnnotationComposer
 
   GeneratedColumn<int> get visibleColumns => $composableBuilder(
     column: $table.visibleColumns,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showCellColor => $composableBuilder(
+    column: $table.showCellColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showSymbols => $composableBuilder(
+    column: $table.showSymbols,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showGrid =>
+      $composableBuilder(column: $table.showGrid, builder: (column) => column);
+
+  GeneratedColumn<double> get cellColorOpacity => $composableBuilder(
+    column: $table.cellColorOpacity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get gridColor =>
+      $composableBuilder(column: $table.gridColor, builder: (column) => column);
+
+  GeneratedColumn<bool> get showRegions => $composableBuilder(
+    column: $table.showRegions,
     builder: (column) => column,
   );
 }
@@ -9773,6 +10191,12 @@ class $$ViewportStatesTableTableManager
                 Value<int> anchorColumn = const Value.absent(),
                 Value<int?> visibleRows = const Value.absent(),
                 Value<int?> visibleColumns = const Value.absent(),
+                Value<bool> showCellColor = const Value.absent(),
+                Value<bool> showSymbols = const Value.absent(),
+                Value<bool> showGrid = const Value.absent(),
+                Value<double> cellColorOpacity = const Value.absent(),
+                Value<String> gridColor = const Value.absent(),
+                Value<bool> showRegions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion(
                 documentId: documentId,
@@ -9783,6 +10207,12 @@ class $$ViewportStatesTableTableManager
                 anchorColumn: anchorColumn,
                 visibleRows: visibleRows,
                 visibleColumns: visibleColumns,
+                showCellColor: showCellColor,
+                showSymbols: showSymbols,
+                showGrid: showGrid,
+                cellColorOpacity: cellColorOpacity,
+                gridColor: gridColor,
+                showRegions: showRegions,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -9795,6 +10225,12 @@ class $$ViewportStatesTableTableManager
                 required int anchorColumn,
                 Value<int?> visibleRows = const Value.absent(),
                 Value<int?> visibleColumns = const Value.absent(),
+                Value<bool> showCellColor = const Value.absent(),
+                Value<bool> showSymbols = const Value.absent(),
+                Value<bool> showGrid = const Value.absent(),
+                Value<double> cellColorOpacity = const Value.absent(),
+                Value<String> gridColor = const Value.absent(),
+                Value<bool> showRegions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion.insert(
                 documentId: documentId,
@@ -9805,6 +10241,12 @@ class $$ViewportStatesTableTableManager
                 anchorColumn: anchorColumn,
                 visibleRows: visibleRows,
                 visibleColumns: visibleColumns,
+                showCellColor: showCellColor,
+                showSymbols: showSymbols,
+                showGrid: showGrid,
+                cellColorOpacity: cellColorOpacity,
+                gridColor: gridColor,
+                showRegions: showRegions,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

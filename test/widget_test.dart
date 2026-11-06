@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
+import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 import 'package:stitch_scope/presentation/screens/library_screen.dart';
 import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
@@ -44,6 +45,14 @@ void main() {
     expect(find.text('Garden Sampler'), findsOneWidget);
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.toolbarHeight, 48);
+    expect(
+      (appBar.leading! as IconButton).key,
+      const ValueKey('workspace-back'),
+    );
+    expect(
+      find.byKey(const ValueKey('renderer-settings-toggle')),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('pattern-viewport')), findsOneWidget);
     expect(find.byKey(const ValueKey('pattern-grid-canvas')), findsOneWidget);
     expect(find.byType(InteractiveViewer), findsNothing);
@@ -57,6 +66,16 @@ void main() {
       painter.document.grid.cellsIntersecting(painter.visibleBounds),
       hasLength(3),
     );
+
+    await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('renderer-settings-panel')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('workspace-back')));
+    await tester.pumpAndSettle();
+    expect(find.text('Pattern Library'), findsOneWidget);
   });
 
   testWidgets('pans the large pattern with a direct camera transform', (
@@ -94,7 +113,7 @@ void main() {
     expect(after.cellSize, before.cellSize);
   });
 
-  testWidgets('replaces existing patterns with both seed patterns', (
+  testWidgets('upserts seed patterns without clearing the library', (
     tester,
   ) async {
     final repository = InMemoryPatternDocumentRepository();
@@ -115,16 +134,77 @@ void main() {
     expect(find.text('Garden Sampler'), findsOneWidget);
     expect(find.text('Large Test Pattern'), findsOneWidget);
   });
+
+  testWidgets(
+    'changes and persists renderer settings without resetting camera',
+    (tester) async {
+      final documents = InMemoryPatternDocumentRepository();
+      final progress = InMemoryProgressRepository();
+
+      await tester.pumpWidget(
+        _libraryApp(
+          documents,
+          progress: progress,
+          seedDocument: SamplePatternFixture.create(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Garden Sampler'));
+      await tester.pumpAndSettle();
+
+      ViewportPatternPainter painter() =>
+          tester
+                  .widget<CustomPaint>(
+                    find.byKey(const ValueKey('pattern-grid-canvas')),
+                  )
+                  .painter!
+              as ViewportPatternPainter;
+
+      expect(painter().settings, const PatternRenderSettings());
+      await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
+      await tester.pumpAndSettle();
+      final cameraBeforeChange = painter().camera;
+      expect(
+        find.byKey(const ValueKey('cell-color-opacity-setting')),
+        findsNothing,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('show-cell-color-setting')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('cell-color-opacity-setting')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const ValueKey('show-grid-setting')));
+      await tester.pumpAndSettle();
+
+      expect(painter().settings.showCellColor, isTrue);
+      expect(painter().settings.showGrid, isFalse);
+      expect(painter().camera, cameraBeforeChange);
+      final saved = await progress.getForDocument('sample-garden-sampler');
+      expect(saved?.viewport?.renderSettings.showCellColor, isTrue);
+      expect(saved?.viewport?.renderSettings.showGrid, isFalse);
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Garden Sampler'));
+      await tester.pumpAndSettle();
+      expect(painter().settings.showCellColor, isTrue);
+      expect(painter().settings.showGrid, isFalse);
+    },
+  );
 }
 
 /// Wraps a library screen in the Material context required by widget tests.
 Widget _libraryApp(
   InMemoryPatternDocumentRepository repository, {
+  InMemoryProgressRepository? progress,
   List<PatternDocument> seedDocuments = const [],
   PatternDocument? seedDocument,
 }) => MaterialApp(
   home: LibraryScreen(
     patternDocuments: repository,
+    progress: progress ?? InMemoryProgressRepository(),
     seedDocuments: seedDocuments,
     seedDocument: seedDocument,
   ),
