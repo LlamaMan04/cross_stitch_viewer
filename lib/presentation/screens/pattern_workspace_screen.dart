@@ -125,27 +125,21 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Cap the panel while preserving useful viewport width on small screens.
-        final panelWidth = math.min(280.0, constraints.maxWidth * 0.8);
-        return Row(
+        // Cap the overlay without changing the pattern viewport's layout.
+        final panelWidth = math.min(
+          280.0,
+          math.max(0.0, constraints.maxWidth - 24),
+        );
+        return Stack(
           children: [
-            SizedBox(
-              width: 56,
-              child: Material(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                child: IconButton(
-                  key: const ValueKey('renderer-settings-toggle'),
-                  tooltip: 'Renderer settings',
-                  isSelected: _showSettings,
-                  onPressed: () =>
-                      setState(() => _showSettings = !_showSettings),
-                  icon: const Icon(Icons.tune),
-                ),
-              ),
+            Positioned.fill(
+              child: PatternRenderView(document: document, settings: _settings),
             ),
-            const VerticalDivider(width: 1),
             if (_showSettings)
-              SizedBox(
+              Positioned(
+                left: 12,
+                top: 12,
+                bottom: 72,
                 key: const ValueKey('renderer-settings-panel'),
                 width: panelWidth,
                 child: _PatternRenderSettingsPanel(
@@ -155,9 +149,19 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   onOpacityChangeEnd: _saveOpacity,
                 ),
               ),
-            if (_showSettings) const VerticalDivider(width: 1),
-            Expanded(
-              child: PatternRenderView(document: document, settings: _settings),
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: Opacity(
+                opacity: 0.85,
+                child: FloatingActionButton.small(
+                  key: const ValueKey('renderer-settings-toggle'),
+                  tooltip: 'Renderer settings',
+                  onPressed: () =>
+                      setState(() => _showSettings = !_showSettings),
+                  child: Icon(_showSettings ? Icons.close : Icons.tune),
+                ),
+              ),
             ),
           ],
         );
@@ -266,7 +270,7 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: Text(
-              'Renderer',
+              'Renderer Settings',
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),

@@ -161,8 +161,16 @@ void main() {
               as ViewportPatternPainter;
 
       expect(painter().settings, const PatternRenderSettings());
+      final viewportSize = tester.getSize(
+        find.byKey(const ValueKey('pattern-grid-canvas')),
+      );
       await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
       await tester.pumpAndSettle();
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(
+        tester.getSize(find.byKey(const ValueKey('pattern-grid-canvas'))),
+        viewportSize,
+      );
       final cameraBeforeChange = painter().camera;
       expect(
         find.byKey(const ValueKey('cell-color-opacity-setting')),
