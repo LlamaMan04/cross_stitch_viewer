@@ -115,9 +115,9 @@ class ViewportPatternPainter extends CustomPainter {
     final isOutside = coordinate == 0 || coordinate == documentExtent;
     final isMajor = coordinate % 10 == 0;
     final strokeWidth = isOutside
-        ? math.min(2.0, camera.cellSize * 0.35)
+        ? math.min(2.25, camera.cellSize * 0.38)
         : isMajor
-        ? math.min(1.5, camera.cellSize * 0.26)
+        ? math.min(2.0, camera.cellSize * 0.3)
         : math.min(1.0, camera.cellSize * 0.18);
     return Paint()
       ..color = gridColor
