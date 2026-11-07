@@ -155,6 +155,9 @@ void main() {
     );
     expect(find.byKey(const ValueKey('symbol-palette-panel')), findsNothing);
     expect(find.byKey(const ValueKey('completion-action-bar')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('close-renderer-settings')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('renderer-settings-panel')), findsNothing);
 
     await _selectWorkspaceMenuOption(
       tester,
@@ -163,6 +166,9 @@ void main() {
     expect(find.byKey(const ValueKey('renderer-settings-panel')), findsNothing);
     expect(find.byKey(const ValueKey('symbol-palette-panel')), findsOneWidget);
     expect(find.byKey(const ValueKey('completion-action-bar')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('close-symbol-palette')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('symbol-palette-panel')), findsNothing);
 
     await _selectWorkspaceMenuOption(
       tester,
@@ -171,6 +177,9 @@ void main() {
     expect(find.byKey(const ValueKey('renderer-settings-panel')), findsNothing);
     expect(find.byKey(const ValueKey('symbol-palette-panel')), findsNothing);
     expect(find.byKey(const ValueKey('completion-action-bar')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('close-completion-selection')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('completion-action-bar')), findsNothing);
   });
 
   testWidgets('upserts seed patterns without clearing the library', (
@@ -352,6 +361,10 @@ void main() {
       expect(painter().completionSelection, <GridCoordinate>{
         const GridCoordinate(0, 0),
       });
+      expect(
+        painter().completionSelectionOverlayColor.withValues(alpha: 1),
+        Theme.of(tester.element(canvasFinder)).colorScheme.primary,
+      );
       expect(painter().selection.hasSelection, isFalse);
       expect(find.text('1 selected'), findsOneWidget);
 

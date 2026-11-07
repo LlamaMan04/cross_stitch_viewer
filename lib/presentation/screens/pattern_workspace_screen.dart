@@ -225,6 +225,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                     onOpacityChangeEnd: _saveOpacity,
                     onCompletedOpacityChanged: _previewCompletedOpacity,
                     onCompletedOpacityChangeEnd: _saveCompletedOpacity,
+                    onClose: _closeActiveMenuOption,
                   ),
                 ),
               if (_showSymbolPalette)
@@ -238,6 +239,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                     document: document,
                     selection: _selection,
                     onSelected: _selectSymbol,
+                    onClose: _closeActiveMenuOption,
                   ),
                 ),
               if (_interactionMode == PatternInteractionMode.editCompletion)
@@ -258,6 +260,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                       onMarkIncomplete: () =>
                           _applyCompletionSelection(completed: false),
                       onClearSelection: _clearCompletionSelection,
+                      onClose: _closeActiveMenuOption,
                     ),
                   ),
                 ),
@@ -311,6 +314,18 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       if (_activeMenuOption == _WorkspaceMenuOption.completionSelection) {
         _selection = _selection.select(null);
       }
+      _isFloatingMenuExpanded = false;
+    });
+  }
+
+  /// Closes the active workspace surface without expanding the floating menu.
+  void _closeActiveMenuOption() {
+    _dismissCompletionUndo();
+    setState(() {
+      if (_activeMenuOption == _WorkspaceMenuOption.completionSelection) {
+        _completionSelection = _completionSelection.clear();
+      }
+      _activeMenuOption = null;
       _isFloatingMenuExpanded = false;
     });
   }
@@ -660,6 +675,7 @@ class _CompletionActionBar extends StatelessWidget {
     required this.onMarkCompleted,
     required this.onMarkIncomplete,
     required this.onClearSelection,
+    required this.onClose,
   });
 
   /// Number of exact cells awaiting a completion action.
@@ -679,6 +695,9 @@ class _CompletionActionBar extends StatelessWidget {
 
   /// Clears selection without changing completion state.
   final VoidCallback onClearSelection;
+
+  /// Closes completion selection without reopening the floating menu.
+  final VoidCallback onClose;
 
   /// Builds a compact action surface that can wrap on narrow viewports.
   @override
@@ -748,11 +767,16 @@ class _CompletionActionBar extends StatelessWidget {
               icon: const Icon(Icons.remove_done),
               label: const Text('Incomplete'),
             ),
-            IconButton(
+            TextButton(
               key: const ValueKey('clear-completion-selection'),
-              tooltip: 'Clear cell selection',
               onPressed: hasSelection ? onClearSelection : null,
-              icon: const Icon(Icons.clear),
+              child: const Text('Clear selection'),
+            ),
+            IconButton(
+              key: const ValueKey('close-completion-selection'),
+              tooltip: 'Close completion selection',
+              onPressed: onClose,
+              icon: const Icon(Icons.close),
             ),
           ],
         ),
@@ -771,6 +795,7 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
     required this.onOpacityChangeEnd,
     required this.onCompletedOpacityChanged,
     required this.onCompletedOpacityChangeEnd,
+    required this.onClose,
   });
 
   /// Current immutable renderer settings.
@@ -791,6 +816,9 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
   /// Callback for persisting a settled completed-cell opacity value.
   final ValueChanged<double> onCompletedOpacityChangeEnd;
 
+  /// Closes renderer settings without reopening the floating menu.
+  final VoidCallback onClose;
+
   /// Builds scrollable controls that fit desktop and compact-height layouts.
   @override
   Widget build(BuildContext context) {
@@ -800,10 +828,22 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text(
-              'Renderer Settings',
-              style: Theme.of(context).textTheme.titleMedium,
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Renderer Settings',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                IconButton(
+                  key: const ValueKey('close-renderer-settings'),
+                  tooltip: 'Close renderer settings',
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close),
+                ),
+              ],
             ),
           ),
           SwitchListTile(
@@ -996,6 +1036,7 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
     required this.document,
     required this.selection,
     required this.onSelected,
+    required this.onClose,
   });
 
   /// Document supplying symbols and complete thread definitions.
@@ -1006,6 +1047,9 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
 
   /// Callback used to select or clear a symbol.
   final ValueChanged<String?> onSelected;
+
+  /// Closes the palette without reopening the floating menu.
+  final VoidCallback onClose;
 
   /// Builds selected details followed by every selectable document symbol.
   @override
@@ -1031,12 +1075,17 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
                   ),
                 ),
                 if (selection.hasSelection)
-                  IconButton(
+                  TextButton(
                     key: const ValueKey('clear-symbol-selection'),
-                    tooltip: 'Clear selection',
                     onPressed: () => onSelected(null),
-                    icon: const Icon(Icons.clear),
+                    child: const Text('Clear'),
                   ),
+                IconButton(
+                  key: const ValueKey('close-symbol-palette'),
+                  tooltip: 'Close symbol palette',
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close),
+                ),
               ],
             ),
           ),

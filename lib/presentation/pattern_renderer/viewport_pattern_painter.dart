@@ -54,7 +54,7 @@ class ViewportPatternPainter extends CustomPainter {
   /// Theme color used for enabled source-region outlines.
   final Color regionColor;
 
-  /// Theme color used to outline exact completion-edit selections.
+  /// Primary application color used by completion-selection overlays.
   final Color completionSelectionColor;
 
   /// Completed populated cells intersecting the current visible bounds.
@@ -90,26 +90,28 @@ class ViewportPatternPainter extends CustomPainter {
       _paintCompletedCells(canvas);
     }
     _paintSelectedSymbol(canvas);
+    _paintCompletionSelection(canvas);
     _paintGlyphs(canvas);
     if (settings.showGrid) _paintGrid(canvas);
     if (settings.showRegions) _paintRegions(canvas);
-    _paintCompletionSelection(canvas);
     canvas.restore();
   }
 
-  /// Paints an inset outline around exact cells selected for completion edits.
+  /// Theme-derived color used to overlay exact completion-cell selections.
+  Color get completionSelectionOverlayColor {
+    final overlayOpacity = math.max(0.55, settings.completedCellOpacity);
+    return completionSelectionColor.withValues(alpha: overlayOpacity);
+  }
+
+  /// Paints a high-contrast theme-color overlay on selected exact cells.
   void _paintCompletionSelection(Canvas canvas) {
     if (completionSelection.isEmpty) return;
-    final outlinePaint = Paint()
-      ..color = completionSelectionColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.min(3, camera.cellSize * 0.2);
+    final overlayPaint = Paint()..color = completionSelectionOverlayColor;
     for (final coordinate in completionSelection) {
       if (!visibleBounds.contains(coordinate)) continue;
       final cell = document.grid.cellAt(coordinate);
       if (cell == null) continue;
-      final cellRect = _cellRect(cell).deflate(outlinePaint.strokeWidth);
-      canvas.drawRect(cellRect, outlinePaint);
+      canvas.drawRect(_cellRect(cell), overlayPaint);
     }
   }
 

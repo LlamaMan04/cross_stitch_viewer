@@ -130,7 +130,7 @@ class _PatternViewportState extends State<PatternViewport> {
                 completionSelection: widget.completionSelection.coordinates,
                 surfaceColor: colors.surfaceContainerLowest,
                 regionColor: colors.primary,
-                completionSelectionColor: colors.tertiary,
+                completionSelectionColor: colors.primary,
               ),
               child: const SizedBox.expand(),
             ),
