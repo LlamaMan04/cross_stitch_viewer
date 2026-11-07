@@ -12,6 +12,18 @@ import '../pattern_renderer/pattern_interaction.dart';
 import '../pattern_renderer/pattern_viewport.dart';
 import '../pattern_renderer/pattern_render_selection.dart';
 
+/// Mutually exclusive workspace surface activated from the floating menu.
+enum _WorkspaceMenuOption {
+  /// Opens renderer-specific visual settings.
+  rendererSettings,
+
+  /// Opens the symbol palette and thread inspector.
+  symbolPalette,
+
+  /// Enables exact-cell completion selection and its action surface.
+  completionSelection,
+}
+
 /// Loads a persisted pattern and its independent viewport render settings.
 class PatternWorkspaceScreen extends StatefulWidget {
   /// Creates a workspace for the selected document.
@@ -50,17 +62,28 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   /// Completed coordinates loaded with the mutable progress graph.
   Set<GridCoordinate> _completedCells = const <GridCoordinate>{};
 
-  /// Whether the left renderer-settings panel is visible.
-  bool _showSettings = false;
+  /// Whether the bottom-right floating menu currently exposes its choices.
+  bool _isFloatingMenuExpanded = false;
 
-  /// Whether the right symbol palette and inspector is visible.
-  bool _showSymbolPalette = false;
+  /// The only active workspace surface, or null when none is selected.
+  _WorkspaceMenuOption? _activeMenuOption;
 
   /// Current ephemeral symbol selection, intentionally not persisted.
   PatternRenderSelection _selection = const PatternRenderSelection();
 
-  /// Current meaning assigned to taps in the pattern viewport.
-  PatternInteractionMode _interactionMode = PatternInteractionMode.browse;
+  /// Whether the renderer settings surface is the active menu choice.
+  bool get _showSettings =>
+      _activeMenuOption == _WorkspaceMenuOption.rendererSettings;
+
+  /// Whether the symbol palette surface is the active menu choice.
+  bool get _showSymbolPalette =>
+      _activeMenuOption == _WorkspaceMenuOption.symbolPalette;
+
+  /// Derives tap behavior from the currently active mutually exclusive choice.
+  PatternInteractionMode get _interactionMode =>
+      _activeMenuOption == _WorkspaceMenuOption.completionSelection
+      ? PatternInteractionMode.editCompletion
+      : PatternInteractionMode.browse;
 
   /// Exact cells selected for the next completion action.
   CompletionCellSelection _completionSelection =
@@ -128,19 +151,6 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             actions: [
-              if (document != null)
-                IconButton(
-                  key: const ValueKey('completion-edit-toggle'),
-                  tooltip: _interactionMode == PatternInteractionMode.browse
-                      ? 'Edit completion'
-                      : 'Finish editing completion',
-                  onPressed: _toggleCompletionMode,
-                  icon: Icon(
-                    _interactionMode == PatternInteractionMode.editCompletion
-                        ? Icons.check_box
-                        : Icons.check_box_outlined,
-                  ),
-                ),
               if (document != null)
                 Padding(
                   padding: const EdgeInsets.only(right: 16),
@@ -252,33 +262,13 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   ),
                 ),
               Positioned(
-                left: 12,
-                bottom: 12,
-                child: Opacity(
-                  opacity: 0.85,
-                  child: FloatingActionButton.small(
-                    key: const ValueKey('renderer-settings-toggle'),
-                    heroTag: 'renderer-settings-fab',
-                    tooltip: 'Pattern View Settings',
-                    onPressed: _toggleSettingsPanel,
-                    child: Icon(_showSettings ? Icons.close : Icons.tune),
-                  ),
-                ),
-              ),
-              Positioned(
                 right: 12,
                 bottom: 12,
-                child: Opacity(
-                  opacity: 0.85,
-                  child: FloatingActionButton.small(
-                    key: const ValueKey('symbol-palette-toggle'),
-                    heroTag: 'symbol-palette-fab',
-                    tooltip: 'Symbol palette',
-                    onPressed: _toggleSymbolPalette,
-                    child: Icon(
-                      _showSymbolPalette ? Icons.close : Icons.palette_outlined,
-                    ),
-                  ),
+                child: _WorkspaceFloatingMenu(
+                  isExpanded: _isFloatingMenuExpanded,
+                  activeOption: _activeMenuOption,
+                  onToggle: _toggleFloatingMenu,
+                  onSelected: _selectMenuOption,
                 ),
               ),
             ],
@@ -293,21 +283,35 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     _dismissCompletionUndo();
     setState(() {
       _selection = _selection.select(symbolId);
-      if (symbolId != null) _showSymbolPalette = true;
+      if (symbolId != null) {
+        _activeMenuOption = _WorkspaceMenuOption.symbolPalette;
+        _isFloatingMenuExpanded = false;
+      }
     });
   }
 
-  /// Toggles between symbol inspection and exact-cell completion editing.
-  void _toggleCompletionMode() {
+  /// Opens or collapses the floating menu without changing the active choice.
+  void _toggleFloatingMenu() {
+    _dismissCompletionUndo();
+    setState(() => _isFloatingMenuExpanded = !_isFloatingMenuExpanded);
+  }
+
+  /// Activates one menu choice while closing every other workspace surface.
+  void _selectMenuOption(_WorkspaceMenuOption option) {
     _dismissCompletionUndo();
     setState(() {
-      if (_interactionMode == PatternInteractionMode.browse) {
-        _interactionMode = PatternInteractionMode.editCompletion;
-        _selection = _selection.select(null);
+      if (_activeMenuOption == option) {
+        _activeMenuOption = null;
       } else {
-        _interactionMode = PatternInteractionMode.browse;
+        _activeMenuOption = option;
+      }
+      if (_activeMenuOption != _WorkspaceMenuOption.completionSelection) {
         _completionSelection = _completionSelection.clear();
       }
+      if (_activeMenuOption == _WorkspaceMenuOption.completionSelection) {
+        _selection = _selection.select(null);
+      }
+      _isFloatingMenuExpanded = false;
     });
   }
 
@@ -402,18 +406,6 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       if (!mounted || !identical(_completionUndoNotice, visibleNotice)) return;
       _dismissCompletionUndo();
     });
-  }
-
-  /// Toggles the renderer settings panel and clears transient Undo feedback.
-  void _toggleSettingsPanel() {
-    _dismissCompletionUndo();
-    setState(() => _showSettings = !_showSettings);
-  }
-
-  /// Toggles the symbol palette and clears transient Undo feedback.
-  void _toggleSymbolPalette() {
-    _dismissCompletionUndo();
-    setState(() => _showSymbolPalette = !_showSymbolPalette);
   }
 
   /// Persists completed coordinates while preserving markers and viewport data.
@@ -545,6 +537,117 @@ class _CompletionUndoNotice {
 
   /// Completion snapshot restored when Undo is selected.
   final Set<GridCoordinate> previousCells;
+}
+
+/// Collapsible bottom-right menu for mutually exclusive workspace surfaces.
+class _WorkspaceFloatingMenu extends StatelessWidget {
+  /// Creates the menu from its expansion and active-selection state.
+  const _WorkspaceFloatingMenu({
+    required this.isExpanded,
+    required this.activeOption,
+    required this.onToggle,
+    required this.onSelected,
+  });
+
+  /// Whether the three workspace choices are currently visible.
+  final bool isExpanded;
+
+  /// The only currently active workspace choice, if any.
+  final _WorkspaceMenuOption? activeOption;
+
+  /// Opens or closes the three-choice floating menu.
+  final VoidCallback onToggle;
+
+  /// Activates or clears one workspace choice.
+  final ValueChanged<_WorkspaceMenuOption> onSelected;
+
+  /// Builds vertically stacked floating choices above the menu trigger.
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (isExpanded) ...[
+          _WorkspaceMenuButton(
+            key: const ValueKey('floating-menu-completion-selection'),
+            tooltip: 'Completion selection',
+            icon: Icons.check_box_outlined,
+            isSelected:
+                activeOption == _WorkspaceMenuOption.completionSelection,
+            selectedColor: colors.secondaryContainer,
+            onPressed: () =>
+                onSelected(_WorkspaceMenuOption.completionSelection),
+          ),
+          const SizedBox(height: 8),
+          _WorkspaceMenuButton(
+            key: const ValueKey('floating-menu-symbol-palette'),
+            tooltip: 'Symbol palette',
+            icon: Icons.palette_outlined,
+            isSelected: activeOption == _WorkspaceMenuOption.symbolPalette,
+            selectedColor: colors.secondaryContainer,
+            onPressed: () => onSelected(_WorkspaceMenuOption.symbolPalette),
+          ),
+          const SizedBox(height: 8),
+          _WorkspaceMenuButton(
+            key: const ValueKey('floating-menu-renderer-settings'),
+            tooltip: 'Renderer settings',
+            icon: Icons.tune,
+            isSelected: activeOption == _WorkspaceMenuOption.rendererSettings,
+            selectedColor: colors.secondaryContainer,
+            onPressed: () => onSelected(_WorkspaceMenuOption.rendererSettings),
+          ),
+          const SizedBox(height: 8),
+        ],
+        FloatingActionButton.small(
+          key: const ValueKey('floating-menu-toggle'),
+          heroTag: 'workspace-floating-menu',
+          tooltip: isExpanded ? 'Close workspace menu' : 'Open workspace menu',
+          onPressed: onToggle,
+          child: Icon(isExpanded ? Icons.close : Icons.menu),
+        ),
+      ],
+    );
+  }
+}
+
+/// One visible choice in the workspace floating menu.
+class _WorkspaceMenuButton extends StatelessWidget {
+  /// Creates one small floating button representing a workspace surface.
+  const _WorkspaceMenuButton({
+    required super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.isSelected,
+    required this.selectedColor,
+    required this.onPressed,
+  });
+
+  /// Accessible label explaining the menu choice.
+  final String tooltip;
+
+  /// Icon representing the menu choice.
+  final IconData icon;
+
+  /// Whether this choice is the currently active workspace surface.
+  final bool isSelected;
+
+  /// Highlight color used for the active choice.
+  final Color selectedColor;
+
+  /// Activates or clears this menu choice.
+  final VoidCallback onPressed;
+
+  /// Builds a colored small floating-action button for the choice.
+  @override
+  Widget build(BuildContext context) => FloatingActionButton.small(
+    heroTag: tooltip,
+    tooltip: tooltip,
+    backgroundColor: isSelected ? selectedColor : null,
+    onPressed: onPressed,
+    child: Icon(icon),
+  );
 }
 
 /// Floating controls for applying completion state to exact selected cells.

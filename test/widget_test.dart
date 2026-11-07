@@ -52,9 +52,10 @@ void main() {
       (appBar.leading! as IconButton).key,
       const ValueKey('workspace-back'),
     );
+    expect(find.byKey(const ValueKey('floating-menu-toggle')), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('renderer-settings-toggle')),
-      findsOneWidget,
+      find.byKey(const ValueKey('floating-menu-renderer-settings')),
+      findsNothing,
     );
     expect(find.byKey(const ValueKey('pattern-viewport')), findsOneWidget);
     expect(find.byKey(const ValueKey('pattern-grid-canvas')), findsOneWidget);
@@ -70,8 +71,10 @@ void main() {
       hasLength(3),
     );
 
-    await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
-    await tester.pumpAndSettle();
+    await _selectWorkspaceMenuOption(
+      tester,
+      const ValueKey('floating-menu-renderer-settings'),
+    );
     expect(
       find.byKey(const ValueKey('renderer-settings-panel')),
       findsOneWidget,
@@ -114,6 +117,60 @@ void main() {
 
     expect(after.origin.dy, lessThan(before.origin.dy));
     expect(after.cellSize, before.cellSize);
+  });
+
+  testWidgets('floating menu activates only one workspace surface', (
+    tester,
+  ) async {
+    final documents = InMemoryPatternDocumentRepository();
+    await tester.pumpWidget(
+      _libraryApp(documents, seedDocument: SamplePatternFixture.create()),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Garden Sampler'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('floating-menu-toggle')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('floating-menu-renderer-settings')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('floating-menu-symbol-palette')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('floating-menu-completion-selection')),
+      findsOneWidget,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('floating-menu-renderer-settings')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('renderer-settings-panel')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('symbol-palette-panel')), findsNothing);
+    expect(find.byKey(const ValueKey('completion-action-bar')), findsNothing);
+
+    await _selectWorkspaceMenuOption(
+      tester,
+      const ValueKey('floating-menu-symbol-palette'),
+    );
+    expect(find.byKey(const ValueKey('renderer-settings-panel')), findsNothing);
+    expect(find.byKey(const ValueKey('symbol-palette-panel')), findsOneWidget);
+    expect(find.byKey(const ValueKey('completion-action-bar')), findsNothing);
+
+    await _selectWorkspaceMenuOption(
+      tester,
+      const ValueKey('floating-menu-completion-selection'),
+    );
+    expect(find.byKey(const ValueKey('renderer-settings-panel')), findsNothing);
+    expect(find.byKey(const ValueKey('symbol-palette-panel')), findsNothing);
+    expect(find.byKey(const ValueKey('completion-action-bar')), findsOneWidget);
   });
 
   testWidgets('upserts seed patterns without clearing the library', (
@@ -167,10 +224,12 @@ void main() {
       final viewportSize = tester.getSize(
         find.byKey(const ValueKey('pattern-grid-canvas')),
       );
-      await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
-      await tester.pumpAndSettle();
+      await _selectWorkspaceMenuOption(
+        tester,
+        const ValueKey('floating-menu-renderer-settings'),
+      );
       expect(
-        find.byKey(const ValueKey('renderer-settings-toggle')),
+        find.byKey(const ValueKey('floating-menu-toggle')),
         findsOneWidget,
       );
       expect(
@@ -273,8 +332,10 @@ void main() {
           tester.getTopLeft(canvasFinder) +
           painter().camera.gridToScreen(row: 0.5, column: 0.5);
 
-      await tester.tap(find.byKey(const ValueKey('completion-edit-toggle')));
-      await tester.pumpAndSettle();
+      await _selectWorkspaceMenuOption(
+        tester,
+        const ValueKey('floating-menu-completion-selection'),
+      );
       expect(
         find.byKey(const ValueKey('completion-action-bar')),
         findsOneWidget,
@@ -313,15 +374,7 @@ void main() {
       );
       expect(
         undoRect.overlaps(
-          tester.getRect(
-            find.byKey(const ValueKey('renderer-settings-toggle')),
-          ),
-        ),
-        isFalse,
-      );
-      expect(
-        undoRect.overlaps(
-          tester.getRect(find.byKey(const ValueKey('symbol-palette-toggle'))),
+          tester.getRect(find.byKey(const ValueKey('floating-menu-toggle'))),
         ),
         isFalse,
       );
@@ -440,8 +493,10 @@ void main() {
         tester.getTopLeft(canvasFinder) +
         painter().camera.gridToScreen(row: 0.5, column: 0.5);
 
-    await tester.tap(find.byKey(const ValueKey('completion-edit-toggle')));
-    await tester.pumpAndSettle();
+    await _selectWorkspaceMenuOption(
+      tester,
+      const ValueKey('floating-menu-completion-selection'),
+    );
     await tester.tapAt(firstFlowerCenter);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mark-incomplete')));
@@ -457,15 +512,19 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
-    await tester.pumpAndSettle();
+    await _selectWorkspaceMenuOption(
+      tester,
+      const ValueKey('floating-menu-renderer-settings'),
+    );
     expect(
       find.byKey(const ValueKey('completion-undo-snackbar')),
       findsNothing,
     );
 
-    await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
-    await tester.pumpAndSettle();
+    await _selectWorkspaceMenuOption(
+      tester,
+      const ValueKey('floating-menu-completion-selection'),
+    );
     await tester.tapAt(firstFlowerCenter);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('mark-completed')));
@@ -596,3 +655,16 @@ Widget _libraryApp(
     seedDocument: seedDocument,
   ),
 );
+
+/// Opens the workspace menu when necessary and selects one visible choice.
+Future<void> _selectWorkspaceMenuOption(
+  WidgetTester tester,
+  ValueKey<String> optionKey,
+) async {
+  if (find.byKey(optionKey).evaluate().isEmpty) {
+    await tester.tap(find.byKey(const ValueKey('floating-menu-toggle')));
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(find.byKey(optionKey));
+  await tester.pumpAndSettle();
+}

@@ -360,8 +360,8 @@ decluttering rule only and does not change the 10-cell major-grid positions.
 ## UI Composition and Settings
 
 1. Replace the tall title block in `PatternWorkspaceScreen` with a compact
-   app bar/command bar containing back navigation, title, dimensions, reset
-   view, a left-settings-panel toggle, and a right-symbol-palette toggle.
+   app bar/command bar containing back navigation, title, dimensions, and
+   reset view.
 2. Let `PatternViewport` fill all remaining available space; remove the large
    outer decoration/padding that reduces renderer area.
 3. Place the renderer settings in a collapsible window that expands from the
@@ -372,9 +372,12 @@ decluttering rule only and does not change the 10-cell major-grid positions.
    from the right side of the workspace. It lists document symbols, supports
    selecting/clearing a symbol, and shows the selected symbol's glyph and
    associated thread information.
-5. When either panel is collapsed, the viewport reclaims its width. On narrow
+5. Expose renderer settings, the symbol palette, and completion selection from
+   one collapsible bottom-right floating-icon menu. Its choices are mutually
+   exclusive: selecting one closes every other panel or interaction mode.
+6. When either panel is collapsed, the viewport reclaims its width. On narrow
    layouts, preserve the left/right semantic placement using edge drawers or
-   sheets opened from their respective command-bar controls.
+   sheets opened from the floating menu.
 6. Persist every `PatternRenderSettings` field per pattern as part of its
    `ViewportState`. Reload those values before constructing the viewport so a
    document reopens with the same visual configuration. Do not place them in
