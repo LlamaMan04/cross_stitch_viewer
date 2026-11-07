@@ -55,15 +55,23 @@ void main() {
     expect(defaults.showGrid, isTrue);
     expect(defaults.showCellColor, isFalse);
     expect(defaults.showRegions, isFalse);
+    expect(defaults.showCompletedCellOverlay, isTrue);
+    expect(defaults.includeCompletedCellsInSelection, isTrue);
     expect(defaults.gridColor, GridColorPreset.black);
     expect(
       defaults.selectionHighlightColor,
       SelectionHighlightColorPreset.amber,
     );
     expect(defaults.cellColorOpacity, 0.22);
+    expect(defaults.completedCellColor, CompletedCellColorPreset.neutralGray);
+    expect(defaults.completedCellOpacity, 0.55);
 
     expect(
       () => const PatternRenderSettings(cellColorOpacity: 1.1).validate(),
+      throwsA(isA<DocumentValidationException>()),
+    );
+    expect(
+      () => const PatternRenderSettings(completedCellOpacity: -0.1).validate(),
       throwsA(isA<DocumentValidationException>()),
     );
   });

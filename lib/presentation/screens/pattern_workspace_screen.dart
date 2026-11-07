@@ -8,6 +8,7 @@ import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/repositories.dart';
 import '../../domain/value_objects.dart';
+import '../pattern_renderer/pattern_interaction.dart';
 import '../pattern_renderer/pattern_viewport.dart';
 import '../pattern_renderer/pattern_render_selection.dart';
 
@@ -46,6 +47,9 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   /// Latest complete progress graph used to preserve unrelated user state.
   ProgressState? _progress;
 
+  /// Completed coordinates loaded with the mutable progress graph.
+  Set<GridCoordinate> _completedCells = const <GridCoordinate>{};
+
   /// Whether the left renderer-settings panel is visible.
   bool _showSettings = false;
 
@@ -54,6 +58,19 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
 
   /// Current ephemeral symbol selection, intentionally not persisted.
   PatternRenderSelection _selection = const PatternRenderSelection();
+
+  /// Current meaning assigned to taps in the pattern viewport.
+  PatternInteractionMode _interactionMode = PatternInteractionMode.browse;
+
+  /// Exact cells selected for the next completion action.
+  CompletionCellSelection _completionSelection =
+      CompletionCellSelection.empty();
+
+  /// Inline Undo notice shown without covering workspace controls.
+  _CompletionUndoNotice? _completionUndoNotice;
+
+  /// Timer that dismisses the completion Undo notice after five seconds.
+  Timer? _completionUndoTimer;
 
   /// Serializes settings writes so rapid interactions cannot save out of order.
   Future<void> _saveChain = Future<void>.value();
@@ -65,6 +82,13 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     _document = _loadWorkspace();
   }
 
+  /// Releases the transient completion-notice timer.
+  @override
+  void dispose() {
+    _completionUndoTimer?.cancel();
+    super.dispose();
+  }
+
   /// Loads immutable source data and mutable progress concurrently.
   Future<PatternDocument?> _loadWorkspace() async {
     final documentFuture = widget.patternDocuments.getById(widget.documentId);
@@ -72,6 +96,9 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     final document = await documentFuture;
     final progress = await progressFuture;
     _progress = progress;
+    _completedCells = Set<GridCoordinate>.unmodifiable(
+      progress?.completedCells ?? const <GridCoordinate>[],
+    );
     _settings =
         progress?.viewport?.renderSettings ?? const PatternRenderSettings();
     return document;
@@ -101,6 +128,19 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             actions: [
+              if (document != null)
+                IconButton(
+                  key: const ValueKey('completion-edit-toggle'),
+                  tooltip: _interactionMode == PatternInteractionMode.browse
+                      ? 'Edit completion'
+                      : 'Finish editing completion',
+                  onPressed: _toggleCompletionMode,
+                  icon: Icon(
+                    _interactionMode == PatternInteractionMode.editCompletion
+                        ? Icons.check_box
+                        : Icons.check_box_outlined,
+                  ),
+                ),
               if (document != null)
                 Padding(
                   padding: const EdgeInsets.only(right: 16),
@@ -142,76 +182,107 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
           320.0,
           math.max(0.0, constraints.maxWidth - 24),
         );
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: PatternRenderView(
-                document: document,
-                settings: _settings,
-                selection: _selection,
-                onSymbolSelected: _selectSymbol,
+        return Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerUp: _dismissCompletionUndoAfterPointer,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: PatternRenderView(
+                  document: document,
+                  settings: _settings,
+                  selection: _selection,
+                  completedCells: _completedCells,
+                  interactionMode: _interactionMode,
+                  completionSelection: _completionSelection,
+                  onSymbolSelected: _selectSymbol,
+                  onCompletionCellSelected: _toggleCompletionCell,
+                  onCompletionEditUnavailable: _showCompletionZoomGuidance,
+                  onInteraction: _dismissCompletionUndo,
+                ),
               ),
-            ),
-            if (_showSettings)
+              if (_showSettings)
+                Positioned(
+                  left: 12,
+                  top: 12,
+                  bottom: 72,
+                  key: const ValueKey('renderer-settings-panel'),
+                  width: panelWidth,
+                  child: _PatternRenderSettingsPanel(
+                    settings: _settings,
+                    onChanged: _applySettings,
+                    onOpacityChanged: _previewOpacity,
+                    onOpacityChangeEnd: _saveOpacity,
+                    onCompletedOpacityChanged: _previewCompletedOpacity,
+                    onCompletedOpacityChangeEnd: _saveCompletedOpacity,
+                  ),
+                ),
+              if (_showSymbolPalette)
+                Positioned(
+                  right: 12,
+                  top: 12,
+                  bottom: 72,
+                  key: const ValueKey('symbol-palette-panel'),
+                  width: paletteWidth,
+                  child: _PatternSymbolPalettePanel(
+                    document: document,
+                    selection: _selection,
+                    onSelected: _selectSymbol,
+                  ),
+                ),
+              if (_interactionMode == PatternInteractionMode.editCompletion)
+                Positioned(
+                  left: 72,
+                  right: 72,
+                  bottom: 12,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: _CompletionActionBar(
+                      selectionCount: _completionSelection.length,
+                      undoMessage: _completionUndoNotice?.message,
+                      onUndo: _completionUndoNotice == null
+                          ? null
+                          : _undoCompletionAction,
+                      onMarkCompleted: () =>
+                          _applyCompletionSelection(completed: true),
+                      onMarkIncomplete: () =>
+                          _applyCompletionSelection(completed: false),
+                      onClearSelection: _clearCompletionSelection,
+                    ),
+                  ),
+                ),
               Positioned(
                 left: 12,
-                top: 12,
-                bottom: 72,
-                key: const ValueKey('renderer-settings-panel'),
-                width: panelWidth,
-                child: _PatternRenderSettingsPanel(
-                  settings: _settings,
-                  onChanged: _applySettings,
-                  onOpacityChanged: _previewOpacity,
-                  onOpacityChangeEnd: _saveOpacity,
-                ),
-              ),
-            if (_showSymbolPalette)
-              Positioned(
-                right: 12,
-                top: 12,
-                bottom: 72,
-                key: const ValueKey('symbol-palette-panel'),
-                width: paletteWidth,
-                child: _PatternSymbolPalettePanel(
-                  document: document,
-                  selection: _selection,
-                  onSelected: _selectSymbol,
-                ),
-              ),
-            Positioned(
-              left: 12,
-              bottom: 12,
-              child: Opacity(
-                opacity: 0.85,
-                child: FloatingActionButton.small(
-                  key: const ValueKey('renderer-settings-toggle'),
-                  heroTag: 'renderer-settings-fab',
-                  tooltip: 'Renderer settings',
-                  onPressed: () =>
-                      setState(() => _showSettings = !_showSettings),
-                  child: Icon(_showSettings ? Icons.close : Icons.tune),
-                ),
-              ),
-            ),
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: Opacity(
-                opacity: 0.85,
-                child: FloatingActionButton.small(
-                  key: const ValueKey('symbol-palette-toggle'),
-                  heroTag: 'symbol-palette-fab',
-                  tooltip: 'Symbol palette',
-                  onPressed: () =>
-                      setState(() => _showSymbolPalette = !_showSymbolPalette),
-                  child: Icon(
-                    _showSymbolPalette ? Icons.close : Icons.palette_outlined,
+                bottom: 12,
+                child: Opacity(
+                  opacity: 0.85,
+                  child: FloatingActionButton.small(
+                    key: const ValueKey('renderer-settings-toggle'),
+                    heroTag: 'renderer-settings-fab',
+                    tooltip: 'Pattern View Settings',
+                    onPressed: _toggleSettingsPanel,
+                    child: Icon(_showSettings ? Icons.close : Icons.tune),
                   ),
                 ),
               ),
-            ),
-          ],
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: Opacity(
+                  opacity: 0.85,
+                  child: FloatingActionButton.small(
+                    key: const ValueKey('symbol-palette-toggle'),
+                    heroTag: 'symbol-palette-fab',
+                    tooltip: 'Symbol palette',
+                    onPressed: _toggleSymbolPalette,
+                    child: Icon(
+                      _showSymbolPalette ? Icons.close : Icons.palette_outlined,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -219,20 +290,166 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
 
   /// Selects a symbol and opens its inspector when selection is non-null.
   void _selectSymbol(String? symbolId) {
+    _dismissCompletionUndo();
     setState(() {
       _selection = _selection.select(symbolId);
       if (symbolId != null) _showSymbolPalette = true;
     });
   }
 
+  /// Toggles between symbol inspection and exact-cell completion editing.
+  void _toggleCompletionMode() {
+    _dismissCompletionUndo();
+    setState(() {
+      if (_interactionMode == PatternInteractionMode.browse) {
+        _interactionMode = PatternInteractionMode.editCompletion;
+        _selection = _selection.select(null);
+      } else {
+        _interactionMode = PatternInteractionMode.browse;
+        _completionSelection = _completionSelection.clear();
+      }
+    });
+  }
+
+  /// Toggles one populated coordinate in the transient completion selection.
+  void _toggleCompletionCell(GridCoordinate coordinate) {
+    _dismissCompletionUndo();
+    setState(() {
+      _completionSelection = _completionSelection.toggle(coordinate);
+    });
+  }
+
+  /// Clears exact-cell selection without changing persisted progress.
+  void _clearCompletionSelection() {
+    _dismissCompletionUndo();
+    setState(() {
+      _completionSelection = _completionSelection.clear();
+    });
+  }
+
+  /// Applies one completion value to every exactly selected coordinate.
+  void _applyCompletionSelection({required bool completed}) {
+    _dismissCompletionUndo();
+    if (_completionSelection.isEmpty) return;
+    final previousCells = _completedCells;
+    final updatedCells = Set<GridCoordinate>.of(_completedCells);
+    if (completed) {
+      updatedCells.addAll(_completionSelection.coordinates);
+    } else {
+      updatedCells.removeAll(_completionSelection.coordinates);
+    }
+    final changedCellCount = completed
+        ? updatedCells.length - previousCells.length
+        : previousCells.length - updatedCells.length;
+    setState(() {
+      _completedCells = Set<GridCoordinate>.unmodifiable(updatedCells);
+      _completionSelection = _completionSelection.clear();
+    });
+    if (changedCellCount == 0) return;
+    _persistCompletedCells(_completedCells);
+    final actionLabel = completed ? 'completed' : 'incomplete';
+    final message =
+        '$changedCellCount ${changedCellCount == 1 ? 'cell' : 'cells'} '
+        'marked $actionLabel.';
+    _showCompletionUndo(previousCells: previousCells, message: message);
+  }
+
+  /// Shows an inline Undo notice for exactly five seconds.
+  void _showCompletionUndo({
+    required Set<GridCoordinate> previousCells,
+    required String message,
+  }) {
+    _completionUndoTimer?.cancel();
+    setState(() {
+      _completionUndoNotice = _CompletionUndoNotice(
+        message: message,
+        previousCells: previousCells,
+      );
+    });
+    _completionUndoTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted || _completionUndoNotice == null) return;
+      setState(() => _completionUndoNotice = null);
+      _completionUndoTimer = null;
+    });
+  }
+
+  /// Restores completion state captured by the visible Undo notice.
+  void _undoCompletionAction() {
+    final notice = _completionUndoNotice;
+    if (notice == null) return;
+    _completionUndoTimer?.cancel();
+    _completionUndoTimer = null;
+    setState(() {
+      _completionUndoNotice = null;
+      _completedCells = notice.previousCells;
+    });
+    _persistCompletedCells(_completedCells);
+  }
+
+  /// Removes completion Undo feedback when another interaction begins.
+  void _dismissCompletionUndo() {
+    if (_completionUndoNotice == null) return;
+    _completionUndoTimer?.cancel();
+    _completionUndoTimer = null;
+    setState(() => _completionUndoNotice = null);
+  }
+
+  /// Dismisses the notice after a body pointer action finishes dispatching.
+  void _dismissCompletionUndoAfterPointer(PointerUpEvent event) {
+    final visibleNotice = _completionUndoNotice;
+    if (visibleNotice == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !identical(_completionUndoNotice, visibleNotice)) return;
+      _dismissCompletionUndo();
+    });
+  }
+
+  /// Toggles the renderer settings panel and clears transient Undo feedback.
+  void _toggleSettingsPanel() {
+    _dismissCompletionUndo();
+    setState(() => _showSettings = !_showSettings);
+  }
+
+  /// Toggles the symbol palette and clears transient Undo feedback.
+  void _toggleSymbolPalette() {
+    _dismissCompletionUndo();
+    setState(() => _showSymbolPalette = !_showSymbolPalette);
+  }
+
+  /// Persists completed coordinates while preserving markers and viewport data.
+  void _persistCompletedCells(Set<GridCoordinate> completedCells) {
+    final current = _progress;
+    final updated = ProgressState(
+      documentId: widget.documentId,
+      schemaVersion: current?.schemaVersion ?? 1,
+      completedCells: completedCells,
+      markers: current?.markers ?? const [],
+      viewport: current?.viewport,
+      lastInteractionAt: DateTime.now().toUtc(),
+    );
+    _queueProgressSave(updated);
+  }
+
+  /// Explains why exact completion editing is unavailable at overview zoom.
+  void _showCompletionZoomGuidance() {
+    _dismissCompletionUndo();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text('Zoom in to select individual cells.')),
+      );
+  }
+
   /// Applies and persists a discrete renderer setting change.
   void _applySettings(PatternRenderSettings settings) {
+    _dismissCompletionUndo();
     setState(() => _settings = settings);
     _persistSettings(settings);
   }
 
   /// Updates opacity immediately while the slider is moving.
   void _previewOpacity(double opacity) {
+    _dismissCompletionUndo();
     setState(() {
       _settings = _settings.copyWith(cellColorOpacity: opacity);
     });
@@ -240,7 +457,24 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
 
   /// Persists the final opacity after a slider interaction settles.
   void _saveOpacity(double opacity) {
+    _dismissCompletionUndo();
     final settings = _settings.copyWith(cellColorOpacity: opacity);
+    setState(() => _settings = settings);
+    _persistSettings(settings);
+  }
+
+  /// Updates completed-cell opacity immediately while its slider is moving.
+  void _previewCompletedOpacity(double opacity) {
+    _dismissCompletionUndo();
+    setState(() {
+      _settings = _settings.copyWith(completedCellOpacity: opacity);
+    });
+  }
+
+  /// Persists the final completed-cell opacity after slider interaction.
+  void _saveCompletedOpacity(double opacity) {
+    _dismissCompletionUndo();
+    final settings = _settings.copyWith(completedCellOpacity: opacity);
     setState(() => _settings = settings);
     _persistSettings(settings);
   }
@@ -265,6 +499,11 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       viewport: viewport,
       lastInteractionAt: DateTime.now().toUtc(),
     );
+    _queueProgressSave(updated);
+  }
+
+  /// Queues a complete progress snapshot after all earlier writes settle.
+  void _queueProgressSave(ProgressState updated) {
     _progress = updated;
     final previousSave = _saveChain;
     _saveChain = () async {
@@ -287,9 +526,135 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(content: Text('Unable to save renderer settings.')),
+          const SnackBar(content: Text('Unable to save pattern progress.')),
         );
     }
+  }
+}
+
+/// Snapshot and message backing the transient inline completion Undo notice.
+class _CompletionUndoNotice {
+  /// Creates an immutable notice for one completed-cell change.
+  _CompletionUndoNotice({
+    required this.message,
+    required Set<GridCoordinate> previousCells,
+  }) : previousCells = Set<GridCoordinate>.unmodifiable(previousCells);
+
+  /// Human-readable description of the completion change.
+  final String message;
+
+  /// Completion snapshot restored when Undo is selected.
+  final Set<GridCoordinate> previousCells;
+}
+
+/// Floating controls for applying completion state to exact selected cells.
+class _CompletionActionBar extends StatelessWidget {
+  /// Creates completion controls for the current transient cell selection.
+  const _CompletionActionBar({
+    required this.selectionCount,
+    required this.undoMessage,
+    required this.onUndo,
+    required this.onMarkCompleted,
+    required this.onMarkIncomplete,
+    required this.onClearSelection,
+  });
+
+  /// Number of exact cells awaiting a completion action.
+  final int selectionCount;
+
+  /// Completion result announced inline without covering workspace controls.
+  final String? undoMessage;
+
+  /// Restores the completion snapshot associated with [undoMessage].
+  final VoidCallback? onUndo;
+
+  /// Marks every selected coordinate complete.
+  final VoidCallback onMarkCompleted;
+
+  /// Marks every selected coordinate incomplete.
+  final VoidCallback onMarkIncomplete;
+
+  /// Clears selection without changing completion state.
+  final VoidCallback onClearSelection;
+
+  /// Builds a compact action surface that can wrap on narrow viewports.
+  @override
+  Widget build(BuildContext context) {
+    final hasSelection = selectionCount > 0;
+    return Material(
+      key: const ValueKey('completion-action-bar'),
+      elevation: 4,
+      borderRadius: BorderRadius.circular(16),
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          alignment: WrapAlignment.center,
+          children: [
+            if (undoMessage == null)
+              Text(
+                hasSelection
+                    ? '$selectionCount selected'
+                    : 'Tap stitches to select',
+              )
+            else
+              Container(
+                key: const ValueKey('completion-undo-snackbar'),
+                constraints: const BoxConstraints(maxWidth: 320),
+                padding: const EdgeInsets.only(left: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.inverseSurface,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Semantics(
+                  liveRegion: true,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          undoMessage!,
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onInverseSurface,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        key: const ValueKey('undo-completion-action'),
+                        onPressed: onUndo,
+                        child: const Text('Undo'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            FilledButton.icon(
+              key: const ValueKey('mark-completed'),
+              onPressed: hasSelection ? onMarkCompleted : null,
+              icon: const Icon(Icons.check),
+              label: const Text('Complete'),
+            ),
+            OutlinedButton.icon(
+              key: const ValueKey('mark-incomplete'),
+              onPressed: hasSelection ? onMarkIncomplete : null,
+              icon: const Icon(Icons.remove_done),
+              label: const Text('Incomplete'),
+            ),
+            IconButton(
+              key: const ValueKey('clear-completion-selection'),
+              tooltip: 'Clear cell selection',
+              onPressed: hasSelection ? onClearSelection : null,
+              icon: const Icon(Icons.clear),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -301,6 +666,8 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
     required this.onChanged,
     required this.onOpacityChanged,
     required this.onOpacityChangeEnd,
+    required this.onCompletedOpacityChanged,
+    required this.onCompletedOpacityChangeEnd,
   });
 
   /// Current immutable renderer settings.
@@ -314,6 +681,12 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
 
   /// Callback for persisting a settled opacity value.
   final ValueChanged<double> onOpacityChangeEnd;
+
+  /// Callback for live completed-cell opacity previews.
+  final ValueChanged<double> onCompletedOpacityChanged;
+
+  /// Callback for persisting a settled completed-cell opacity value.
+  final ValueChanged<double> onCompletedOpacityChangeEnd;
 
   /// Builds scrollable controls that fit desktop and compact-height layouts.
   @override
@@ -439,6 +812,73 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
             value: settings.showRegions,
             onChanged: (value) =>
                 onChanged(settings.copyWith(showRegions: value)),
+          ),
+          SwitchListTile(
+            key: const ValueKey('show-completed-overlay-setting'),
+            dense: true,
+            title: const Text('Completed-cell overlay'),
+            value: settings.showCompletedCellOverlay,
+            onChanged: (value) =>
+                onChanged(settings.copyWith(showCompletedCellOverlay: value)),
+          ),
+          if (settings.showCompletedCellOverlay) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: DropdownButtonFormField<CompletedCellColorPreset>(
+                key: const ValueKey('completed-cell-color-setting'),
+                initialValue: settings.completedCellColor,
+                decoration: const InputDecoration(
+                  labelText: 'Completed-cell color',
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: CompletedCellColorPreset.neutralGray,
+                    child: Text('Neutral gray'),
+                  ),
+                  DropdownMenuItem(
+                    value: CompletedCellColorPreset.darkGray,
+                    child: Text('Dark gray'),
+                  ),
+                  DropdownMenuItem(
+                    value: CompletedCellColorPreset.lightGray,
+                    child: Text('Light gray'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    onChanged(settings.copyWith(completedCellColor: value));
+                  }
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Expanded(child: Text('Completed opacity')),
+                  Text('${(settings.completedCellOpacity * 100).round()}%'),
+                ],
+              ),
+            ),
+            Slider(
+              key: const ValueKey('completed-cell-opacity-setting'),
+              value: settings.completedCellOpacity,
+              onChanged: onCompletedOpacityChanged,
+              onChangeEnd: onCompletedOpacityChangeEnd,
+            ),
+          ],
+          SwitchListTile(
+            key: const ValueKey('include-completed-in-selection-setting'),
+            dense: true,
+            title: const Text('Select completed cells'),
+            subtitle: const Text(
+              'Include completed cells in symbol highlighting',
+            ),
+            value: settings.includeCompletedCellsInSelection,
+            onChanged: (value) => onChanged(
+              settings.copyWith(includeCompletedCellsInSelection: value),
+            ),
           ),
         ],
       ),
@@ -629,9 +1069,16 @@ class PatternRenderView extends StatelessWidget {
     required this.document,
     this.settings = const PatternRenderSettings(),
     this.selection = const PatternRenderSelection(),
+    this.completedCells = const <GridCoordinate>{},
+    this.interactionMode = PatternInteractionMode.browse,
+    CompletionCellSelection? completionSelection,
     this.onSymbolSelected,
+    this.onCompletionCellSelected,
+    this.onCompletionEditUnavailable,
+    this.onInteraction,
     super.key,
-  });
+  }) : completionSelection =
+           completionSelection ?? const CompletionCellSelection.empty();
 
   /// Pattern data rendered by the viewport.
   final PatternDocument document;
@@ -642,8 +1089,26 @@ class PatternRenderView extends StatelessWidget {
   /// Ephemeral symbol selection highlighted across matching visible cells.
   final PatternRenderSelection selection;
 
+  /// Completed coordinates used by progress-aware renderer overlays.
+  final Set<GridCoordinate> completedCells;
+
+  /// Active interpretation of taps inside the viewport.
+  final PatternInteractionMode interactionMode;
+
+  /// Exact coordinates selected for pending completion changes.
+  final CompletionCellSelection completionSelection;
+
   /// Reports direct pattern-cell selection changes.
   final ValueChanged<String?>? onSymbolSelected;
+
+  /// Reports exact-cell selection changes in completion-edit mode.
+  final ValueChanged<GridCoordinate>? onCompletionCellSelected;
+
+  /// Reports completion taps attempted below the legible zoom threshold.
+  final VoidCallback? onCompletionEditUnavailable;
+
+  /// Reports viewport interaction so transient completion feedback can clear.
+  final VoidCallback? onInteraction;
 
   /// Builds a bounded surface whose camera maps grid coordinates to pixels.
   @override
@@ -659,7 +1124,13 @@ class PatternRenderView extends StatelessWidget {
         document: document,
         settings: settings,
         selection: selection,
+        completedCells: completedCells,
+        interactionMode: interactionMode,
+        completionSelection: completionSelection,
         onSymbolSelected: onSymbolSelected,
+        onCompletionCellSelected: onCompletionCellSelected,
+        onCompletionEditUnavailable: onCompletionEditUnavailable,
+        onInteraction: onInteraction,
       ),
     );
   }

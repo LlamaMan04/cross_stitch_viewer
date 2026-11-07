@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Includes the domain-aligned pattern and progress table definitions.
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   /// Defines creation, upgrade, and connection configuration for the database.
   @override

@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/pattern_definitions.dart';
 import '../../domain/pattern_document.dart';
 import '../../domain/pattern_grid.dart';
 import '../../domain/progress_models.dart';
+import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 import 'pattern_render_selection.dart';
 
@@ -18,8 +20,11 @@ class ViewportPatternPainter extends CustomPainter {
     required this.visibleBounds,
     required this.settings,
     required this.selection,
+    required this.completedCells,
+    required this.completionSelection,
     required this.surfaceColor,
     required this.regionColor,
+    required this.completionSelectionColor,
   });
 
   /// Normalized source document rendered by this painter.
@@ -37,18 +42,39 @@ class ViewportPatternPainter extends CustomPainter {
   /// Ephemeral symbol selection highlighted during this paint pass.
   final PatternRenderSelection selection;
 
+  /// Completed grid coordinates used by dynamic cell overlays.
+  final Set<GridCoordinate> completedCells;
+
+  /// Exact coordinates selected for a pending completion action.
+  final Set<GridCoordinate> completionSelection;
+
   /// Background color used for the viewport and empty cells.
   final Color surfaceColor;
 
   /// Theme color used for enabled source-region outlines.
   final Color regionColor;
 
+  /// Theme color used to outline exact completion-edit selections.
+  final Color completionSelectionColor;
+
+  /// Completed populated cells intersecting the current visible bounds.
+  Iterable<StitchCell> get completedVisibleCells sync* {
+    for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
+      if (completedCells.contains(cell.coordinate)) yield cell;
+    }
+  }
+
   /// Matching visible cells used by selection painting and focused tests.
   Iterable<StitchCell> get selectedVisibleCells sync* {
     final selectedSymbolId = selection.selectedSymbolId;
     if (selectedSymbolId == null) return;
     for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
-      if (cell.symbolId == selectedSymbolId) yield cell;
+      final isExcludedCompletedCell =
+          !settings.includeCompletedCellsInSelection &&
+          completedCells.contains(cell.coordinate);
+      if (cell.symbolId == selectedSymbolId && !isExcludedCompletedCell) {
+        yield cell;
+      }
     }
   }
 
@@ -59,22 +85,61 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
     _paintDocumentBackground(canvas);
-    _paintCells(canvas);
+    _paintCellFills(canvas);
+    if (settings.showCompletedCellOverlay) {
+      _paintCompletedCells(canvas);
+    }
     _paintSelectedSymbol(canvas);
+    _paintGlyphs(canvas);
     if (settings.showGrid) _paintGrid(canvas);
     if (settings.showRegions) _paintRegions(canvas);
+    _paintCompletionSelection(canvas);
     canvas.restore();
   }
 
-  /// Paints a translucent fill highlight across selected visible cells.
+  /// Paints an inset outline around exact cells selected for completion edits.
+  void _paintCompletionSelection(Canvas canvas) {
+    if (completionSelection.isEmpty) return;
+    final outlinePaint = Paint()
+      ..color = completionSelectionColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.min(3, camera.cellSize * 0.2);
+    for (final coordinate in completionSelection) {
+      if (!visibleBounds.contains(coordinate)) continue;
+      final cell = document.grid.cellAt(coordinate);
+      if (cell == null) continue;
+      final cellRect = _cellRect(cell).deflate(outlinePaint.strokeWidth);
+      canvas.drawRect(cellRect, outlinePaint);
+    }
+  }
+
+  /// Paints a translucent accent and outline across selected visible cells.
   void _paintSelectedSymbol(Canvas canvas) {
     final highlightColor = _parseColor(
       settings.selectionHighlightColor.colorHex,
     );
-    final highlightPaint = Paint()
-      ..color = highlightColor.withValues(alpha: 0.38);
+    final fillPaint = Paint()..color = highlightColor.withValues(alpha: 0.22);
+    final outlinePaint = Paint()
+      ..color = highlightColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.min(2, camera.cellSize * 0.16);
     for (final cell in selectedVisibleCells) {
-      canvas.drawRect(_cellRect(cell), highlightPaint);
+      final cellRect = _cellRect(cell);
+      canvas.drawRect(cellRect, fillPaint);
+      canvas.drawRect(
+        cellRect.deflate(outlinePaint.strokeWidth / 2),
+        outlinePaint,
+      );
+    }
+  }
+
+  /// Paints the configured neutral overlay on completed visible cells.
+  void _paintCompletedCells(Canvas canvas) {
+    final completedPaint = Paint()
+      ..color = _parseColor(settings.completedCellColor.colorHex)
+          .withValues(alpha: settings.completedCellOpacity);
+    for (final cell in completedVisibleCells) {
+      canvas.drawRect(_cellRect(cell), completedPaint);
     }
   }
 
@@ -91,33 +156,55 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.drawRect(documentRect, Paint()..color = surfaceColor);
   }
 
-  /// Paints populated cells returned by the grid's spatial range query.
-  void _paintCells(Canvas canvas) {
-    if (!settings.showCellColor && !settings.showSymbols) return;
+  /// Paints configured thread-color fills for visible populated cells.
+  void _paintCellFills(Canvas canvas) {
+    if (!settings.showCellColor) return;
     for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
-      // Resolve symbol metadata only for cells returned by the spatial query.
       final symbol = document.symbolById(cell.symbolId);
       if (symbol == null) continue;
-      // Cell and color values are reused by both fill and glyph layers.
-      final cellRect = _cellRect(cell);
       final threadColor = _parseColor(symbol.thread.color);
-      final effectiveBackground = settings.showCellColor
-          ? Color.alphaBlend(
-              threadColor.withValues(alpha: settings.cellColorOpacity),
-              surfaceColor,
-            )
-          : surfaceColor;
-      if (settings.showCellColor) {
-        canvas.drawRect(
-          cellRect,
-          Paint()
-            ..color = threadColor.withValues(alpha: settings.cellColorOpacity),
-        );
-      }
-      if (settings.showSymbols && camera.cellSize >= 12) {
-        _paintGlyph(canvas, cellRect, symbol, effectiveBackground);
-      }
+      canvas.drawRect(
+        _cellRect(cell),
+        Paint()
+          ..color = threadColor.withValues(alpha: settings.cellColorOpacity),
+      );
     }
+  }
+
+  /// Paints glyphs after dynamic overlays so symbols remain legible.
+  void _paintGlyphs(Canvas canvas) {
+    if (!settings.showSymbols || camera.cellSize < 12) return;
+    for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
+      final symbol = document.symbolById(cell.symbolId);
+      if (symbol == null) continue;
+      _paintGlyph(
+        canvas,
+        _cellRect(cell),
+        symbol,
+        _effectiveCellBackground(cell, symbol),
+      );
+    }
+  }
+
+  /// Resolves the composited background used for glyph contrast selection.
+  Color _effectiveCellBackground(StitchCell cell, SymbolDefinition symbol) {
+    var background = surfaceColor;
+    if (settings.showCellColor) {
+      background = Color.alphaBlend(
+        _parseColor(symbol.thread.color)
+            .withValues(alpha: settings.cellColorOpacity),
+        background,
+      );
+    }
+    if (settings.showCompletedCellOverlay &&
+        completedCells.contains(cell.coordinate)) {
+      background = Color.alphaBlend(
+        _parseColor(settings.completedCellColor.colorHex)
+            .withValues(alpha: settings.completedCellOpacity),
+        background,
+      );
+    }
+    return background;
   }
 
   /// Paints outlines for source regions intersecting the visible grid range.
@@ -233,6 +320,9 @@ class ViewportPatternPainter extends CustomPainter {
       oldDelegate.visibleBounds != visibleBounds ||
       oldDelegate.settings != settings ||
       oldDelegate.selection != selection ||
+      !setEquals(oldDelegate.completedCells, completedCells) ||
+      !setEquals(oldDelegate.completionSelection, completionSelection) ||
       oldDelegate.surfaceColor != surfaceColor ||
-      oldDelegate.regionColor != regionColor;
+      oldDelegate.regionColor != regionColor ||
+      oldDelegate.completionSelectionColor != completionSelectionColor;
 }

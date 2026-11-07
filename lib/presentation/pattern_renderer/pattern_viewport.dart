@@ -7,6 +7,7 @@ import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
+import 'pattern_interaction.dart';
 import 'pattern_render_selection.dart';
 import 'viewport_pattern_painter.dart';
 
@@ -17,7 +18,13 @@ class PatternViewport extends StatefulWidget {
     required this.document,
     required this.settings,
     required this.selection,
+    required this.completedCells,
+    required this.interactionMode,
+    required this.completionSelection,
     this.onSymbolSelected,
+    this.onCompletionCellSelected,
+    this.onCompletionEditUnavailable,
+    this.onInteraction,
     super.key,
   });
 
@@ -30,8 +37,26 @@ class PatternViewport extends StatefulWidget {
   /// Ephemeral symbol selection highlighted without modifying pattern data.
   final PatternRenderSelection selection;
 
+  /// Completed coordinates used by dynamic renderer overlays.
+  final Set<GridCoordinate> completedCells;
+
+  /// Active interpretation of taps inside the viewport.
+  final PatternInteractionMode interactionMode;
+
+  /// Exact cells selected for a pending completion action.
+  final CompletionCellSelection completionSelection;
+
   /// Reports a tapped populated cell's symbol ID, or null for an empty cell.
   final ValueChanged<String?>? onSymbolSelected;
+
+  /// Reports a populated coordinate tapped in completion-edit mode.
+  final ValueChanged<GridCoordinate>? onCompletionCellSelected;
+
+  /// Reports that completion editing requires a more legible zoom level.
+  final VoidCallback? onCompletionEditUnavailable;
+
+  /// Reports navigation or tap interaction so transient feedback can clear.
+  final VoidCallback? onInteraction;
 
   /// Creates the mutable camera state for this viewport.
   @override
@@ -88,7 +113,11 @@ class _PatternViewportState extends State<PatternViewport> {
             behavior: HitTestBehavior.opaque,
             onScaleStart: _handleScaleStart,
             onScaleUpdate: _handleScaleUpdate,
-            onTapUp: widget.onSymbolSelected == null ? null : _handleTapUp,
+            onTapUp:
+                widget.onSymbolSelected == null &&
+                    widget.onCompletionCellSelected == null
+                ? null
+                : _handleTapUp,
             child: CustomPaint(
               key: const ValueKey('pattern-grid-canvas'),
               painter: ViewportPatternPainter(
@@ -97,8 +126,11 @@ class _PatternViewportState extends State<PatternViewport> {
                 visibleBounds: visibleBounds,
                 settings: widget.settings,
                 selection: widget.selection,
+                completedCells: widget.completedCells,
+                completionSelection: widget.completionSelection.coordinates,
                 surfaceColor: colors.surfaceContainerLowest,
                 regionColor: colors.primary,
+                completionSelectionColor: colors.tertiary,
               ),
               child: const SizedBox.expand(),
             ),
@@ -110,18 +142,30 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Converts a tap into a populated cell's symbol selection.
   void _handleTapUp(TapUpDetails details) {
+    widget.onInteraction?.call();
     final camera = _camera;
     if (camera == null) return;
+    if (widget.interactionMode == PatternInteractionMode.editCompletion &&
+        camera.cellSize < 12) {
+      widget.onCompletionEditUnavailable?.call();
+      return;
+    }
     final gridPoint = camera.screenToGrid(details.localPosition);
     final coordinate = GridCoordinate(
       gridPoint.dy.floor(),
       gridPoint.dx.floor(),
     );
     if (!widget.document.grid.dimensions.contains(coordinate)) {
-      widget.onSymbolSelected?.call(null);
+      if (widget.interactionMode == PatternInteractionMode.browse) {
+        widget.onSymbolSelected?.call(null);
+      }
       return;
     }
     final cell = widget.document.grid.cellAt(coordinate);
+    if (widget.interactionMode == PatternInteractionMode.editCompletion) {
+      if (cell != null) widget.onCompletionCellSelected?.call(coordinate);
+      return;
+    }
     widget.onSymbolSelected?.call(cell?.symbolId);
   }
 
@@ -166,6 +210,7 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Captures stable camera inputs for the duration of one scale gesture.
   void _handleScaleStart(ScaleStartDetails details) {
+    widget.onInteraction?.call();
     _gestureStartCamera = _camera;
     _gestureStartFocalPoint = details.localFocalPoint;
   }
@@ -209,6 +254,7 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Converts mouse-wheel movement into focal zoom at the pointer location.
   void _handlePointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent || _camera == null) return;
+    widget.onInteraction?.call();
     final viewportSize = _viewportSize;
     if (viewportSize == null) return;
     // Exponential scaling makes equal wheel deltas feel symmetric.

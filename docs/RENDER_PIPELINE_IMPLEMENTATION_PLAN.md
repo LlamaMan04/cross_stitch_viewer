@@ -39,7 +39,8 @@ Implemented today:
 3. `ViewportPatternPainter` paints the background, visible cells, visible
    grid rules, and optionally visible source-region outlines.
 4. `PatternRenderSettings` controls symbols, thread-color fills, opacity, grid
-   visibility/color, and source-region visibility; settings are persisted.
+   visibility/color, completion styling and selection inclusion, and
+   source-region visibility; settings are persisted.
 5. The workspace has a compact app bar and a collapsible settings panel.
 
 The renderer is therefore visible-range bounded, but it is not yet frame-cost
@@ -98,6 +99,8 @@ Create the following presentation-layer types, preferably under
 | `PatternRenderSettings` | Immutable, persistable visual switches, colors, opacity, and ruler configuration. |
 | `GridColorPreset` | Named allowed grid colors; default is black. |
 | `PatternRenderSelection` | Ephemeral selected symbol ID and any selection-specific visual state. |
+| `PatternInteractionMode` | Ephemeral browse or exact-cell completion-edit tap behavior. |
+| `CompletionCellSelection` | Ephemeral set of exact coordinates awaiting a completion action. |
 | `CompletedCellStyle` | Immutable color and opacity used to gray completed cells. |
 | `RenderLod` | Automatic overview, grid, or detail paint policy derived from `cellSizePx`. |
 | `PatternCamera` | Pixels per cell plus the screen-space location of grid coordinate `(0, 0)`. |
@@ -116,6 +119,8 @@ const PatternRenderSettings(
   colorMode: PatternColorMode.threadColor,
   completedCellColor: Colors.grey,
   completedCellOpacity: 0.55,
+  showCompletedCellOverlay: true,
+  includeCompletedCellsInSelection: true,
   gridColor: Colors.black,
   showRegions: false,
   showTopRuler: true,
@@ -158,9 +163,17 @@ The visible-only foundations are complete: `PatternCamera`, domain
 `GridBounds`, `PatternViewport`, `ViewportPatternPainter`, the `PatternGrid`
 cell tile index, the `PatternDocument` region tile index, basic render
 settings, and the compact workspace/settings-panel composition. Camera
-restoration and debounced camera persistence, rulers, completion overlays,
-selected-symbol highlighting, overview tile summaries, and the performance
-layers below remain planned work.
+restoration and debounced camera persistence, rulers, overview tile summaries,
+and the performance layers below remain planned work. Visible-only completion
+overlays and selected-symbol highlighting are implemented, including persisted
+controls for overlay visibility and whether selection includes completed cells.
+Users can enter a distinct completion-edit mode, select exact populated
+coordinates without changing symbol selection, batch-mark those cells complete
+or incomplete, and undo the last action. Completion changes persist through
+`ProgressState` while the pending coordinate selection remains ephemeral. The
+Undo notice is embedded in the completion action surface so it cannot obscure
+workspace controls, remains available for five seconds, and clears when the
+user continues interacting.
 
 Extend `PatternGrid` with an efficient, immutable range query such as:
 
@@ -394,6 +407,8 @@ Add one `ViewportStates` column for each `PatternRenderSettings` property:
 | `showLeftRuler` | `show_left_ruler` | Boolean, default `true`. |
 | `completedCellColor` | `completed_cell_color` | Canonical `#RRGGBB`, default neutral gray. |
 | `completedCellOpacity` | `completed_cell_opacity` | Real, default `0.55`, constrained to `0..1`. |
+| `showCompletedCellOverlay` | `show_completed_cell_overlay` | Boolean, default `true`. |
+| `includeCompletedCellsInSelection` | `include_completed_cells_in_selection` | Boolean, default `true`. |
 
 Use non-null columns with SQL defaults and checks wherever SQLite can enforce
 the contract. The database migration must add the columns with those defaults,
@@ -447,9 +462,9 @@ pointer events do not write progress state on every update.
 4. [x] Add symbol-only, color-only, combined, and neither rendering modes.
 5. [x] Implement true thread-color parsing and opacity, preserving the source RGB
    value for enabled cell fills.
-6. [ ] Add visible-only completed-cell overlays using `ProgressState` and its
+6. [x] Add visible-only completed-cell overlays using `ProgressState` and its
    configurable gray color/opacity.
-7. [ ] Add visible-only selected-symbol highlights, keyed by selected symbol ID.
+7. [x] Add visible-only selected-symbol highlights, keyed by selected symbol ID.
 8. [x] Add source-region intersection filtering and default it to hidden.
 9. [ ] Apply the three-level LOD policy: visible tile summaries at overview,
     glyph suppression at grid level, and complete per-cell rendering at detail.
@@ -494,14 +509,16 @@ pointer events do not write progress state on every update.
 
 ### Phase 5: Integrate progress and remove legacy behavior
 
-1. Load and restore camera state plus every persisted render setting when
+1. [x] Add exact-cell completion-edit mode with batch complete/incomplete
+   actions, transient coordinate selection, and undo.
+2. Load and restore camera state plus every persisted render setting when
    opening a document.
-2. Debounce and save camera state and render-settings changes through
+3. Debounce and save camera state and render-settings changes through
    `ProgressRepository`.
-3. Remove the old `InteractiveViewer`, its padded full-grid child, and the
+4. Remove the old `InteractiveViewer`, its padded full-grid child, and the
    all-pattern label implementation.
-4. Update widget tests that assert the old widget tree or legacy scale values.
-5. Document the coordinate and persistence conventions in code comments.
+5. Update widget tests that assert the old widget tree or legacy scale values.
+6. Document the coordinate and persistence conventions in code comments.
 
 ## Test and Verification Plan
 
@@ -536,6 +553,9 @@ pointer events do not write progress state on every update.
   that symbol; the highlight persists through pan/zoom and clears correctly.
 - Completed cells use the configured gray overlay while retaining grid lines
   and enabled symbols.
+- Completion-edit mode selects exact populated coordinates, does not activate
+  symbol selection, keeps drag navigation intact, persists complete/incomplete
+  actions, and supports undo.
 - Overview suppresses glyphs and minor rules while retaining major rules,
   document borders, and tile-level completion/selection indicators.
 - Grid LOD suppresses glyphs; detail LOD restores individual symbols and all

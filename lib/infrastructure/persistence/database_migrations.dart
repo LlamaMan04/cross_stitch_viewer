@@ -112,6 +112,10 @@ Future<void> migrateAppDatabase(
             database.viewportStates.cellColorOpacity,
             database.viewportStates.gridColor,
             database.viewportStates.selectionHighlightColor,
+            database.viewportStates.showCompletedCellOverlay,
+            database.viewportStates.completedCellColor,
+            database.viewportStates.completedCellOpacity,
+            database.viewportStates.includeCompletedCellsInSelection,
             database.viewportStates.showRegions,
           ],
         ),
@@ -139,6 +143,19 @@ Future<void> migrateAppDatabase(
       TableMigration(
         database.viewportStates,
         newColumns: [database.viewportStates.selectionHighlightColor],
+      ),
+    );
+  }
+  if (from >= 2 && from < 6 && to >= 6) {
+    await migrator.alterTable(
+      TableMigration(
+        database.viewportStates,
+        newColumns: [
+          database.viewportStates.showCompletedCellOverlay,
+          database.viewportStates.completedCellColor,
+          database.viewportStates.completedCellOpacity,
+          database.viewportStates.includeCompletedCellsInSelection,
+        ],
       ),
     );
   }

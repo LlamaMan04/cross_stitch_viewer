@@ -106,6 +106,16 @@ void main() {
         loaded.viewport?.renderSettings.selectionHighlightColor,
         SelectionHighlightColorPreset.teal,
       );
+      expect(loaded.viewport?.renderSettings.showCompletedCellOverlay, isFalse);
+      expect(
+        loaded.viewport?.renderSettings.completedCellColor,
+        CompletedCellColorPreset.darkGray,
+      );
+      expect(loaded.viewport?.renderSettings.completedCellOpacity, 0.7);
+      expect(
+        loaded.viewport?.renderSettings.includeCompletedCellsInSelection,
+        isFalse,
+      );
       expect(loaded.viewport?.renderSettings.showRegions, isTrue);
       expect(loaded.lastInteractionAt, DateTime.utc(2026, 11, 3, 12));
 
@@ -304,6 +314,10 @@ ProgressState _progress() => ProgressState(
       cellColorOpacity: 0.45,
       gridColor: GridColorPreset.darkGray,
       selectionHighlightColor: SelectionHighlightColorPreset.teal,
+      showCompletedCellOverlay: false,
+      completedCellColor: CompletedCellColorPreset.darkGray,
+      completedCellOpacity: 0.7,
+      includeCompletedCellsInSelection: false,
       showRegions: true,
     ),
   ),

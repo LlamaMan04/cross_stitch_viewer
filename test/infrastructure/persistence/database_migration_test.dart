@@ -32,7 +32,7 @@ void main() {
       expect(
         (await database.customSelect('PRAGMA user_version').getSingle())
             .read<int>('user_version'),
-        5,
+        6,
       );
       expect(
         await database.customSelect('PRAGMA foreign_key_check').get(),
@@ -40,6 +40,53 @@ void main() {
       );
     },
   );
+
+  test('adds completed-cell settings to version 5 viewport rows', () async {
+    final legacy = sqlite3.openInMemory();
+    _createVersionFiveViewportFixture(legacy);
+    final database = AppDatabase(NativeDatabase.opened(legacy));
+    addTearDown(database.close);
+
+    final viewport = await database
+        .customSelect(
+          'SELECT show_completed_cell_overlay, completed_cell_color, '
+          'completed_cell_opacity, include_completed_cells_in_selection '
+          'FROM viewport_states',
+        )
+        .getSingle();
+
+    expect(viewport.read<int>('show_completed_cell_overlay'), 1);
+    expect(viewport.read<String>('completed_cell_color'), '#808080');
+    expect(viewport.read<double>('completed_cell_opacity'), 0.55);
+    expect(viewport.read<int>('include_completed_cells_in_selection'), 1);
+    expect(
+      (await database.customSelect('PRAGMA user_version').getSingle())
+          .read<int>('user_version'),
+      6,
+    );
+  });
+}
+
+/// Builds the version 5 viewport layout immediately preceding this migration.
+void _createVersionFiveViewportFixture(Database database) {
+  database.execute(
+    'CREATE TABLE viewport_states ('
+    'document_id TEXT PRIMARY KEY, zoom REAL NOT NULL, pan_x REAL NOT NULL, '
+    'pan_y REAL NOT NULL, anchor_row INTEGER NOT NULL, anchor_column INTEGER NOT NULL, '
+    'visible_rows INTEGER, visible_columns INTEGER, '
+    'show_cell_color INTEGER NOT NULL DEFAULT 0, '
+    'show_symbols INTEGER NOT NULL DEFAULT 1, show_grid INTEGER NOT NULL DEFAULT 1, '
+    'cell_color_opacity REAL NOT NULL DEFAULT 0.22, '
+    "grid_color TEXT NOT NULL DEFAULT '#000000', "
+    "selection_highlight_color TEXT NOT NULL DEFAULT '#FFC107', "
+    'show_regions INTEGER NOT NULL DEFAULT 0)',
+  );
+  database.execute(
+    'INSERT INTO viewport_states ('
+    'document_id, zoom, pan_x, pan_y, anchor_row, anchor_column'
+    ") VALUES ('old', 2, 0, 0, 1, 2)",
+  );
+  database.execute('PRAGMA user_version = 5');
 }
 
 /// Builds the changed portion of the original version 1 SQLite layout.

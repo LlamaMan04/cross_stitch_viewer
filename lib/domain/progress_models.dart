@@ -54,6 +54,33 @@ enum SelectionHighlightColorPreset {
       );
 }
 
+/// Allowed neutral colors for the completed-cell overlay.
+enum CompletedCellColorPreset {
+  /// Medium neutral gray used by default for completed stitches.
+  neutralGray('#808080'),
+
+  /// Dark gray for a stronger completed-cell treatment.
+  darkGray('#5F6368'),
+
+  /// Light gray for a softer completed-cell treatment.
+  lightGray('#B0B0B0');
+
+  /// Creates a preset with its canonical persisted RGB value.
+  const CompletedCellColorPreset(this.colorHex);
+
+  /// Canonical `#RRGGBB` value persisted for this preset.
+  final String colorHex;
+
+  /// Resolves a persisted RGB value to its supported preset.
+  static CompletedCellColorPreset fromColorHex(String value) =>
+      values.firstWhere(
+        (preset) => preset.colorHex == value,
+        orElse: () => throw const DocumentValidationException(
+          'Unsupported completed-cell color preset.',
+        ),
+      );
+}
+
 /// Immutable visual settings stored with one pattern viewport.
 class PatternRenderSettings {
   /// Creates settings with the documented initial renderer behavior.
@@ -64,6 +91,10 @@ class PatternRenderSettings {
     this.cellColorOpacity = 0.22,
     this.gridColor = GridColorPreset.black,
     this.selectionHighlightColor = SelectionHighlightColorPreset.amber,
+    this.showCompletedCellOverlay = true,
+    this.completedCellColor = CompletedCellColorPreset.neutralGray,
+    this.completedCellOpacity = 0.55,
+    this.includeCompletedCellsInSelection = true,
     this.showRegions = false,
   });
 
@@ -85,6 +116,18 @@ class PatternRenderSettings {
   /// Preset color used to fill cells sharing the selected symbol.
   final SelectionHighlightColorPreset selectionHighlightColor;
 
+  /// Whether completed populated cells receive the completion overlay.
+  final bool showCompletedCellOverlay;
+
+  /// Preset color used to gray completed populated cells.
+  final CompletedCellColorPreset completedCellColor;
+
+  /// Alpha applied to the completed-cell overlay.
+  final double completedCellOpacity;
+
+  /// Whether selected-symbol highlighting includes completed cells.
+  final bool includeCompletedCellsInSelection;
+
   /// Whether visible source-region outlines are displayed.
   final bool showRegions;
 
@@ -96,6 +139,10 @@ class PatternRenderSettings {
     double? cellColorOpacity,
     GridColorPreset? gridColor,
     SelectionHighlightColorPreset? selectionHighlightColor,
+    bool? showCompletedCellOverlay,
+    CompletedCellColorPreset? completedCellColor,
+    double? completedCellOpacity,
+    bool? includeCompletedCellsInSelection,
     bool? showRegions,
   }) => PatternRenderSettings(
     showCellColor: showCellColor ?? this.showCellColor,
@@ -105,6 +152,13 @@ class PatternRenderSettings {
     gridColor: gridColor ?? this.gridColor,
     selectionHighlightColor:
         selectionHighlightColor ?? this.selectionHighlightColor,
+    showCompletedCellOverlay:
+        showCompletedCellOverlay ?? this.showCompletedCellOverlay,
+    completedCellColor: completedCellColor ?? this.completedCellColor,
+    completedCellOpacity: completedCellOpacity ?? this.completedCellOpacity,
+    includeCompletedCellsInSelection:
+        includeCompletedCellsInSelection ??
+        this.includeCompletedCellsInSelection,
     showRegions: showRegions ?? this.showRegions,
   );
 
@@ -112,9 +166,12 @@ class PatternRenderSettings {
   void validate() {
     if (!cellColorOpacity.isFinite ||
         cellColorOpacity < 0 ||
-        cellColorOpacity > 1) {
+        cellColorOpacity > 1 ||
+        !completedCellOpacity.isFinite ||
+        completedCellOpacity < 0 ||
+        completedCellOpacity > 1) {
       throw const DocumentValidationException(
-        'Cell color opacity must be from zero through one.',
+        'Renderer opacity values must be from zero through one.',
       );
     }
   }
@@ -129,6 +186,11 @@ class PatternRenderSettings {
       cellColorOpacity == other.cellColorOpacity &&
       gridColor == other.gridColor &&
       selectionHighlightColor == other.selectionHighlightColor &&
+      showCompletedCellOverlay == other.showCompletedCellOverlay &&
+      completedCellColor == other.completedCellColor &&
+      completedCellOpacity == other.completedCellOpacity &&
+      includeCompletedCellsInSelection ==
+          other.includeCompletedCellsInSelection &&
       showRegions == other.showRegions;
 
   /// Hash code consistent with [operator ==].
@@ -140,6 +202,10 @@ class PatternRenderSettings {
     cellColorOpacity,
     gridColor,
     selectionHighlightColor,
+    showCompletedCellOverlay,
+    completedCellColor,
+    completedCellOpacity,
+    includeCompletedCellsInSelection,
     showRegions,
   );
 }

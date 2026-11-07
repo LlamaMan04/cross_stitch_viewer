@@ -62,6 +62,16 @@ abstract final class ProgressMapper {
       selectionHighlightColor: Value(
         viewport.renderSettings.selectionHighlightColor.colorHex,
       ),
+      showCompletedCellOverlay: Value(
+        viewport.renderSettings.showCompletedCellOverlay,
+      ),
+      completedCellColor: Value(
+        viewport.renderSettings.completedCellColor.colorHex,
+      ),
+      completedCellOpacity: Value(viewport.renderSettings.completedCellOpacity),
+      includeCompletedCellsInSelection: Value(
+        viewport.renderSettings.includeCompletedCellsInSelection,
+      ),
       showRegions: Value(viewport.renderSettings.showRegions),
     );
   }
@@ -111,6 +121,13 @@ abstract final class ProgressMapper {
                     SelectionHighlightColorPreset.fromColorHex(
                       viewport.selectionHighlightColor,
                     ),
+                showCompletedCellOverlay: viewport.showCompletedCellOverlay,
+                completedCellColor: CompletedCellColorPreset.fromColorHex(
+                  viewport.completedCellColor,
+                ),
+                completedCellOpacity: viewport.completedCellOpacity,
+                includeCompletedCellsInSelection:
+                    viewport.includeCompletedCellsInSelection,
                 showRegions: viewport.showRegions,
               ),
             ),

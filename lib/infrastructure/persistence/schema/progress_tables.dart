@@ -151,6 +151,22 @@ class ViewportStates extends Table {
   TextColumn get selectionHighlightColor =>
       text().withDefault(const Constant('#FFC107'))();
 
+  /// Defines whether completed cells receive the completion overlay.
+  BoolColumn get showCompletedCellOverlay =>
+      boolean().withDefault(const Constant(true))();
+
+  /// Defines the canonical RGB value of the completed-cell color preset.
+  TextColumn get completedCellColor =>
+      text().withDefault(const Constant('#808080'))();
+
+  /// Defines completed-cell overlay opacity from zero through one.
+  RealColumn get completedCellOpacity =>
+      real().withDefault(const Constant(0.55))();
+
+  /// Defines whether selection highlighting includes completed cells.
+  BoolColumn get includeCompletedCellsInSelection =>
+      boolean().withDefault(const Constant(true))();
+
   /// Defines whether source-region outlines are visible.
   BoolColumn get showRegions => boolean().withDefault(const Constant(false))();
 
@@ -169,7 +185,9 @@ class ViewportStates extends Table {
     'CHECK (visible_rows IS NULL OR visible_rows > 0)',
     'CHECK (visible_columns IS NULL OR visible_columns > 0)',
     'CHECK (cell_color_opacity >= 0 AND cell_color_opacity <= 1)',
+    'CHECK (completed_cell_opacity >= 0 AND completed_cell_opacity <= 1)',
     "CHECK (grid_color IN ('#000000', '#444444', '#A0A0A0'))",
     "CHECK (selection_highlight_color IN ('#FFC107', '#00A6A6', '#C2185B'))",
+    "CHECK (completed_cell_color IN ('#808080', '#5F6368', '#B0B0B0'))",
   ];
 }

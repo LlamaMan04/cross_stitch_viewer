@@ -5571,6 +5571,60 @@ class $ViewportStatesTable extends ViewportStates
         requiredDuringInsert: false,
         defaultValue: const Constant('#FFC107'),
       );
+  static const VerificationMeta _showCompletedCellOverlayMeta =
+      const VerificationMeta('showCompletedCellOverlay');
+  @override
+  late final GeneratedColumn<bool> showCompletedCellOverlay =
+      GeneratedColumn<bool>(
+        'show_completed_cell_overlay',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("show_completed_cell_overlay" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
+  static const VerificationMeta _completedCellColorMeta =
+      const VerificationMeta('completedCellColor');
+  @override
+  late final GeneratedColumn<String> completedCellColor =
+      GeneratedColumn<String>(
+        'completed_cell_color',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('#808080'),
+      );
+  static const VerificationMeta _completedCellOpacityMeta =
+      const VerificationMeta('completedCellOpacity');
+  @override
+  late final GeneratedColumn<double> completedCellOpacity =
+      GeneratedColumn<double>(
+        'completed_cell_opacity',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.55),
+      );
+  static const VerificationMeta _includeCompletedCellsInSelectionMeta =
+      const VerificationMeta('includeCompletedCellsInSelection');
+  @override
+  late final GeneratedColumn<bool> includeCompletedCellsInSelection =
+      GeneratedColumn<bool>(
+        'include_completed_cells_in_selection',
+        aliasedName,
+        false,
+        type: DriftSqlType.bool,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("include_completed_cells_in_selection" IN (0, 1))',
+        ),
+        defaultValue: const Constant(true),
+      );
   static const VerificationMeta _showRegionsMeta = const VerificationMeta(
     'showRegions',
   );
@@ -5602,6 +5656,10 @@ class $ViewportStatesTable extends ViewportStates
     cellColorOpacity,
     gridColor,
     selectionHighlightColor,
+    showCompletedCellOverlay,
+    completedCellColor,
+    completedCellOpacity,
+    includeCompletedCellsInSelection,
     showRegions,
   ];
   @override
@@ -5733,6 +5791,42 @@ class $ViewportStatesTable extends ViewportStates
         ),
       );
     }
+    if (data.containsKey('show_completed_cell_overlay')) {
+      context.handle(
+        _showCompletedCellOverlayMeta,
+        showCompletedCellOverlay.isAcceptableOrUnknown(
+          data['show_completed_cell_overlay']!,
+          _showCompletedCellOverlayMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completed_cell_color')) {
+      context.handle(
+        _completedCellColorMeta,
+        completedCellColor.isAcceptableOrUnknown(
+          data['completed_cell_color']!,
+          _completedCellColorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('completed_cell_opacity')) {
+      context.handle(
+        _completedCellOpacityMeta,
+        completedCellOpacity.isAcceptableOrUnknown(
+          data['completed_cell_opacity']!,
+          _completedCellOpacityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('include_completed_cells_in_selection')) {
+      context.handle(
+        _includeCompletedCellsInSelectionMeta,
+        includeCompletedCellsInSelection.isAcceptableOrUnknown(
+          data['include_completed_cells_in_selection']!,
+          _includeCompletedCellsInSelectionMeta,
+        ),
+      );
+    }
     if (data.containsKey('show_regions')) {
       context.handle(
         _showRegionsMeta,
@@ -5807,6 +5901,22 @@ class $ViewportStatesTable extends ViewportStates
         DriftSqlType.string,
         data['${effectivePrefix}selection_highlight_color'],
       )!,
+      showCompletedCellOverlay: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_completed_cell_overlay'],
+      )!,
+      completedCellColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}completed_cell_color'],
+      )!,
+      completedCellOpacity: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}completed_cell_opacity'],
+      )!,
+      includeCompletedCellsInSelection: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}include_completed_cells_in_selection'],
+      )!,
       showRegions: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}show_regions'],
@@ -5864,6 +5974,18 @@ class ViewportStateRow extends DataClass
   /// Defines the canonical RGB value of the selected-cell highlight preset.
   final String selectionHighlightColor;
 
+  /// Defines whether completed cells receive the completion overlay.
+  final bool showCompletedCellOverlay;
+
+  /// Defines the canonical RGB value of the completed-cell color preset.
+  final String completedCellColor;
+
+  /// Defines completed-cell overlay opacity from zero through one.
+  final double completedCellOpacity;
+
+  /// Defines whether selection highlighting includes completed cells.
+  final bool includeCompletedCellsInSelection;
+
   /// Defines whether source-region outlines are visible.
   final bool showRegions;
   const ViewportStateRow({
@@ -5881,6 +6003,10 @@ class ViewportStateRow extends DataClass
     required this.cellColorOpacity,
     required this.gridColor,
     required this.selectionHighlightColor,
+    required this.showCompletedCellOverlay,
+    required this.completedCellColor,
+    required this.completedCellOpacity,
+    required this.includeCompletedCellsInSelection,
     required this.showRegions,
   });
   @override
@@ -5906,6 +6032,14 @@ class ViewportStateRow extends DataClass
     map['selection_highlight_color'] = Variable<String>(
       selectionHighlightColor,
     );
+    map['show_completed_cell_overlay'] = Variable<bool>(
+      showCompletedCellOverlay,
+    );
+    map['completed_cell_color'] = Variable<String>(completedCellColor);
+    map['completed_cell_opacity'] = Variable<double>(completedCellOpacity);
+    map['include_completed_cells_in_selection'] = Variable<bool>(
+      includeCompletedCellsInSelection,
+    );
     map['show_regions'] = Variable<bool>(showRegions);
     return map;
   }
@@ -5930,6 +6064,10 @@ class ViewportStateRow extends DataClass
       cellColorOpacity: Value(cellColorOpacity),
       gridColor: Value(gridColor),
       selectionHighlightColor: Value(selectionHighlightColor),
+      showCompletedCellOverlay: Value(showCompletedCellOverlay),
+      completedCellColor: Value(completedCellColor),
+      completedCellOpacity: Value(completedCellOpacity),
+      includeCompletedCellsInSelection: Value(includeCompletedCellsInSelection),
       showRegions: Value(showRegions),
     );
   }
@@ -5956,6 +6094,18 @@ class ViewportStateRow extends DataClass
       selectionHighlightColor: serializer.fromJson<String>(
         json['selectionHighlightColor'],
       ),
+      showCompletedCellOverlay: serializer.fromJson<bool>(
+        json['showCompletedCellOverlay'],
+      ),
+      completedCellColor: serializer.fromJson<String>(
+        json['completedCellColor'],
+      ),
+      completedCellOpacity: serializer.fromJson<double>(
+        json['completedCellOpacity'],
+      ),
+      includeCompletedCellsInSelection: serializer.fromJson<bool>(
+        json['includeCompletedCellsInSelection'],
+      ),
       showRegions: serializer.fromJson<bool>(json['showRegions']),
     );
   }
@@ -5979,6 +6129,14 @@ class ViewportStateRow extends DataClass
       'selectionHighlightColor': serializer.toJson<String>(
         selectionHighlightColor,
       ),
+      'showCompletedCellOverlay': serializer.toJson<bool>(
+        showCompletedCellOverlay,
+      ),
+      'completedCellColor': serializer.toJson<String>(completedCellColor),
+      'completedCellOpacity': serializer.toJson<double>(completedCellOpacity),
+      'includeCompletedCellsInSelection': serializer.toJson<bool>(
+        includeCompletedCellsInSelection,
+      ),
       'showRegions': serializer.toJson<bool>(showRegions),
     };
   }
@@ -5998,6 +6156,10 @@ class ViewportStateRow extends DataClass
     double? cellColorOpacity,
     String? gridColor,
     String? selectionHighlightColor,
+    bool? showCompletedCellOverlay,
+    String? completedCellColor,
+    double? completedCellOpacity,
+    bool? includeCompletedCellsInSelection,
     bool? showRegions,
   }) => ViewportStateRow(
     documentId: documentId ?? this.documentId,
@@ -6017,6 +6179,13 @@ class ViewportStateRow extends DataClass
     gridColor: gridColor ?? this.gridColor,
     selectionHighlightColor:
         selectionHighlightColor ?? this.selectionHighlightColor,
+    showCompletedCellOverlay:
+        showCompletedCellOverlay ?? this.showCompletedCellOverlay,
+    completedCellColor: completedCellColor ?? this.completedCellColor,
+    completedCellOpacity: completedCellOpacity ?? this.completedCellOpacity,
+    includeCompletedCellsInSelection:
+        includeCompletedCellsInSelection ??
+        this.includeCompletedCellsInSelection,
     showRegions: showRegions ?? this.showRegions,
   );
   ViewportStateRow copyWithCompanion(ViewportStatesCompanion data) {
@@ -6051,6 +6220,19 @@ class ViewportStateRow extends DataClass
       selectionHighlightColor: data.selectionHighlightColor.present
           ? data.selectionHighlightColor.value
           : this.selectionHighlightColor,
+      showCompletedCellOverlay: data.showCompletedCellOverlay.present
+          ? data.showCompletedCellOverlay.value
+          : this.showCompletedCellOverlay,
+      completedCellColor: data.completedCellColor.present
+          ? data.completedCellColor.value
+          : this.completedCellColor,
+      completedCellOpacity: data.completedCellOpacity.present
+          ? data.completedCellOpacity.value
+          : this.completedCellOpacity,
+      includeCompletedCellsInSelection:
+          data.includeCompletedCellsInSelection.present
+          ? data.includeCompletedCellsInSelection.value
+          : this.includeCompletedCellsInSelection,
       showRegions: data.showRegions.present
           ? data.showRegions.value
           : this.showRegions,
@@ -6074,6 +6256,12 @@ class ViewportStateRow extends DataClass
           ..write('cellColorOpacity: $cellColorOpacity, ')
           ..write('gridColor: $gridColor, ')
           ..write('selectionHighlightColor: $selectionHighlightColor, ')
+          ..write('showCompletedCellOverlay: $showCompletedCellOverlay, ')
+          ..write('completedCellColor: $completedCellColor, ')
+          ..write('completedCellOpacity: $completedCellOpacity, ')
+          ..write(
+            'includeCompletedCellsInSelection: $includeCompletedCellsInSelection, ',
+          )
           ..write('showRegions: $showRegions')
           ..write(')'))
         .toString();
@@ -6095,6 +6283,10 @@ class ViewportStateRow extends DataClass
     cellColorOpacity,
     gridColor,
     selectionHighlightColor,
+    showCompletedCellOverlay,
+    completedCellColor,
+    completedCellOpacity,
+    includeCompletedCellsInSelection,
     showRegions,
   );
   @override
@@ -6115,6 +6307,11 @@ class ViewportStateRow extends DataClass
           other.cellColorOpacity == this.cellColorOpacity &&
           other.gridColor == this.gridColor &&
           other.selectionHighlightColor == this.selectionHighlightColor &&
+          other.showCompletedCellOverlay == this.showCompletedCellOverlay &&
+          other.completedCellColor == this.completedCellColor &&
+          other.completedCellOpacity == this.completedCellOpacity &&
+          other.includeCompletedCellsInSelection ==
+              this.includeCompletedCellsInSelection &&
           other.showRegions == this.showRegions);
 }
 
@@ -6133,6 +6330,10 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
   final Value<double> cellColorOpacity;
   final Value<String> gridColor;
   final Value<String> selectionHighlightColor;
+  final Value<bool> showCompletedCellOverlay;
+  final Value<String> completedCellColor;
+  final Value<double> completedCellOpacity;
+  final Value<bool> includeCompletedCellsInSelection;
   final Value<bool> showRegions;
   final Value<int> rowid;
   const ViewportStatesCompanion({
@@ -6150,6 +6351,10 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     this.cellColorOpacity = const Value.absent(),
     this.gridColor = const Value.absent(),
     this.selectionHighlightColor = const Value.absent(),
+    this.showCompletedCellOverlay = const Value.absent(),
+    this.completedCellColor = const Value.absent(),
+    this.completedCellOpacity = const Value.absent(),
+    this.includeCompletedCellsInSelection = const Value.absent(),
     this.showRegions = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -6168,6 +6373,10 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     this.cellColorOpacity = const Value.absent(),
     this.gridColor = const Value.absent(),
     this.selectionHighlightColor = const Value.absent(),
+    this.showCompletedCellOverlay = const Value.absent(),
+    this.completedCellColor = const Value.absent(),
+    this.completedCellOpacity = const Value.absent(),
+    this.includeCompletedCellsInSelection = const Value.absent(),
     this.showRegions = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : documentId = Value(documentId),
@@ -6191,6 +6400,10 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Expression<double>? cellColorOpacity,
     Expression<String>? gridColor,
     Expression<String>? selectionHighlightColor,
+    Expression<bool>? showCompletedCellOverlay,
+    Expression<String>? completedCellColor,
+    Expression<double>? completedCellOpacity,
+    Expression<bool>? includeCompletedCellsInSelection,
     Expression<bool>? showRegions,
     Expression<int>? rowid,
   }) {
@@ -6210,6 +6423,15 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       if (gridColor != null) 'grid_color': gridColor,
       if (selectionHighlightColor != null)
         'selection_highlight_color': selectionHighlightColor,
+      if (showCompletedCellOverlay != null)
+        'show_completed_cell_overlay': showCompletedCellOverlay,
+      if (completedCellColor != null)
+        'completed_cell_color': completedCellColor,
+      if (completedCellOpacity != null)
+        'completed_cell_opacity': completedCellOpacity,
+      if (includeCompletedCellsInSelection != null)
+        'include_completed_cells_in_selection':
+            includeCompletedCellsInSelection,
       if (showRegions != null) 'show_regions': showRegions,
       if (rowid != null) 'rowid': rowid,
     });
@@ -6230,6 +6452,10 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Value<double>? cellColorOpacity,
     Value<String>? gridColor,
     Value<String>? selectionHighlightColor,
+    Value<bool>? showCompletedCellOverlay,
+    Value<String>? completedCellColor,
+    Value<double>? completedCellOpacity,
+    Value<bool>? includeCompletedCellsInSelection,
     Value<bool>? showRegions,
     Value<int>? rowid,
   }) {
@@ -6249,6 +6475,13 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       gridColor: gridColor ?? this.gridColor,
       selectionHighlightColor:
           selectionHighlightColor ?? this.selectionHighlightColor,
+      showCompletedCellOverlay:
+          showCompletedCellOverlay ?? this.showCompletedCellOverlay,
+      completedCellColor: completedCellColor ?? this.completedCellColor,
+      completedCellOpacity: completedCellOpacity ?? this.completedCellOpacity,
+      includeCompletedCellsInSelection:
+          includeCompletedCellsInSelection ??
+          this.includeCompletedCellsInSelection,
       showRegions: showRegions ?? this.showRegions,
       rowid: rowid ?? this.rowid,
     );
@@ -6301,6 +6534,24 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
         selectionHighlightColor.value,
       );
     }
+    if (showCompletedCellOverlay.present) {
+      map['show_completed_cell_overlay'] = Variable<bool>(
+        showCompletedCellOverlay.value,
+      );
+    }
+    if (completedCellColor.present) {
+      map['completed_cell_color'] = Variable<String>(completedCellColor.value);
+    }
+    if (completedCellOpacity.present) {
+      map['completed_cell_opacity'] = Variable<double>(
+        completedCellOpacity.value,
+      );
+    }
+    if (includeCompletedCellsInSelection.present) {
+      map['include_completed_cells_in_selection'] = Variable<bool>(
+        includeCompletedCellsInSelection.value,
+      );
+    }
     if (showRegions.present) {
       map['show_regions'] = Variable<bool>(showRegions.value);
     }
@@ -6327,6 +6578,12 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
           ..write('cellColorOpacity: $cellColorOpacity, ')
           ..write('gridColor: $gridColor, ')
           ..write('selectionHighlightColor: $selectionHighlightColor, ')
+          ..write('showCompletedCellOverlay: $showCompletedCellOverlay, ')
+          ..write('completedCellColor: $completedCellColor, ')
+          ..write('completedCellOpacity: $completedCellOpacity, ')
+          ..write(
+            'includeCompletedCellsInSelection: $includeCompletedCellsInSelection, ',
+          )
           ..write('showRegions: $showRegions, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -9961,6 +10218,10 @@ typedef $$ViewportStatesTableCreateCompanionBuilder =
       Value<double> cellColorOpacity,
       Value<String> gridColor,
       Value<String> selectionHighlightColor,
+      Value<bool> showCompletedCellOverlay,
+      Value<String> completedCellColor,
+      Value<double> completedCellOpacity,
+      Value<bool> includeCompletedCellsInSelection,
       Value<bool> showRegions,
       Value<int> rowid,
     });
@@ -9980,6 +10241,10 @@ typedef $$ViewportStatesTableUpdateCompanionBuilder =
       Value<double> cellColorOpacity,
       Value<String> gridColor,
       Value<String> selectionHighlightColor,
+      Value<bool> showCompletedCellOverlay,
+      Value<String> completedCellColor,
+      Value<double> completedCellOpacity,
+      Value<bool> includeCompletedCellsInSelection,
       Value<bool> showRegions,
       Value<int> rowid,
     });
@@ -10062,6 +10327,27 @@ class $$ViewportStatesTableFilterComposer
     column: $table.selectionHighlightColor,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<bool> get showCompletedCellOverlay => $composableBuilder(
+    column: $table.showCompletedCellOverlay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get completedCellColor => $composableBuilder(
+    column: $table.completedCellColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get completedCellOpacity => $composableBuilder(
+    column: $table.completedCellOpacity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get includeCompletedCellsInSelection =>
+      $composableBuilder(
+        column: $table.includeCompletedCellsInSelection,
+        builder: (column) => ColumnFilters(column),
+      );
 
   ColumnFilters<bool> get showRegions => $composableBuilder(
     column: $table.showRegions,
@@ -10148,6 +10434,27 @@ class $$ViewportStatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get showCompletedCellOverlay => $composableBuilder(
+    column: $table.showCompletedCellOverlay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get completedCellColor => $composableBuilder(
+    column: $table.completedCellColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get completedCellOpacity => $composableBuilder(
+    column: $table.completedCellOpacity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get includeCompletedCellsInSelection =>
+      $composableBuilder(
+        column: $table.includeCompletedCellsInSelection,
+        builder: (column) => ColumnOrderings(column),
+      );
+
   ColumnOrderings<bool> get showRegions => $composableBuilder(
     column: $table.showRegions,
     builder: (column) => ColumnOrderings(column),
@@ -10221,6 +10528,27 @@ class $$ViewportStatesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<bool> get showCompletedCellOverlay => $composableBuilder(
+    column: $table.showCompletedCellOverlay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get completedCellColor => $composableBuilder(
+    column: $table.completedCellColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get completedCellOpacity => $composableBuilder(
+    column: $table.completedCellOpacity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get includeCompletedCellsInSelection =>
+      $composableBuilder(
+        column: $table.includeCompletedCellsInSelection,
+        builder: (column) => column,
+      );
+
   GeneratedColumn<bool> get showRegions => $composableBuilder(
     column: $table.showRegions,
     builder: (column) => column,
@@ -10278,6 +10606,11 @@ class $$ViewportStatesTableTableManager
                 Value<double> cellColorOpacity = const Value.absent(),
                 Value<String> gridColor = const Value.absent(),
                 Value<String> selectionHighlightColor = const Value.absent(),
+                Value<bool> showCompletedCellOverlay = const Value.absent(),
+                Value<String> completedCellColor = const Value.absent(),
+                Value<double> completedCellOpacity = const Value.absent(),
+                Value<bool> includeCompletedCellsInSelection =
+                    const Value.absent(),
                 Value<bool> showRegions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion(
@@ -10295,6 +10628,11 @@ class $$ViewportStatesTableTableManager
                 cellColorOpacity: cellColorOpacity,
                 gridColor: gridColor,
                 selectionHighlightColor: selectionHighlightColor,
+                showCompletedCellOverlay: showCompletedCellOverlay,
+                completedCellColor: completedCellColor,
+                completedCellOpacity: completedCellOpacity,
+                includeCompletedCellsInSelection:
+                    includeCompletedCellsInSelection,
                 showRegions: showRegions,
                 rowid: rowid,
               ),
@@ -10314,6 +10652,11 @@ class $$ViewportStatesTableTableManager
                 Value<double> cellColorOpacity = const Value.absent(),
                 Value<String> gridColor = const Value.absent(),
                 Value<String> selectionHighlightColor = const Value.absent(),
+                Value<bool> showCompletedCellOverlay = const Value.absent(),
+                Value<String> completedCellColor = const Value.absent(),
+                Value<double> completedCellOpacity = const Value.absent(),
+                Value<bool> includeCompletedCellsInSelection =
+                    const Value.absent(),
                 Value<bool> showRegions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion.insert(
@@ -10331,6 +10674,11 @@ class $$ViewportStatesTableTableManager
                 cellColorOpacity: cellColorOpacity,
                 gridColor: gridColor,
                 selectionHighlightColor: selectionHighlightColor,
+                showCompletedCellOverlay: showCompletedCellOverlay,
+                completedCellColor: completedCellColor,
+                completedCellOpacity: completedCellOpacity,
+                includeCompletedCellsInSelection:
+                    includeCompletedCellsInSelection,
                 showRegions: showRegions,
                 rowid: rowid,
               ),
