@@ -111,6 +111,7 @@ Future<void> migrateAppDatabase(
             database.viewportStates.showGrid,
             database.viewportStates.cellColorOpacity,
             database.viewportStates.gridColor,
+            database.viewportStates.selectionHighlightColor,
             database.viewportStates.showRegions,
           ],
         ),
@@ -130,6 +131,14 @@ Future<void> migrateAppDatabase(
           database.viewportStates.gridColor,
           database.viewportStates.showRegions,
         ],
+      ),
+    );
+  }
+  if (from >= 2 && from < 5 && to >= 5) {
+    await migrator.alterTable(
+      TableMigration(
+        database.viewportStates,
+        newColumns: [database.viewportStates.selectionHighlightColor],
       ),
     );
   }

@@ -59,6 +59,9 @@ abstract final class ProgressMapper {
       showGrid: Value(viewport.renderSettings.showGrid),
       cellColorOpacity: Value(viewport.renderSettings.cellColorOpacity),
       gridColor: Value(viewport.renderSettings.gridColor.colorHex),
+      selectionHighlightColor: Value(
+        viewport.renderSettings.selectionHighlightColor.colorHex,
+      ),
       showRegions: Value(viewport.renderSettings.showRegions),
     );
   }
@@ -104,6 +107,10 @@ abstract final class ProgressMapper {
                 showGrid: viewport.showGrid,
                 cellColorOpacity: viewport.cellColorOpacity,
                 gridColor: GridColorPreset.fromColorHex(viewport.gridColor),
+                selectionHighlightColor:
+                    SelectionHighlightColorPreset.fromColorHex(
+                      viewport.selectionHighlightColor,
+                    ),
                 showRegions: viewport.showRegions,
               ),
             ),

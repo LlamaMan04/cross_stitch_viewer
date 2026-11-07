@@ -188,13 +188,27 @@ void main() {
       );
       await tester.tap(find.byKey(const ValueKey('show-grid-setting')));
       await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('selection-highlight-color-setting')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Teal').last);
+      await tester.pumpAndSettle();
 
       expect(painter().settings.showCellColor, isTrue);
       expect(painter().settings.showGrid, isFalse);
+      expect(
+        painter().settings.selectionHighlightColor,
+        SelectionHighlightColorPreset.teal,
+      );
       expect(painter().camera, cameraBeforeChange);
       final saved = await progress.getForDocument('sample-garden-sampler');
       expect(saved?.viewport?.renderSettings.showCellColor, isTrue);
       expect(saved?.viewport?.renderSettings.showGrid, isFalse);
+      expect(
+        saved?.viewport?.renderSettings.selectionHighlightColor,
+        SelectionHighlightColorPreset.teal,
+      );
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -202,6 +216,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(painter().settings.showCellColor, isTrue);
       expect(painter().settings.showGrid, isFalse);
+      expect(
+        painter().settings.selectionHighlightColor,
+        SelectionHighlightColorPreset.teal,
+      );
     },
   );
 

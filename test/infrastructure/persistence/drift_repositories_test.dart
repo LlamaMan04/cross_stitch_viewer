@@ -102,6 +102,10 @@ void main() {
         loaded.viewport?.renderSettings.gridColor,
         GridColorPreset.darkGray,
       );
+      expect(
+        loaded.viewport?.renderSettings.selectionHighlightColor,
+        SelectionHighlightColorPreset.teal,
+      );
       expect(loaded.viewport?.renderSettings.showRegions, isTrue);
       expect(loaded.lastInteractionAt, DateTime.utc(2026, 11, 3, 12));
 
@@ -299,6 +303,7 @@ ProgressState _progress() => ProgressState(
       showGrid: false,
       cellColorOpacity: 0.45,
       gridColor: GridColorPreset.darkGray,
+      selectionHighlightColor: SelectionHighlightColorPreset.teal,
       showRegions: true,
     ),
   ),

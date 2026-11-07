@@ -20,7 +20,6 @@ class ViewportPatternPainter extends CustomPainter {
     required this.selection,
     required this.surfaceColor,
     required this.regionColor,
-    required this.selectionColor,
   });
 
   /// Normalized source document rendered by this painter.
@@ -43,9 +42,6 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Theme color used for enabled source-region outlines.
   final Color regionColor;
-
-  /// Accessible accent used inside the selected-cell double outline.
-  final Color selectionColor;
 
   /// Matching visible cells used by selection painting and focused tests.
   Iterable<StitchCell> get selectedVisibleCells sync* {
@@ -70,23 +66,15 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.restore();
   }
 
-  /// Paints a high-contrast double outline around selected visible cells.
+  /// Paints a translucent fill highlight across selected visible cells.
   void _paintSelectedSymbol(Canvas canvas) {
-    final outerWidth = math.min(4.0, camera.cellSize * 0.25);
-    final innerWidth = math.min(2.0, camera.cellSize * 0.13);
-    final inset = math.min(2.0, camera.cellSize * 0.12);
-    final outerPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = outerWidth;
-    final innerPaint = Paint()
-      ..color = selectionColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = innerWidth;
+    final highlightColor = _parseColor(
+      settings.selectionHighlightColor.colorHex,
+    );
+    final highlightPaint = Paint()
+      ..color = highlightColor.withValues(alpha: 0.38);
     for (final cell in selectedVisibleCells) {
-      final rect = _cellRect(cell).deflate(inset);
-      canvas.drawRect(rect, outerPaint);
-      canvas.drawRect(rect, innerPaint);
+      canvas.drawRect(_cellRect(cell), highlightPaint);
     }
   }
 
@@ -246,6 +234,5 @@ class ViewportPatternPainter extends CustomPainter {
       oldDelegate.settings != settings ||
       oldDelegate.selection != selection ||
       oldDelegate.surfaceColor != surfaceColor ||
-      oldDelegate.regionColor != regionColor ||
-      oldDelegate.selectionColor != selectionColor;
+      oldDelegate.regionColor != regionColor;
 }

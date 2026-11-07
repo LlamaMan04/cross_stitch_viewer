@@ -99,7 +99,6 @@ class _PatternViewportState extends State<PatternViewport> {
                 selection: widget.selection,
                 surfaceColor: colors.surfaceContainerLowest,
                 regionColor: colors.primary,
-                selectionColor: colors.tertiary,
               ),
               child: const SizedBox.expand(),
             ),

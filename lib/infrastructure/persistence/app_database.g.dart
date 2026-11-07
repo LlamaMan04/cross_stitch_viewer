@@ -5559,6 +5559,18 @@ class $ViewportStatesTable extends ViewportStates
     requiredDuringInsert: false,
     defaultValue: const Constant('#000000'),
   );
+  static const VerificationMeta _selectionHighlightColorMeta =
+      const VerificationMeta('selectionHighlightColor');
+  @override
+  late final GeneratedColumn<String> selectionHighlightColor =
+      GeneratedColumn<String>(
+        'selection_highlight_color',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('#FFC107'),
+      );
   static const VerificationMeta _showRegionsMeta = const VerificationMeta(
     'showRegions',
   );
@@ -5589,6 +5601,7 @@ class $ViewportStatesTable extends ViewportStates
     showGrid,
     cellColorOpacity,
     gridColor,
+    selectionHighlightColor,
     showRegions,
   ];
   @override
@@ -5711,6 +5724,15 @@ class $ViewportStatesTable extends ViewportStates
         gridColor.isAcceptableOrUnknown(data['grid_color']!, _gridColorMeta),
       );
     }
+    if (data.containsKey('selection_highlight_color')) {
+      context.handle(
+        _selectionHighlightColorMeta,
+        selectionHighlightColor.isAcceptableOrUnknown(
+          data['selection_highlight_color']!,
+          _selectionHighlightColorMeta,
+        ),
+      );
+    }
     if (data.containsKey('show_regions')) {
       context.handle(
         _showRegionsMeta,
@@ -5781,6 +5803,10 @@ class $ViewportStatesTable extends ViewportStates
         DriftSqlType.string,
         data['${effectivePrefix}grid_color'],
       )!,
+      selectionHighlightColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}selection_highlight_color'],
+      )!,
       showRegions: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}show_regions'],
@@ -5835,6 +5861,9 @@ class ViewportStateRow extends DataClass
   /// Defines the canonical RGB value of the selected grid-color preset.
   final String gridColor;
 
+  /// Defines the canonical RGB value of the selected-cell highlight preset.
+  final String selectionHighlightColor;
+
   /// Defines whether source-region outlines are visible.
   final bool showRegions;
   const ViewportStateRow({
@@ -5851,6 +5880,7 @@ class ViewportStateRow extends DataClass
     required this.showGrid,
     required this.cellColorOpacity,
     required this.gridColor,
+    required this.selectionHighlightColor,
     required this.showRegions,
   });
   @override
@@ -5873,6 +5903,9 @@ class ViewportStateRow extends DataClass
     map['show_grid'] = Variable<bool>(showGrid);
     map['cell_color_opacity'] = Variable<double>(cellColorOpacity);
     map['grid_color'] = Variable<String>(gridColor);
+    map['selection_highlight_color'] = Variable<String>(
+      selectionHighlightColor,
+    );
     map['show_regions'] = Variable<bool>(showRegions);
     return map;
   }
@@ -5896,6 +5929,7 @@ class ViewportStateRow extends DataClass
       showGrid: Value(showGrid),
       cellColorOpacity: Value(cellColorOpacity),
       gridColor: Value(gridColor),
+      selectionHighlightColor: Value(selectionHighlightColor),
       showRegions: Value(showRegions),
     );
   }
@@ -5919,6 +5953,9 @@ class ViewportStateRow extends DataClass
       showGrid: serializer.fromJson<bool>(json['showGrid']),
       cellColorOpacity: serializer.fromJson<double>(json['cellColorOpacity']),
       gridColor: serializer.fromJson<String>(json['gridColor']),
+      selectionHighlightColor: serializer.fromJson<String>(
+        json['selectionHighlightColor'],
+      ),
       showRegions: serializer.fromJson<bool>(json['showRegions']),
     );
   }
@@ -5939,6 +5976,9 @@ class ViewportStateRow extends DataClass
       'showGrid': serializer.toJson<bool>(showGrid),
       'cellColorOpacity': serializer.toJson<double>(cellColorOpacity),
       'gridColor': serializer.toJson<String>(gridColor),
+      'selectionHighlightColor': serializer.toJson<String>(
+        selectionHighlightColor,
+      ),
       'showRegions': serializer.toJson<bool>(showRegions),
     };
   }
@@ -5957,6 +5997,7 @@ class ViewportStateRow extends DataClass
     bool? showGrid,
     double? cellColorOpacity,
     String? gridColor,
+    String? selectionHighlightColor,
     bool? showRegions,
   }) => ViewportStateRow(
     documentId: documentId ?? this.documentId,
@@ -5974,6 +6015,8 @@ class ViewportStateRow extends DataClass
     showGrid: showGrid ?? this.showGrid,
     cellColorOpacity: cellColorOpacity ?? this.cellColorOpacity,
     gridColor: gridColor ?? this.gridColor,
+    selectionHighlightColor:
+        selectionHighlightColor ?? this.selectionHighlightColor,
     showRegions: showRegions ?? this.showRegions,
   );
   ViewportStateRow copyWithCompanion(ViewportStatesCompanion data) {
@@ -6005,6 +6048,9 @@ class ViewportStateRow extends DataClass
           ? data.cellColorOpacity.value
           : this.cellColorOpacity,
       gridColor: data.gridColor.present ? data.gridColor.value : this.gridColor,
+      selectionHighlightColor: data.selectionHighlightColor.present
+          ? data.selectionHighlightColor.value
+          : this.selectionHighlightColor,
       showRegions: data.showRegions.present
           ? data.showRegions.value
           : this.showRegions,
@@ -6027,6 +6073,7 @@ class ViewportStateRow extends DataClass
           ..write('showGrid: $showGrid, ')
           ..write('cellColorOpacity: $cellColorOpacity, ')
           ..write('gridColor: $gridColor, ')
+          ..write('selectionHighlightColor: $selectionHighlightColor, ')
           ..write('showRegions: $showRegions')
           ..write(')'))
         .toString();
@@ -6047,6 +6094,7 @@ class ViewportStateRow extends DataClass
     showGrid,
     cellColorOpacity,
     gridColor,
+    selectionHighlightColor,
     showRegions,
   );
   @override
@@ -6066,6 +6114,7 @@ class ViewportStateRow extends DataClass
           other.showGrid == this.showGrid &&
           other.cellColorOpacity == this.cellColorOpacity &&
           other.gridColor == this.gridColor &&
+          other.selectionHighlightColor == this.selectionHighlightColor &&
           other.showRegions == this.showRegions);
 }
 
@@ -6083,6 +6132,7 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
   final Value<bool> showGrid;
   final Value<double> cellColorOpacity;
   final Value<String> gridColor;
+  final Value<String> selectionHighlightColor;
   final Value<bool> showRegions;
   final Value<int> rowid;
   const ViewportStatesCompanion({
@@ -6099,6 +6149,7 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     this.showGrid = const Value.absent(),
     this.cellColorOpacity = const Value.absent(),
     this.gridColor = const Value.absent(),
+    this.selectionHighlightColor = const Value.absent(),
     this.showRegions = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -6116,6 +6167,7 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     this.showGrid = const Value.absent(),
     this.cellColorOpacity = const Value.absent(),
     this.gridColor = const Value.absent(),
+    this.selectionHighlightColor = const Value.absent(),
     this.showRegions = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : documentId = Value(documentId),
@@ -6138,6 +6190,7 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Expression<bool>? showGrid,
     Expression<double>? cellColorOpacity,
     Expression<String>? gridColor,
+    Expression<String>? selectionHighlightColor,
     Expression<bool>? showRegions,
     Expression<int>? rowid,
   }) {
@@ -6155,6 +6208,8 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       if (showGrid != null) 'show_grid': showGrid,
       if (cellColorOpacity != null) 'cell_color_opacity': cellColorOpacity,
       if (gridColor != null) 'grid_color': gridColor,
+      if (selectionHighlightColor != null)
+        'selection_highlight_color': selectionHighlightColor,
       if (showRegions != null) 'show_regions': showRegions,
       if (rowid != null) 'rowid': rowid,
     });
@@ -6174,6 +6229,7 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     Value<bool>? showGrid,
     Value<double>? cellColorOpacity,
     Value<String>? gridColor,
+    Value<String>? selectionHighlightColor,
     Value<bool>? showRegions,
     Value<int>? rowid,
   }) {
@@ -6191,6 +6247,8 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
       showGrid: showGrid ?? this.showGrid,
       cellColorOpacity: cellColorOpacity ?? this.cellColorOpacity,
       gridColor: gridColor ?? this.gridColor,
+      selectionHighlightColor:
+          selectionHighlightColor ?? this.selectionHighlightColor,
       showRegions: showRegions ?? this.showRegions,
       rowid: rowid ?? this.rowid,
     );
@@ -6238,6 +6296,11 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
     if (gridColor.present) {
       map['grid_color'] = Variable<String>(gridColor.value);
     }
+    if (selectionHighlightColor.present) {
+      map['selection_highlight_color'] = Variable<String>(
+        selectionHighlightColor.value,
+      );
+    }
     if (showRegions.present) {
       map['show_regions'] = Variable<bool>(showRegions.value);
     }
@@ -6263,6 +6326,7 @@ class ViewportStatesCompanion extends UpdateCompanion<ViewportStateRow> {
           ..write('showGrid: $showGrid, ')
           ..write('cellColorOpacity: $cellColorOpacity, ')
           ..write('gridColor: $gridColor, ')
+          ..write('selectionHighlightColor: $selectionHighlightColor, ')
           ..write('showRegions: $showRegions, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -9896,6 +9960,7 @@ typedef $$ViewportStatesTableCreateCompanionBuilder =
       Value<bool> showGrid,
       Value<double> cellColorOpacity,
       Value<String> gridColor,
+      Value<String> selectionHighlightColor,
       Value<bool> showRegions,
       Value<int> rowid,
     });
@@ -9914,6 +9979,7 @@ typedef $$ViewportStatesTableUpdateCompanionBuilder =
       Value<bool> showGrid,
       Value<double> cellColorOpacity,
       Value<String> gridColor,
+      Value<String> selectionHighlightColor,
       Value<bool> showRegions,
       Value<int> rowid,
     });
@@ -9989,6 +10055,11 @@ class $$ViewportStatesTableFilterComposer
 
   ColumnFilters<String> get gridColor => $composableBuilder(
     column: $table.gridColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get selectionHighlightColor => $composableBuilder(
+    column: $table.selectionHighlightColor,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10072,6 +10143,11 @@ class $$ViewportStatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get selectionHighlightColor => $composableBuilder(
+    column: $table.selectionHighlightColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get showRegions => $composableBuilder(
     column: $table.showRegions,
     builder: (column) => ColumnOrderings(column),
@@ -10140,6 +10216,11 @@ class $$ViewportStatesTableAnnotationComposer
   GeneratedColumn<String> get gridColor =>
       $composableBuilder(column: $table.gridColor, builder: (column) => column);
 
+  GeneratedColumn<String> get selectionHighlightColor => $composableBuilder(
+    column: $table.selectionHighlightColor,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get showRegions => $composableBuilder(
     column: $table.showRegions,
     builder: (column) => column,
@@ -10196,6 +10277,7 @@ class $$ViewportStatesTableTableManager
                 Value<bool> showGrid = const Value.absent(),
                 Value<double> cellColorOpacity = const Value.absent(),
                 Value<String> gridColor = const Value.absent(),
+                Value<String> selectionHighlightColor = const Value.absent(),
                 Value<bool> showRegions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion(
@@ -10212,6 +10294,7 @@ class $$ViewportStatesTableTableManager
                 showGrid: showGrid,
                 cellColorOpacity: cellColorOpacity,
                 gridColor: gridColor,
+                selectionHighlightColor: selectionHighlightColor,
                 showRegions: showRegions,
                 rowid: rowid,
               ),
@@ -10230,6 +10313,7 @@ class $$ViewportStatesTableTableManager
                 Value<bool> showGrid = const Value.absent(),
                 Value<double> cellColorOpacity = const Value.absent(),
                 Value<String> gridColor = const Value.absent(),
+                Value<String> selectionHighlightColor = const Value.absent(),
                 Value<bool> showRegions = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ViewportStatesCompanion.insert(
@@ -10246,6 +10330,7 @@ class $$ViewportStatesTableTableManager
                 showGrid: showGrid,
                 cellColorOpacity: cellColorOpacity,
                 gridColor: gridColor,
+                selectionHighlightColor: selectionHighlightColor,
                 showRegions: showRegions,
                 rowid: rowid,
               ),

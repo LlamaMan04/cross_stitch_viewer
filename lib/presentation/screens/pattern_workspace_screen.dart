@@ -402,6 +402,36 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
                   : null,
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: DropdownButtonFormField<SelectionHighlightColorPreset>(
+              key: const ValueKey('selection-highlight-color-setting'),
+              initialValue: settings.selectionHighlightColor,
+              decoration: const InputDecoration(
+                labelText: 'Selection highlight',
+                isDense: true,
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: SelectionHighlightColorPreset.amber,
+                  child: Text('Amber'),
+                ),
+                DropdownMenuItem(
+                  value: SelectionHighlightColorPreset.teal,
+                  child: Text('Teal'),
+                ),
+                DropdownMenuItem(
+                  value: SelectionHighlightColorPreset.magenta,
+                  child: Text('Magenta'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(settings.copyWith(selectionHighlightColor: value));
+                }
+              },
+            ),
+          ),
           SwitchListTile(
             key: const ValueKey('show-regions-setting'),
             dense: true,

@@ -32,7 +32,7 @@ void main() {
       expect(
         (await database.customSelect('PRAGMA user_version').getSingle())
             .read<int>('user_version'),
-        4,
+        5,
       );
       expect(
         await database.customSelect('PRAGMA foreign_key_check').get(),

@@ -27,6 +27,33 @@ enum GridColorPreset {
   );
 }
 
+/// Allowed fill colors for the selected-symbol cell highlight.
+enum SelectionHighlightColorPreset {
+  /// Warm amber highlight that contrasts with the default neutral surface.
+  amber('#FFC107'),
+
+  /// Teal highlight for a cool visual treatment.
+  teal('#00A6A6'),
+
+  /// Magenta highlight for a vivid visual treatment.
+  magenta('#C2185B');
+
+  /// Creates a preset with its canonical persisted RGB value.
+  const SelectionHighlightColorPreset(this.colorHex);
+
+  /// Canonical `#RRGGBB` value persisted for this preset.
+  final String colorHex;
+
+  /// Resolves a persisted RGB value to its supported preset.
+  static SelectionHighlightColorPreset fromColorHex(String value) =>
+      values.firstWhere(
+        (preset) => preset.colorHex == value,
+        orElse: () => throw const DocumentValidationException(
+          'Unsupported selection highlight color preset.',
+        ),
+      );
+}
+
 /// Immutable visual settings stored with one pattern viewport.
 class PatternRenderSettings {
   /// Creates settings with the documented initial renderer behavior.
@@ -36,6 +63,7 @@ class PatternRenderSettings {
     this.showGrid = true,
     this.cellColorOpacity = 0.22,
     this.gridColor = GridColorPreset.black,
+    this.selectionHighlightColor = SelectionHighlightColorPreset.amber,
     this.showRegions = false,
   });
 
@@ -54,6 +82,9 @@ class PatternRenderSettings {
   /// Preset color used for every visible grid rule.
   final GridColorPreset gridColor;
 
+  /// Preset color used to fill cells sharing the selected symbol.
+  final SelectionHighlightColorPreset selectionHighlightColor;
+
   /// Whether visible source-region outlines are displayed.
   final bool showRegions;
 
@@ -64,6 +95,7 @@ class PatternRenderSettings {
     bool? showGrid,
     double? cellColorOpacity,
     GridColorPreset? gridColor,
+    SelectionHighlightColorPreset? selectionHighlightColor,
     bool? showRegions,
   }) => PatternRenderSettings(
     showCellColor: showCellColor ?? this.showCellColor,
@@ -71,6 +103,8 @@ class PatternRenderSettings {
     showGrid: showGrid ?? this.showGrid,
     cellColorOpacity: cellColorOpacity ?? this.cellColorOpacity,
     gridColor: gridColor ?? this.gridColor,
+    selectionHighlightColor:
+        selectionHighlightColor ?? this.selectionHighlightColor,
     showRegions: showRegions ?? this.showRegions,
   );
 
@@ -94,6 +128,7 @@ class PatternRenderSettings {
       showGrid == other.showGrid &&
       cellColorOpacity == other.cellColorOpacity &&
       gridColor == other.gridColor &&
+      selectionHighlightColor == other.selectionHighlightColor &&
       showRegions == other.showRegions;
 
   /// Hash code consistent with [operator ==].
@@ -104,6 +139,7 @@ class PatternRenderSettings {
     showGrid,
     cellColorOpacity,
     gridColor,
+    selectionHighlightColor,
     showRegions,
   );
 }

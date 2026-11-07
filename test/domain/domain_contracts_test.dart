@@ -56,6 +56,10 @@ void main() {
     expect(defaults.showCellColor, isFalse);
     expect(defaults.showRegions, isFalse);
     expect(defaults.gridColor, GridColorPreset.black);
+    expect(
+      defaults.selectionHighlightColor,
+      SelectionHighlightColorPreset.amber,
+    );
     expect(defaults.cellColorOpacity, 0.22);
 
     expect(

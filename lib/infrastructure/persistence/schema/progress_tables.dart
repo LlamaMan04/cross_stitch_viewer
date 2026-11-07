@@ -147,6 +147,10 @@ class ViewportStates extends Table {
   /// Defines the canonical RGB value of the selected grid-color preset.
   TextColumn get gridColor => text().withDefault(const Constant('#000000'))();
 
+  /// Defines the canonical RGB value of the selected-cell highlight preset.
+  TextColumn get selectionHighlightColor =>
+      text().withDefault(const Constant('#FFC107'))();
+
   /// Defines whether source-region outlines are visible.
   BoolColumn get showRegions => boolean().withDefault(const Constant(false))();
 
@@ -166,5 +170,6 @@ class ViewportStates extends Table {
     'CHECK (visible_columns IS NULL OR visible_columns > 0)',
     'CHECK (cell_color_opacity >= 0 AND cell_color_opacity <= 1)',
     "CHECK (grid_color IN ('#000000', '#444444', '#A0A0A0'))",
+    "CHECK (selection_highlight_color IN ('#FFC107', '#00A6A6', '#C2185B'))",
   ];
 }
