@@ -281,15 +281,11 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     );
   }
 
-  /// Selects a symbol and opens its inspector when selection is non-null.
+  /// Selects a symbol without changing the currently open workspace surface.
   void _selectSymbol(String? symbolId) {
     _dismissCompletionUndo();
     setState(() {
       _selection = _selection.select(symbolId);
-      if (symbolId != null) {
-        _activeMenuOption = _WorkspaceMenuOption.symbolPalette;
-        _isFloatingMenuExpanded = false;
-      }
     });
   }
 
@@ -302,6 +298,13 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   /// Activates one menu choice while closing every other workspace surface.
   void _selectMenuOption(_WorkspaceMenuOption option) {
     _dismissCompletionUndo();
+    final enablesCompletedOverlay =
+        option == _WorkspaceMenuOption.completionSelection &&
+        _activeMenuOption != _WorkspaceMenuOption.completionSelection &&
+        !_settings.showCompletedCellOverlay;
+    final updatedSettings = enablesCompletedOverlay
+        ? _settings.copyWith(showCompletedCellOverlay: true)
+        : null;
     setState(() {
       if (_activeMenuOption == option) {
         _activeMenuOption = null;
@@ -314,8 +317,14 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       if (_activeMenuOption == _WorkspaceMenuOption.completionSelection) {
         _selection = _selection.select(null);
       }
+      if (updatedSettings != null) {
+        _settings = updatedSettings;
+      }
       _isFloatingMenuExpanded = false;
     });
+    if (updatedSettings != null) {
+      _persistSettings(updatedSettings);
+    }
   }
 
   /// Closes the active workspace surface without expanding the floating menu.
@@ -846,6 +855,7 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
               ],
             ),
           ),
+          _buildSectionHeader(context, 'Cell display'),
           SwitchListTile(
             key: const ValueKey('show-symbols-setting'),
             dense: true,
@@ -879,6 +889,8 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
               onChangeEnd: onOpacityChangeEnd,
             ),
           ],
+          const Divider(height: 24),
+          _buildSectionHeader(context, 'Guides and selection'),
           SwitchListTile(
             key: const ValueKey('show-grid-setting'),
             dense: true,
@@ -886,38 +898,37 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
             value: settings.showGrid,
             onChanged: (value) => onChanged(settings.copyWith(showGrid: value)),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: DropdownButtonFormField<GridColorPreset>(
-              key: const ValueKey('grid-color-setting'),
-              initialValue: settings.gridColor,
-              decoration: const InputDecoration(
-                labelText: 'Grid color',
-                isDense: true,
+          if (settings.showGrid)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: DropdownButtonFormField<GridColorPreset>(
+                key: const ValueKey('grid-color-setting'),
+                initialValue: settings.gridColor,
+                decoration: const InputDecoration(
+                  labelText: 'Grid color',
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: GridColorPreset.black,
+                    child: Text('Black'),
+                  ),
+                  DropdownMenuItem(
+                    value: GridColorPreset.darkGray,
+                    child: Text('Dark gray'),
+                  ),
+                  DropdownMenuItem(
+                    value: GridColorPreset.lightGray,
+                    child: Text('Light gray'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    onChanged(settings.copyWith(gridColor: value));
+                  }
+                },
               ),
-              items: const [
-                DropdownMenuItem(
-                  value: GridColorPreset.black,
-                  child: Text('Black'),
-                ),
-                DropdownMenuItem(
-                  value: GridColorPreset.darkGray,
-                  child: Text('Dark gray'),
-                ),
-                DropdownMenuItem(
-                  value: GridColorPreset.lightGray,
-                  child: Text('Light gray'),
-                ),
-              ],
-              onChanged: settings.showGrid
-                  ? (value) {
-                      if (value != null) {
-                        onChanged(settings.copyWith(gridColor: value));
-                      }
-                    }
-                  : null,
             ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: DropdownButtonFormField<SelectionHighlightColorPreset>(
@@ -956,13 +967,21 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
             onChanged: (value) =>
                 onChanged(settings.copyWith(showRegions: value)),
           ),
+          const Divider(height: 24),
+          _buildSectionHeader(context, 'Completion tracking'),
           SwitchListTile(
             key: const ValueKey('show-completed-overlay-setting'),
             dense: true,
             title: const Text('Completed-cell overlay'),
             value: settings.showCompletedCellOverlay,
-            onChanged: (value) =>
-                onChanged(settings.copyWith(showCompletedCellOverlay: value)),
+            onChanged: (value) => onChanged(
+              settings.copyWith(
+                showCompletedCellOverlay: value,
+                includeCompletedCellsInSelection: value
+                    ? settings.includeCompletedCellsInSelection
+                    : true,
+              ),
+            ),
           ),
           if (settings.showCompletedCellOverlay) ...[
             Padding(
@@ -1010,21 +1029,29 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
               onChanged: onCompletedOpacityChanged,
               onChangeEnd: onCompletedOpacityChangeEnd,
             ),
+            SwitchListTile(
+              key: const ValueKey('include-completed-in-selection-setting'),
+              dense: true,
+              title: const Text('Select completed cells'),
+              subtitle: const Text(
+                'Include completed cells in symbol highlighting',
+              ),
+              value: settings.includeCompletedCellsInSelection,
+              onChanged: (value) => onChanged(
+                settings.copyWith(includeCompletedCellsInSelection: value),
+              ),
+            ),
           ],
-          SwitchListTile(
-            key: const ValueKey('include-completed-in-selection-setting'),
-            dense: true,
-            title: const Text('Select completed cells'),
-            subtitle: const Text(
-              'Include completed cells in symbol highlighting',
-            ),
-            value: settings.includeCompletedCellsInSelection,
-            onChanged: (value) => onChanged(
-              settings.copyWith(includeCompletedCellsInSelection: value),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  /// Builds a label that introduces one related renderer-settings region.
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Text(title, style: Theme.of(context).textTheme.labelLarge),
     );
   }
 }

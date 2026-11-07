@@ -259,6 +259,7 @@ void main() {
       );
       await tester.tap(find.byKey(const ValueKey('show-grid-setting')));
       await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('grid-color-setting')), findsNothing);
       await tester.tap(
         find.byKey(const ValueKey('selection-highlight-color-setting')),
       );
@@ -274,15 +275,15 @@ void main() {
         find.byKey(const ValueKey('show-completed-overlay-setting')),
       );
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const ValueKey('include-completed-in-selection-setting')),
-      );
-      await tester.pumpAndSettle();
 
       expect(painter().settings.showCellColor, isTrue);
       expect(painter().settings.showGrid, isFalse);
       expect(painter().settings.showCompletedCellOverlay, isFalse);
-      expect(painter().settings.includeCompletedCellsInSelection, isFalse);
+      expect(painter().settings.includeCompletedCellsInSelection, isTrue);
+      expect(
+        find.byKey(const ValueKey('include-completed-in-selection-setting')),
+        findsNothing,
+      );
       expect(
         painter().settings.selectionHighlightColor,
         SelectionHighlightColorPreset.teal,
@@ -294,11 +295,24 @@ void main() {
       expect(saved?.viewport?.renderSettings.showCompletedCellOverlay, isFalse);
       expect(
         saved?.viewport?.renderSettings.includeCompletedCellsInSelection,
-        isFalse,
+        isTrue,
       );
       expect(
         saved?.viewport?.renderSettings.selectionHighlightColor,
         SelectionHighlightColorPreset.teal,
+      );
+
+      await _selectWorkspaceMenuOption(
+        tester,
+        const ValueKey('floating-menu-completion-selection'),
+      );
+      expect(painter().settings.showCompletedCellOverlay, isTrue);
+      expect(
+        (await progress.getForDocument('sample-garden-sampler'))
+            ?.viewport
+            ?.renderSettings
+            .showCompletedCellOverlay,
+        isTrue,
       );
 
       await tester.pageBack();
@@ -307,8 +321,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(painter().settings.showCellColor, isTrue);
       expect(painter().settings.showGrid, isFalse);
-      expect(painter().settings.showCompletedCellOverlay, isFalse);
-      expect(painter().settings.includeCompletedCellsInSelection, isFalse);
+      expect(painter().settings.showCompletedCellOverlay, isTrue);
+      expect(painter().settings.includeCompletedCellsInSelection, isTrue);
       expect(
         painter().settings.selectionHighlightColor,
         SelectionHighlightColorPreset.teal,
@@ -616,6 +630,17 @@ void main() {
 
       expect(painter().selection.selectedSymbolId, 'flower');
       expect(painter().selectedVisibleCells, hasLength(2));
+      expect(find.byKey(const ValueKey('symbol-palette-panel')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('selected-symbol-details')),
+        findsNothing,
+      );
+      expect(await progress.getForDocument('sample-garden-sampler'), isNull);
+
+      await _selectWorkspaceMenuOption(
+        tester,
+        const ValueKey('floating-menu-symbol-palette'),
+      );
       expect(
         find.byKey(const ValueKey('symbol-palette-panel')),
         findsOneWidget,
@@ -625,7 +650,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('DMC 321'), findsWidgets);
-      expect(await progress.getForDocument('sample-garden-sampler'), isNull);
 
       final originBeforePan = painter().camera.origin;
       await tester.dragFrom(
