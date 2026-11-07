@@ -3,11 +3,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../domain/pattern_definitions.dart';
 import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/repositories.dart';
 import '../../domain/value_objects.dart';
 import '../pattern_renderer/pattern_viewport.dart';
+import '../pattern_renderer/pattern_render_selection.dart';
 
 /// Loads a persisted pattern and its independent viewport render settings.
 class PatternWorkspaceScreen extends StatefulWidget {
@@ -46,6 +48,12 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
 
   /// Whether the left renderer-settings panel is visible.
   bool _showSettings = false;
+
+  /// Whether the right symbol palette and inspector is visible.
+  bool _showSymbolPalette = false;
+
+  /// Current ephemeral symbol selection, intentionally not persisted.
+  PatternRenderSelection _selection = const PatternRenderSelection();
 
   /// Serializes settings writes so rapid interactions cannot save out of order.
   Future<void> _saveChain = Future<void>.value();
@@ -130,10 +138,19 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
           280.0,
           math.max(0.0, constraints.maxWidth - 24),
         );
+        final paletteWidth = math.min(
+          320.0,
+          math.max(0.0, constraints.maxWidth - 24),
+        );
         return Stack(
           children: [
             Positioned.fill(
-              child: PatternRenderView(document: document, settings: _settings),
+              child: PatternRenderView(
+                document: document,
+                settings: _settings,
+                selection: _selection,
+                onSymbolSelected: _selectSymbol,
+              ),
             ),
             if (_showSettings)
               Positioned(
@@ -149,6 +166,19 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   onOpacityChangeEnd: _saveOpacity,
                 ),
               ),
+            if (_showSymbolPalette)
+              Positioned(
+                right: 12,
+                top: 12,
+                bottom: 72,
+                key: const ValueKey('symbol-palette-panel'),
+                width: paletteWidth,
+                child: _PatternSymbolPalettePanel(
+                  document: document,
+                  selection: _selection,
+                  onSelected: _selectSymbol,
+                ),
+              ),
             Positioned(
               left: 12,
               bottom: 12,
@@ -156,6 +186,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                 opacity: 0.85,
                 child: FloatingActionButton.small(
                   key: const ValueKey('renderer-settings-toggle'),
+                  heroTag: 'renderer-settings-fab',
                   tooltip: 'Renderer settings',
                   onPressed: () =>
                       setState(() => _showSettings = !_showSettings),
@@ -163,10 +194,35 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                 ),
               ),
             ),
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: Opacity(
+                opacity: 0.85,
+                child: FloatingActionButton.small(
+                  key: const ValueKey('symbol-palette-toggle'),
+                  heroTag: 'symbol-palette-fab',
+                  tooltip: 'Symbol palette',
+                  onPressed: () =>
+                      setState(() => _showSymbolPalette = !_showSymbolPalette),
+                  child: Icon(
+                    _showSymbolPalette ? Icons.close : Icons.palette_outlined,
+                  ),
+                ),
+              ),
+            ),
           ],
         );
       },
     );
+  }
+
+  /// Selects a symbol and opens its inspector when selection is non-null.
+  void _selectSymbol(String? symbolId) {
+    setState(() {
+      _selection = _selection.select(symbolId);
+      if (symbolId != null) _showSymbolPalette = true;
+    });
   }
 
   /// Applies and persists a discrete renderer setting change.
@@ -360,12 +416,186 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
   }
 }
 
+/// Floating symbol palette and selected-thread inspector.
+class _PatternSymbolPalettePanel extends StatelessWidget {
+  /// Creates a palette over one immutable pattern document.
+  const _PatternSymbolPalettePanel({
+    required this.document,
+    required this.selection,
+    required this.onSelected,
+  });
+
+  /// Document supplying symbols and complete thread definitions.
+  final PatternDocument document;
+
+  /// Current ephemeral symbol selection.
+  final PatternRenderSelection selection;
+
+  /// Callback used to select or clear a symbol.
+  final ValueChanged<String?> onSelected;
+
+  /// Builds selected details followed by every selectable document symbol.
+  @override
+  Widget build(BuildContext context) {
+    final selected = selection.selectedSymbolId == null
+        ? null
+        : document.symbolById(selection.selectedSymbolId!);
+    return Material(
+      elevation: 8,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Symbols',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (selection.hasSelection)
+                  IconButton(
+                    key: const ValueKey('clear-symbol-selection'),
+                    tooltip: 'Clear selection',
+                    onPressed: () => onSelected(null),
+                    icon: const Icon(Icons.clear),
+                  ),
+              ],
+            ),
+          ),
+          if (selected != null) _SelectedSymbolDetails(symbol: selected),
+          const Divider(),
+          for (final symbol in document.symbols)
+            ListTile(
+              key: ValueKey('symbol-palette-${symbol.id}'),
+              dense: true,
+              selected: symbol.id == selection.selectedSymbolId,
+              onTap: () => onSelected(symbol.id),
+              leading: _SymbolSwatch(symbol: symbol),
+              title: Text(symbol.thread.name ?? symbol.id),
+              subtitle: Text(_threadSummary(symbol.thread)),
+              trailing: Text(
+                symbol.displayGlyph,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Detailed metadata for the currently selected symbol and thread.
+class _SelectedSymbolDetails extends StatelessWidget {
+  /// Creates an inspector for [symbol].
+  const _SelectedSymbolDetails({required this.symbol});
+
+  /// Selected symbol whose thread metadata is displayed.
+  final SymbolDefinition symbol;
+
+  /// Builds glyph, color, catalog, and conversion information.
+  @override
+  Widget build(BuildContext context) {
+    final thread = symbol.thread;
+    return Padding(
+      key: const ValueKey('selected-symbol-details'),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _SymbolSwatch(symbol: symbol, size: 48),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      thread.name ?? symbol.id,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Text(_threadSummary(thread)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Color: ${thread.color}'),
+          Text('Thread ID: ${thread.id}'),
+          if (thread.conversionNotes != null)
+            Text('Conversion: ${thread.conversionNotes}'),
+        ],
+      ),
+    );
+  }
+}
+
+/// Colored glyph swatch shared by palette rows and selected details.
+class _SymbolSwatch extends StatelessWidget {
+  /// Creates a square swatch for [symbol].
+  const _SymbolSwatch({required this.symbol, this.size = 36});
+
+  /// Symbol whose glyph and thread color are represented.
+  final SymbolDefinition symbol;
+
+  /// Logical width and height of the square swatch.
+  final double size;
+
+  /// Builds a contrast-aware glyph over the imported thread color.
+  @override
+  Widget build(BuildContext context) {
+    final color = _parseThreadColor(symbol.thread.color);
+    final foreground = color.computeLuminance() > 0.45
+        ? Colors.black87
+        : Colors.white;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        symbol.displayGlyph,
+        style: TextStyle(
+          color: foreground,
+          fontSize: size * 0.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+/// Produces a compact manufacturer and catalog label for [thread].
+String _threadSummary(ThreadDefinition thread) {
+  final parts = <String>[
+    if (thread.brand != null) thread.brand!,
+    if (thread.catalogNumber != null) thread.catalogNumber!,
+  ];
+  return parts.isEmpty ? thread.color : parts.join(' ');
+}
+
+/// Converts a validated domain thread color to an opaque Flutter color.
+Color _parseThreadColor(String value) =>
+    Color(int.parse('FF${value.substring(1)}', radix: 16));
+
 /// Places a normalized pattern document in the viewport rendering engine.
 class PatternRenderView extends StatelessWidget {
   /// Creates a read-only viewport for [document].
   const PatternRenderView({
     required this.document,
     this.settings = const PatternRenderSettings(),
+    this.selection = const PatternRenderSelection(),
+    this.onSymbolSelected,
     super.key,
   });
 
@@ -374,6 +604,12 @@ class PatternRenderView extends StatelessWidget {
 
   /// Visual settings applied without changing viewport camera state.
   final PatternRenderSettings settings;
+
+  /// Ephemeral symbol selection highlighted across matching visible cells.
+  final PatternRenderSelection selection;
+
+  /// Reports direct pattern-cell selection changes.
+  final ValueChanged<String?>? onSymbolSelected;
 
   /// Builds a bounded surface whose camera maps grid coordinates to pixels.
   @override
@@ -385,7 +621,12 @@ class PatternRenderView extends StatelessWidget {
         color: colors.surfaceContainerLowest,
         border: Border.all(color: colors.outlineVariant),
       ),
-      child: PatternViewport(document: document, settings: settings),
+      child: PatternViewport(
+        document: document,
+        settings: settings,
+        selection: selection,
+        onSymbolSelected: onSymbolSelected,
+      ),
     );
   }
 }

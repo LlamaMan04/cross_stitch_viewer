@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
+import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
+import 'pattern_render_selection.dart';
 import 'viewport_pattern_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
@@ -14,6 +16,8 @@ class PatternViewport extends StatefulWidget {
   const PatternViewport({
     required this.document,
     required this.settings,
+    required this.selection,
+    this.onSymbolSelected,
     super.key,
   });
 
@@ -22,6 +26,12 @@ class PatternViewport extends StatefulWidget {
 
   /// Persisted visual settings applied without replacing camera state.
   final PatternRenderSettings settings;
+
+  /// Ephemeral symbol selection highlighted without modifying pattern data.
+  final PatternRenderSelection selection;
+
+  /// Reports a tapped populated cell's symbol ID, or null for an empty cell.
+  final ValueChanged<String?>? onSymbolSelected;
 
   /// Creates the mutable camera state for this viewport.
   @override
@@ -78,6 +88,7 @@ class _PatternViewportState extends State<PatternViewport> {
             behavior: HitTestBehavior.opaque,
             onScaleStart: _handleScaleStart,
             onScaleUpdate: _handleScaleUpdate,
+            onTapUp: widget.onSymbolSelected == null ? null : _handleTapUp,
             child: CustomPaint(
               key: const ValueKey('pattern-grid-canvas'),
               painter: ViewportPatternPainter(
@@ -85,8 +96,10 @@ class _PatternViewportState extends State<PatternViewport> {
                 camera: camera,
                 visibleBounds: visibleBounds,
                 settings: widget.settings,
+                selection: widget.selection,
                 surfaceColor: colors.surfaceContainerLowest,
                 regionColor: colors.primary,
+                selectionColor: colors.tertiary,
               ),
               child: const SizedBox.expand(),
             ),
@@ -94,6 +107,23 @@ class _PatternViewportState extends State<PatternViewport> {
         );
       },
     );
+  }
+
+  /// Converts a tap into a populated cell's symbol selection.
+  void _handleTapUp(TapUpDetails details) {
+    final camera = _camera;
+    if (camera == null) return;
+    final gridPoint = camera.screenToGrid(details.localPosition);
+    final coordinate = GridCoordinate(
+      gridPoint.dy.floor(),
+      gridPoint.dx.floor(),
+    );
+    if (!widget.document.grid.dimensions.contains(coordinate)) {
+      widget.onSymbolSelected?.call(null);
+      return;
+    }
+    final cell = widget.document.grid.cellAt(coordinate);
+    widget.onSymbolSelected?.call(cell?.symbolId);
   }
 
   /// Initializes a fitted camera or clamps the existing camera after resize.

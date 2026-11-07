@@ -166,7 +166,10 @@ void main() {
       );
       await tester.tap(find.byKey(const ValueKey('renderer-settings-toggle')));
       await tester.pumpAndSettle();
-      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('renderer-settings-toggle')),
+        findsOneWidget,
+      );
       expect(
         tester.getSize(find.byKey(const ValueKey('pattern-grid-canvas'))),
         viewportSize,
@@ -199,6 +202,73 @@ void main() {
       await tester.pumpAndSettle();
       expect(painter().settings.showCellColor, isTrue);
       expect(painter().settings.showGrid, isFalse);
+    },
+  );
+
+  testWidgets(
+    'selects a cell symbol, inspects matching cells, and clears selection',
+    (tester) async {
+      final documents = InMemoryPatternDocumentRepository();
+      final progress = InMemoryProgressRepository();
+
+      await tester.pumpWidget(
+        _libraryApp(
+          documents,
+          progress: progress,
+          seedDocument: SamplePatternFixture.create(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Garden Sampler'));
+      await tester.pumpAndSettle();
+
+      final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+      ViewportPatternPainter painter() =>
+          tester.widget<CustomPaint>(canvasFinder).painter!
+              as ViewportPatternPainter;
+      final flowerCenter =
+          tester.getTopLeft(canvasFinder) +
+          painter().camera.gridToScreen(row: 0.5, column: 0.5);
+
+      await tester.tapAt(flowerCenter);
+      await tester.pumpAndSettle();
+
+      expect(painter().selection.selectedSymbolId, 'flower');
+      expect(painter().selectedVisibleCells, hasLength(2));
+      expect(
+        find.byKey(const ValueKey('symbol-palette-panel')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('selected-symbol-details')),
+        findsOneWidget,
+      );
+      expect(find.text('DMC 321'), findsWidgets);
+      expect(await progress.getForDocument('sample-garden-sampler'), isNull);
+
+      final originBeforePan = painter().camera.origin;
+      await tester.dragFrom(
+        tester.getTopLeft(canvasFinder) + const Offset(300, 300),
+        const Offset(-50, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(painter().camera.origin.dx, lessThan(originBeforePan.dx));
+      expect(painter().selection.selectedSymbolId, 'flower');
+      expect(painter().selectedVisibleCells, hasLength(2));
+
+      await tester.tap(find.byKey(const ValueKey('symbol-palette-leaf')));
+      await tester.pumpAndSettle();
+      expect(painter().selection.selectedSymbolId, 'leaf');
+      expect(painter().selectedVisibleCells, hasLength(1));
+
+      await tester.tap(find.byKey(const ValueKey('clear-symbol-selection')));
+      await tester.pumpAndSettle();
+      expect(painter().selection.hasSelection, isFalse);
+      expect(painter().selectedVisibleCells, isEmpty);
+      expect(
+        find.byKey(const ValueKey('selected-symbol-details')),
+        findsNothing,
+      );
     },
   );
 }

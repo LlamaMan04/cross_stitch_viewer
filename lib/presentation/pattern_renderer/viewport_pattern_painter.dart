@@ -7,6 +7,7 @@ import '../../domain/pattern_document.dart';
 import '../../domain/pattern_grid.dart';
 import '../../domain/progress_models.dart';
 import 'pattern_camera.dart';
+import 'pattern_render_selection.dart';
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
 class ViewportPatternPainter extends CustomPainter {
@@ -16,8 +17,10 @@ class ViewportPatternPainter extends CustomPainter {
     required this.camera,
     required this.visibleBounds,
     required this.settings,
+    required this.selection,
     required this.surfaceColor,
     required this.regionColor,
+    required this.selectionColor,
   });
 
   /// Normalized source document rendered by this painter.
@@ -32,11 +35,26 @@ class ViewportPatternPainter extends CustomPainter {
   /// Persisted visual switches and colors for this paint pass.
   final PatternRenderSettings settings;
 
+  /// Ephemeral symbol selection highlighted during this paint pass.
+  final PatternRenderSelection selection;
+
   /// Background color used for the viewport and empty cells.
   final Color surfaceColor;
 
   /// Theme color used for enabled source-region outlines.
   final Color regionColor;
+
+  /// Accessible accent used inside the selected-cell double outline.
+  final Color selectionColor;
+
+  /// Matching visible cells used by selection painting and focused tests.
+  Iterable<StitchCell> get selectedVisibleCells sync* {
+    final selectedSymbolId = selection.selectedSymbolId;
+    if (selectedSymbolId == null) return;
+    for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
+      if (cell.symbolId == selectedSymbolId) yield cell;
+    }
+  }
 
   /// Paints the visible document background, cells, glyphs, and grid rules.
   @override
@@ -46,9 +64,30 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.clipRect(Offset.zero & size);
     _paintDocumentBackground(canvas);
     _paintCells(canvas);
+    _paintSelectedSymbol(canvas);
     if (settings.showGrid) _paintGrid(canvas);
     if (settings.showRegions) _paintRegions(canvas);
     canvas.restore();
+  }
+
+  /// Paints a high-contrast double outline around selected visible cells.
+  void _paintSelectedSymbol(Canvas canvas) {
+    final outerWidth = math.min(4.0, camera.cellSize * 0.25);
+    final innerWidth = math.min(2.0, camera.cellSize * 0.13);
+    final inset = math.min(2.0, camera.cellSize * 0.12);
+    final outerPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = outerWidth;
+    final innerPaint = Paint()
+      ..color = selectionColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = innerWidth;
+    for (final cell in selectedVisibleCells) {
+      final rect = _cellRect(cell).deflate(inset);
+      canvas.drawRect(rect, outerPaint);
+      canvas.drawRect(rect, innerPaint);
+    }
   }
 
   /// Paints the document rectangle without iterating through empty cells.
@@ -205,6 +244,8 @@ class ViewportPatternPainter extends CustomPainter {
       oldDelegate.camera != camera ||
       oldDelegate.visibleBounds != visibleBounds ||
       oldDelegate.settings != settings ||
+      oldDelegate.selection != selection ||
       oldDelegate.surfaceColor != surfaceColor ||
-      oldDelegate.regionColor != regionColor;
+      oldDelegate.regionColor != regionColor ||
+      oldDelegate.selectionColor != selectionColor;
 }
