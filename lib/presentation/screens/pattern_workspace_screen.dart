@@ -475,11 +475,10 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
             child: Row(
               children: [
                 Expanded(
@@ -500,20 +499,27 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
           ),
           if (selected != null) _SelectedSymbolDetails(symbol: selected),
           const Divider(),
-          for (final symbol in document.symbols)
-            ListTile(
-              key: ValueKey('symbol-palette-${symbol.id}'),
-              dense: true,
-              selected: symbol.id == selection.selectedSymbolId,
-              onTap: () => onSelected(symbol.id),
-              leading: _SymbolSwatch(symbol: symbol),
-              title: Text(symbol.thread.name ?? symbol.id),
-              subtitle: Text(_threadSummary(symbol.thread)),
-              trailing: Text(
-                symbol.displayGlyph,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 8),
+              children: [
+                for (final symbol in document.symbols)
+                  ListTile(
+                    key: ValueKey('symbol-palette-${symbol.id}'),
+                    dense: true,
+                    selected: symbol.id == selection.selectedSymbolId,
+                    onTap: () => onSelected(symbol.id),
+                    leading: _SymbolSwatch(symbol: symbol),
+                    title: Text(symbol.thread.name ?? symbol.id),
+                    subtitle: Text(_threadSummary(symbol.thread)),
+                    trailing: Text(
+                      symbol.displayGlyph,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -528,7 +534,7 @@ class _SelectedSymbolDetails extends StatelessWidget {
   /// Selected symbol whose thread metadata is displayed.
   final SymbolDefinition symbol;
 
-  /// Builds glyph, color, catalog, and conversion information.
+  /// Builds glyph, catalog, and conversion information.
   @override
   Widget build(BuildContext context) {
     final thread = symbol.thread;
@@ -557,8 +563,6 @@ class _SelectedSymbolDetails extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text('Color: ${thread.color}'),
-          Text('Thread ID: ${thread.id}'),
           if (thread.conversionNotes != null)
             Text('Conversion: ${thread.conversionNotes}'),
         ],
