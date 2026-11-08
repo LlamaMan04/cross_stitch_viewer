@@ -62,9 +62,14 @@ class ViewportPatternPainter extends CustomPainter {
   /// Shared glyph layouts retained across otherwise short-lived painters.
   final PatternGlyphLayoutCache glyphLayoutCache;
 
+  /// Visible populated cells materialized only when a cell layer needs them.
+  late final List<StitchCell> _visibleCells = List<StitchCell>.unmodifiable(
+    document.grid.cellsIntersecting(visibleBounds),
+  );
+
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
-    for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
+    for (final cell in _visibleCells) {
       if (completedCells.contains(cell.coordinate)) yield cell;
     }
   }
@@ -73,7 +78,7 @@ class ViewportPatternPainter extends CustomPainter {
   Iterable<StitchCell> get selectedVisibleCells sync* {
     final selectedSymbolId = selection.selectedSymbolId;
     if (selectedSymbolId == null) return;
-    for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
+    for (final cell in _visibleCells) {
       final isExcludedCompletedCell =
           !settings.includeCompletedCellsInSelection &&
           completedCells.contains(cell.coordinate);
@@ -122,6 +127,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints a translucent accent and outline across selected visible cells.
   void _paintSelectedSymbol(Canvas canvas) {
+    if (!selection.hasSelection) return;
     final highlightColor = _parseColor(
       settings.selectionHighlightColor.colorHex,
     );
@@ -142,6 +148,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints the configured neutral overlay on completed visible cells.
   void _paintCompletedCells(Canvas canvas) {
+    if (completedCells.isEmpty) return;
     final completedPaint = Paint()
       ..color = _parseColor(settings.completedCellColor.colorHex)
           .withValues(alpha: settings.completedCellOpacity);
@@ -166,7 +173,7 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paints configured thread-color fills for visible populated cells.
   void _paintCellFills(Canvas canvas) {
     if (!settings.showCellColor) return;
-    for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
+    for (final cell in _visibleCells) {
       final symbol = document.symbolById(cell.symbolId);
       if (symbol == null) continue;
       final threadColor = _parseColor(symbol.thread.color);
@@ -181,7 +188,7 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paints glyphs after dynamic overlays so symbols remain legible.
   void _paintGlyphs(Canvas canvas) {
     if (!settings.showSymbols || camera.cellSize < 12) return;
-    for (final cell in document.grid.cellsIntersecting(visibleBounds)) {
+    for (final cell in _visibleCells) {
       final symbol = document.symbolById(cell.symbolId);
       if (symbol == null) continue;
       _paintGlyph(
