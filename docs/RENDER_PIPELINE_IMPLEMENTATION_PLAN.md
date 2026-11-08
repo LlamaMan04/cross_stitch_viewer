@@ -42,17 +42,21 @@ Implemented today:
    visibility/color, completion styling and selection inclusion, and
    source-region visibility; settings are persisted.
 5. The workspace has a compact app bar and a collapsible settings panel.
+6. A hysteretic three-level LOD policy switches between tile summaries,
+   glyph-free cell rendering, and complete detail rendering. Immutable tile
+   summaries retain population and dominant-symbol data, while dynamic
+   completion and pending-selection tile indexes are maintained outside paint.
 
-The renderer is therefore visible-range bounded, but it is not yet frame-cost
-bounded. At fitted or overview zoom, the visible range can still contain most
-of a dense document. Visible-cell queries are shared within a paint pass, and
-document-scoped render metadata plus a bounded glyph-layout cache now avoid
-per-cell color parsing, fill-paint allocation, and text layout. Each visible
-cell and grid rule still issues a separate draw call, and each grid rule still
-creates a paint. There is no render LOD, batched path generation, tile picture
-cache, or renderer-specific frame instrumentation yet. Camera updates also
-call `setState` for every gesture update, rebuilding the viewport subtree
-before painting.
+The renderer is therefore visible-range and visible-detail bounded. At fitted
+or overview zoom, it queries only intersecting immutable tile summaries and
+does not enumerate visible cells. Visible-cell queries are shared within grid
+and detail paint passes, and document-scoped render metadata plus a bounded
+glyph-layout cache avoid per-cell color parsing, fill-paint allocation, and
+text layout. Each visible cell and grid rule still issues a separate draw call,
+and each grid rule still creates a paint. There is no batched path generation,
+tile picture cache, or renderer-specific frame instrumentation yet. Camera
+updates also call `setState` for every gesture update, rebuilding the viewport
+subtree before painting.
 
 The existing 100-by-200, 95%-populated fixture verifies range-query and gesture
 behavior, but is not sufficient as a production-scale performance target.
@@ -442,7 +446,7 @@ pointer events do not write progress state on every update.
    code and add migration/round-trip tests.
 5. [x] Add `PatternGrid` range-query tests for empty, sparse, dense, and
    tile-boundary cases.
-6. [ ] Add `RenderLod`, its hysteresis resolver, and visible-tile summary tests.
+6. [x] Add `RenderLod`, its hysteresis resolver, and visible-tile summary tests.
 7. [x] Add the renderer package and integrate the viewport path.
 
 ### Phase 2: Build the camera and viewport shell (foundation complete)
@@ -470,14 +474,14 @@ pointer events do not write progress state on every update.
    configurable gray color/opacity.
 7. [x] Add visible-only selected-symbol highlights, keyed by selected symbol ID.
 8. [x] Add source-region intersection filtering and default it to hidden.
-9. [ ] Apply the three-level LOD policy: visible tile summaries at overview,
+9. [x] Apply the three-level LOD policy: visible tile summaries at overview,
     glyph suppression at grid level, and complete per-cell rendering at detail.
 
 ### Phase 3A: Make frame cost proportional to visible detail
 
-1. [ ] Add a pure LOD resolver with hysteresis at approximately 3 px/cell and
+1. [x] Add a pure LOD resolver with hysteresis at approximately 3 px/cell and
    12 px/cell; verify overview, grid, and detail transitions independently.
-2. [ ] Add immutable per-tile summaries for overview density, dominant color, and
+2. [x] Add immutable per-tile summaries for overview density, dominant color, and
    selection/completion presence. Overview rendering must not enumerate every
    cell in a visible tile.
 3. [x] Precompute symbol render metadata, including parsed colors and contrast

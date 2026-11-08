@@ -12,6 +12,7 @@ import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
+import 'render_lod.dart';
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
 class ViewportPatternPainter extends CustomPainter {
@@ -29,6 +30,8 @@ class ViewportPatternPainter extends CustomPainter {
     required this.completionSelectionColor,
     required this.glyphLayoutCache,
     required this.symbolRenderCache,
+    required this.renderLod,
+    required this.completedTileCoordinates,
   });
 
   /// Normalized source document rendered by this painter.
@@ -67,6 +70,12 @@ class ViewportPatternPainter extends CustomPainter {
   /// Parsed symbol colors and fill paints shared across viewport painters.
   final PatternSymbolRenderCache symbolRenderCache;
 
+  /// Automatic detail policy resolved by the viewport with hysteresis.
+  final RenderLod renderLod;
+
+  /// Tiles containing completed cells, indexed outside the paint loop.
+  final Set<PatternTileCoordinate> completedTileCoordinates;
+
   /// Completed-cell color and opacity resolved once for this paint delegate.
   late final Color _completedOverlayColor = _parseColor(
     settings.completedCellColor.colorHex,
@@ -80,6 +89,18 @@ class ViewportPatternPainter extends CustomPainter {
   late final List<StitchCell> _visibleCells = List<StitchCell>.unmodifiable(
     document.grid.cellsIntersecting(visibleBounds),
   );
+
+  /// Tile summaries queried lazily only by overview rendering.
+  late final List<PatternTileSummary> _visibleTileSummaries =
+      List<PatternTileSummary>.unmodifiable(
+        document.grid.tileSummariesIntersecting(visibleBounds),
+      );
+
+  /// Tiles containing pending exact-cell completion selections.
+  late final Set<PatternTileCoordinate> _completionSelectionTiles =
+      Set<PatternTileCoordinate>.unmodifiable(
+        completionSelection.map(PatternGrid.tileCoordinateFor),
+      );
 
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
@@ -109,6 +130,7 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
     _paintDocumentBackground(canvas);
+    if (renderLod == RenderLod.overview) _paintOverviewTiles(canvas);
     _paintCellFills(canvas);
     if (settings.showCompletedCellOverlay) {
       _paintCompletedCells(canvas);
@@ -129,7 +151,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints a high-contrast theme-color overlay on selected exact cells.
   void _paintCompletionSelection(Canvas canvas) {
-    if (completionSelection.isEmpty) return;
+    if (completionSelection.isEmpty || renderLod == RenderLod.overview) return;
     final overlayPaint = Paint()..color = completionSelectionOverlayColor;
     for (final coordinate in completionSelection) {
       if (!visibleBounds.contains(coordinate)) continue;
@@ -141,7 +163,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints a translucent accent and outline across selected visible cells.
   void _paintSelectedSymbol(Canvas canvas) {
-    if (!selection.hasSelection) return;
+    if (!selection.hasSelection || renderLod == RenderLod.overview) return;
     final highlightColor = _parseColor(
       settings.selectionHighlightColor.colorHex,
     );
@@ -162,7 +184,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints the configured neutral overlay on completed visible cells.
   void _paintCompletedCells(Canvas canvas) {
-    if (completedCells.isEmpty) return;
+    if (completedCells.isEmpty || renderLod == RenderLod.overview) return;
     for (final cell in completedVisibleCells) {
       canvas.drawRect(_cellRect(cell), _completedOverlayPaint);
     }
@@ -183,7 +205,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints configured thread-color fills for visible populated cells.
   void _paintCellFills(Canvas canvas) {
-    if (!settings.showCellColor) return;
+    if (!settings.showCellColor || renderLod == RenderLod.overview) return;
     for (final cell in _visibleCells) {
       final fillPaint = symbolRenderCache.fillPaintFor(
         cell.symbolId,
@@ -196,7 +218,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints glyphs after dynamic overlays so symbols remain legible.
   void _paintGlyphs(Canvas canvas) {
-    if (!settings.showSymbols || camera.cellSize < 12) return;
+    if (!settings.showSymbols || renderLod != RenderLod.detail) return;
     for (final cell in _visibleCells) {
       final metadata = symbolRenderCache.metadataFor(cell.symbolId);
       if (metadata == null) continue;
@@ -207,6 +229,80 @@ class ViewportPatternPainter extends CustomPainter {
         _effectiveCellBackground(cell, metadata),
       );
     }
+  }
+
+  /// Paints density plus dynamic tile accents without enumerating tile cells.
+  void _paintOverviewTiles(Canvas canvas) {
+    final gridColor = _parseColor(settings.gridColor.colorHex);
+    final selectedSymbolId = selection.selectedSymbolId;
+    final selectedColor = _parseColor(
+      settings.selectionHighlightColor.colorHex,
+    );
+    final selectedPaint = Paint()
+      ..color = selectedColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.min(2, camera.cellSize * 2);
+    final pendingPaint = Paint()
+      ..color = completionSelectionColor.withValues(alpha: 0.4);
+    final completedPaint = Paint()
+      ..color = _completedOverlayColor.withValues(
+        alpha: settings.completedCellOpacity * 0.45,
+      );
+    for (final summary in _visibleTileSummaries) {
+      final tileRect = _tileRect(summary.coordinate);
+      final tileRows = math.min(
+        PatternGrid.tileSize,
+        document.grid.dimensions.rows -
+            summary.coordinate.row * PatternGrid.tileSize,
+      );
+      final tileColumns = math.min(
+        PatternGrid.tileSize,
+        document.grid.dimensions.columns -
+            summary.coordinate.column * PatternGrid.tileSize,
+      );
+      final density = summary.populatedCellCount / (tileRows * tileColumns);
+      final metadata = symbolRenderCache.metadataFor(summary.dominantSymbolId);
+      final densityColor = settings.showCellColor && metadata != null
+          ? metadata.threadColor.withValues(
+              alpha: settings.cellColorOpacity * density,
+            )
+          : gridColor.withValues(alpha: 0.18 * density);
+      canvas.drawRect(tileRect, Paint()..color = densityColor);
+      if (settings.showCompletedCellOverlay &&
+          completedTileCoordinates.contains(summary.coordinate)) {
+        canvas.drawRect(tileRect, completedPaint);
+      }
+      if (selectedSymbolId != null &&
+          summary.symbolCounts.containsKey(selectedSymbolId)) {
+        canvas.drawRect(
+          tileRect.deflate(selectedPaint.strokeWidth / 2),
+          selectedPaint,
+        );
+      }
+      if (_completionSelectionTiles.contains(summary.coordinate)) {
+        canvas.drawRect(tileRect, pendingPaint);
+      }
+    }
+  }
+
+  /// Calculates the full screen-space rectangle occupied by one tile.
+  Rect _tileRect(PatternTileCoordinate coordinate) {
+    final startRow = coordinate.row * PatternGrid.tileSize;
+    final startColumn = coordinate.column * PatternGrid.tileSize;
+    final endRow = math.min(
+      startRow + PatternGrid.tileSize,
+      document.grid.dimensions.rows,
+    );
+    final endColumn = math.min(
+      startColumn + PatternGrid.tileSize,
+      document.grid.dimensions.columns,
+    );
+    return Rect.fromLTWH(
+      camera.origin.dx + startColumn * camera.cellSize,
+      camera.origin.dy + startRow * camera.cellSize,
+      (endColumn - startColumn) * camera.cellSize,
+      (endRow - startRow) * camera.cellSize,
+    );
   }
 
   /// Resolves the composited background used for glyph contrast selection.
@@ -255,7 +351,13 @@ class ViewportPatternPainter extends CustomPainter {
     final top = camera.origin.dy + visibleBounds.startRow * camera.cellSize;
     final bottom = camera.origin.dy + visibleBounds.endRow * camera.cellSize;
 
-    for (var row = visibleBounds.startRow; row <= visibleBounds.endRow; row++) {
+    final overview = renderLod == RenderLod.overview;
+    for (final row in _ruleCoordinates(
+      visibleBounds.startRow,
+      visibleBounds.endRow,
+      overview,
+      dimensions.rows,
+    )) {
       final y = camera.origin.dy + row * camera.cellSize;
       canvas.drawLine(
         Offset(left, y),
@@ -263,17 +365,42 @@ class ViewportPatternPainter extends CustomPainter {
         _rulePaint(row, dimensions.rows),
       );
     }
-    for (
-      var column = visibleBounds.startColumn;
-      column <= visibleBounds.endColumn;
-      column++
-    ) {
+    for (final column in _ruleCoordinates(
+      visibleBounds.startColumn,
+      visibleBounds.endColumn,
+      overview,
+      dimensions.columns,
+    )) {
       final x = camera.origin.dx + column * camera.cellSize;
       canvas.drawLine(
         Offset(x, top),
         Offset(x, bottom),
         _rulePaint(column, dimensions.columns),
       );
+    }
+  }
+
+  /// Yields every visible rule or only ten-cell rules in overview mode.
+  Iterable<int> _ruleCoordinates(
+    int start,
+    int end,
+    bool majorOnly,
+    int documentExtent,
+  ) sync* {
+    if (!majorOnly) {
+      for (var coordinate = start; coordinate <= end; coordinate++) {
+        yield coordinate;
+      }
+      return;
+    }
+    final firstMajor = ((start + 9) ~/ 10) * 10;
+    for (var coordinate = firstMajor; coordinate <= end; coordinate += 10) {
+      yield coordinate;
+    }
+    if (documentExtent >= start &&
+        documentExtent <= end &&
+        documentExtent % 10 != 0) {
+      yield documentExtent;
     }
   }
 
@@ -337,6 +464,11 @@ class ViewportPatternPainter extends CustomPainter {
       oldDelegate.selection != selection ||
       !setEquals(oldDelegate.completedCells, completedCells) ||
       !setEquals(oldDelegate.completionSelection, completionSelection) ||
+      oldDelegate.renderLod != renderLod ||
+      !setEquals(
+        oldDelegate.completedTileCoordinates,
+        completedTileCoordinates,
+      ) ||
       oldDelegate.surfaceColor != surfaceColor ||
       oldDelegate.regionColor != regionColor ||
       oldDelegate.completionSelectionColor != completionSelectionColor;

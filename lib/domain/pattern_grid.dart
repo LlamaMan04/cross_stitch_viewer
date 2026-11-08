@@ -128,6 +128,64 @@ class StitchCell {
   final String? provenanceId;
 }
 
+/// Stable row and column identity for one fixed-size spatial tile.
+class PatternTileCoordinate {
+  /// Creates a tile coordinate from zero-based tile indices.
+  const PatternTileCoordinate(this.row, this.column);
+
+  /// Zero-based tile row.
+  final int row;
+
+  /// Zero-based tile column.
+  final int column;
+
+  /// Compares tile coordinates by row and column.
+  @override
+  bool operator ==(Object other) =>
+      other is PatternTileCoordinate && row == other.row && column == other.column;
+
+  /// Hash code consistent with [operator ==].
+  @override
+  int get hashCode => Object.hash(row, column);
+}
+
+/// Immutable aggregate used to render a tile without enumerating its cells.
+class PatternTileSummary {
+  /// Creates one summary from its coordinate and symbol population counts.
+  PatternTileSummary({
+    required this.coordinate,
+    required Map<String, int> symbolCounts,
+  }) : symbolCounts = Map<String, int>.unmodifiable(symbolCounts),
+       populatedCellCount = symbolCounts.values.fold(0, (sum, count) => sum + count),
+       dominantSymbolId = _dominantSymbol(symbolCounts);
+
+  /// Spatial tile represented by this summary.
+  final PatternTileCoordinate coordinate;
+
+  /// Number of populated cells associated with each symbol ID.
+  final Map<String, int> symbolCounts;
+
+  /// Total populated cells in this tile.
+  final int populatedCellCount;
+
+  /// Most frequent symbol ID, with source order breaking ties.
+  final String dominantSymbolId;
+
+  /// Selects the first symbol having the greatest population.
+  static String _dominantSymbol(Map<String, int> symbolCounts) {
+    assert(symbolCounts.isNotEmpty);
+    var dominantId = symbolCounts.keys.first;
+    var dominantCount = symbolCounts[dominantId]!;
+    for (final entry in symbolCounts.entries.skip(1)) {
+      if (entry.value > dominantCount) {
+        dominantId = entry.key;
+        dominantCount = entry.value;
+      }
+    }
+    return dominantId;
+  }
+}
+
 /// Sparse populated cells together with the full rectangular grid dimensions.
 class PatternGrid {
   /// Number of rows and columns grouped into one immutable spatial tile.
@@ -155,6 +213,13 @@ class PatternGrid {
       for (final entry in mutableTiles.entries)
         entry.key: List<StitchCell>.unmodifiable(entry.value),
     });
+    _tileSummaries = Map.unmodifiable({
+      for (final entry in mutableTiles.entries)
+        PatternTileCoordinate(entry.key.$1, entry.key.$2): PatternTileSummary(
+          coordinate: PatternTileCoordinate(entry.key.$1, entry.key.$2),
+          symbolCounts: _symbolCounts(entry.value),
+        ),
+    });
   }
 
   /// Full grid extent, including coordinates without stitches.
@@ -169,9 +234,52 @@ class PatternGrid {
   /// Immutable populated cells grouped into fixed-size spatial tiles.
   late final Map<(int, int), List<StitchCell>> _cellsByTile;
 
+  /// Immutable summaries keyed by their fixed spatial tile coordinates.
+  late final Map<PatternTileCoordinate, PatternTileSummary> _tileSummaries;
+
+  /// Returns the tile coordinate containing [coordinate].
+  static PatternTileCoordinate tileCoordinateFor(GridCoordinate coordinate) =>
+      PatternTileCoordinate(
+        coordinate.row ~/ tileSize,
+        coordinate.column ~/ tileSize,
+      );
+
   /// Finds the populated cell at [coordinate], or returns null if empty.
   StitchCell? cellAt(GridCoordinate coordinate) =>
       _cellsByCoordinate[coordinate];
+
+  /// Yields populated tile summaries intersecting [bounds].
+  Iterable<PatternTileSummary> tileSummariesIntersecting(
+    GridBounds bounds,
+  ) sync* {
+    final query = bounds.clampTo(dimensions);
+    if (query.isEmpty) return;
+    final firstTileRow = query.startRow ~/ tileSize;
+    final lastTileRow = (query.endRow - 1) ~/ tileSize;
+    final firstTileColumn = query.startColumn ~/ tileSize;
+    final lastTileColumn = (query.endColumn - 1) ~/ tileSize;
+    for (var tileRow = firstTileRow; tileRow <= lastTileRow; tileRow++) {
+      for (
+        var tileColumn = firstTileColumn;
+        tileColumn <= lastTileColumn;
+        tileColumn++
+      ) {
+        final summary = _tileSummaries[
+          PatternTileCoordinate(tileRow, tileColumn)
+        ];
+        if (summary != null) yield summary;
+      }
+    }
+  }
+
+  /// Counts symbol occurrences while retaining first-seen key ordering.
+  static Map<String, int> _symbolCounts(Iterable<StitchCell> cells) {
+    final counts = <String, int>{};
+    for (final cell in cells) {
+      counts.update(cell.symbolId, (count) => count + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
 
   /// Yields populated cells inside [bounds] without scanning off-screen tiles.
   Iterable<StitchCell> cellsIntersecting(GridBounds bounds) sync* {

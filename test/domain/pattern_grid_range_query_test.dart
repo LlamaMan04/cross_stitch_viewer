@@ -57,4 +57,37 @@ void main() {
       isEmpty,
     );
   });
+
+  test('summarizes populated tiles without exposing their cell lists', () {
+    final grid = PatternGrid(
+      dimensions: const PatternDimensions(80, 80),
+      cells: const [
+        StitchCell(coordinate: GridCoordinate(0, 0), symbolId: 'a'),
+        StitchCell(coordinate: GridCoordinate(1, 1), symbolId: 'a'),
+        StitchCell(coordinate: GridCoordinate(2, 2), symbolId: 'b'),
+        StitchCell(coordinate: GridCoordinate(40, 40), symbolId: 'c'),
+      ],
+    );
+
+    final summaries = grid
+        .tileSummariesIntersecting(
+          const GridBounds(
+            startRow: 0,
+            endRow: 32,
+            startColumn: 0,
+            endColumn: 32,
+          ),
+        )
+        .toList();
+
+    expect(summaries, hasLength(1));
+    expect(summaries.single.coordinate, const PatternTileCoordinate(0, 0));
+    expect(summaries.single.populatedCellCount, 3);
+    expect(summaries.single.symbolCounts, <String, int>{'a': 2, 'b': 1});
+    expect(summaries.single.dominantSymbolId, 'a');
+    expect(
+      () => summaries.single.symbolCounts['a'] = 4,
+      throwsUnsupportedError,
+    );
+  });
 }

@@ -11,6 +11,7 @@ import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_layout_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_symbol_render_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 
 /// Verifies that renderer layers share one visible-cell spatial query.
@@ -37,6 +38,10 @@ void main() {
       completionSelectionColor: Colors.teal,
       glyphLayoutCache: glyphLayoutCache,
       symbolRenderCache: PatternSymbolRenderCache(fixture.document),
+      renderLod: RenderLod.detail,
+      completedTileCoordinates: <PatternTileCoordinate>{
+        const PatternTileCoordinate(0, 0),
+      },
     );
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
@@ -70,6 +75,8 @@ void main() {
       completionSelectionColor: Colors.teal,
       glyphLayoutCache: glyphLayoutCache,
       symbolRenderCache: PatternSymbolRenderCache(fixture.document),
+      renderLod: RenderLod.grid,
+      completedTileCoordinates: const <PatternTileCoordinate>{},
     );
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
@@ -79,6 +86,45 @@ void main() {
     picture.dispose();
 
     expect(fixture.grid.queryCount, 0);
+    expect(fixture.grid.tileSummaryQueryCount, 0);
+  });
+
+  test('overview queries summaries without enumerating visible cells', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    addTearDown(glyphLayoutCache.dispose);
+    final painter = ViewportPatternPainter(
+      document: fixture.document,
+      camera: const PatternCamera(cellSize: 2, origin: Offset.zero),
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: 4,
+        startColumn: 0,
+        endColumn: 5,
+      ),
+      settings: const PatternRenderSettings(showCellColor: true),
+      selection: const PatternRenderSelection(selectedSymbolId: 'flower'),
+      completedCells: <GridCoordinate>{const GridCoordinate(0, 0)},
+      completionSelection: <GridCoordinate>{const GridCoordinate(1, 2)},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(fixture.document),
+      renderLod: RenderLod.overview,
+      completedTileCoordinates: <PatternTileCoordinate>{
+        const PatternTileCoordinate(0, 0),
+      },
+    );
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    painter.paint(canvas, const Size(400, 300));
+    final picture = recorder.endRecording();
+    picture.dispose();
+
+    expect(fixture.grid.queryCount, 0);
+    expect(fixture.grid.tileSummaryQueryCount, 1);
   });
 }
 
@@ -114,10 +160,20 @@ class _CountingPatternGrid extends PatternGrid {
   /// Number of spatial range queries requested from this grid.
   int queryCount = 0;
 
+  /// Number of visible-tile summary queries requested from this grid.
+  int tileSummaryQueryCount = 0;
+
   /// Records and delegates one visible-cell range query.
   @override
   Iterable<StitchCell> cellsIntersecting(GridBounds bounds) {
     queryCount++;
     return super.cellsIntersecting(bounds);
+  }
+
+  /// Records and delegates one visible-tile summary query.
+  @override
+  Iterable<PatternTileSummary> tileSummariesIntersecting(GridBounds bounds) {
+    tileSummaryQueryCount++;
+    return super.tileSummariesIntersecting(bounds);
   }
 }

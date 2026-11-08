@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/pattern_document.dart';
+import '../../domain/pattern_grid.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
@@ -12,6 +13,7 @@ import 'pattern_glyph_layout_cache.dart';
 import 'pattern_interaction.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
+import 'render_lod.dart';
 import 'viewport_pattern_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
@@ -78,6 +80,12 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Parsed symbol colors and fill paints shared across viewport painters.
   late PatternSymbolRenderCache _symbolRenderCache;
 
+  /// Detail level retained across camera changes for threshold hysteresis.
+  RenderLod? _renderLod;
+
+  /// Tiles containing at least one completed coordinate.
+  late Set<PatternTileCoordinate> _completedTileCoordinates;
+
   /// Current camera, initialized after the viewport receives a layout size.
   PatternCamera? _camera;
 
@@ -116,6 +124,7 @@ class _PatternViewportState extends State<PatternViewport> {
   void initState() {
     super.initState();
     _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+    _completedTileCoordinates = _indexCompletedTiles(widget.completedCells);
   }
 
   /// Releases cached native text layouts with the owning viewport.
@@ -132,7 +141,12 @@ class _PatternViewportState extends State<PatternViewport> {
     if (oldWidget.document != widget.document) {
       _camera = null;
       _gestureStartCamera = null;
+      _renderLod = null;
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+    }
+    if (oldWidget.document != widget.document ||
+        !identical(oldWidget.completedCells, widget.completedCells)) {
+      _completedTileCoordinates = _indexCompletedTiles(widget.completedCells);
     }
   }
 
@@ -151,6 +165,10 @@ class _PatternViewportState extends State<PatternViewport> {
         _updateCameraForLayout(viewportSize);
         // Camera and bounds are immutable inputs for this paint pass.
         final camera = _camera!;
+        _renderLod = resolveRenderLod(
+          cellSize: camera.cellSize,
+          previous: _renderLod,
+        );
         final visibleBounds = camera.visibleBounds(
           viewportSize: viewportSize,
           dimensions: widget.document.grid.dimensions,
@@ -186,6 +204,8 @@ class _PatternViewportState extends State<PatternViewport> {
                 completionSelectionColor: colors.primary,
                 glyphLayoutCache: _glyphLayoutCache,
                 symbolRenderCache: _symbolRenderCache,
+                renderLod: _renderLod!,
+                completedTileCoordinates: _completedTileCoordinates,
               ),
               child: const SizedBox.expand(),
             ),
@@ -194,6 +214,13 @@ class _PatternViewportState extends State<PatternViewport> {
       },
     );
   }
+
+  /// Indexes completed coordinates once when progress input changes.
+  Set<PatternTileCoordinate> _indexCompletedTiles(
+    Set<GridCoordinate> completedCells,
+  ) => Set<PatternTileCoordinate>.unmodifiable(
+    completedCells.map(PatternGrid.tileCoordinateFor),
+  );
 
   /// Converts a tap into a populated cell's symbol selection.
   void _handleTapUp(TapUpDetails details) {
