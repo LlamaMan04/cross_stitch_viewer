@@ -11,6 +11,7 @@ import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_interaction.dart';
 import 'pattern_render_selection.dart';
+import 'pattern_symbol_render_cache.dart';
 import 'viewport_pattern_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
@@ -74,6 +75,9 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Glyph layouts shared by every painter created for this viewport.
   final PatternGlyphLayoutCache _glyphLayoutCache = PatternGlyphLayoutCache();
 
+  /// Parsed symbol colors and fill paints shared across viewport painters.
+  late PatternSymbolRenderCache _symbolRenderCache;
+
   /// Current camera, initialized after the viewport receives a layout size.
   PatternCamera? _camera;
 
@@ -107,6 +111,13 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Most recent non-empty viewport layout size.
   Size? _viewportSize;
 
+  /// Creates document-specific renderer metadata before the first paint.
+  @override
+  void initState() {
+    super.initState();
+    _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+  }
+
   /// Releases cached native text layouts with the owning viewport.
   @override
   void dispose() {
@@ -121,6 +132,7 @@ class _PatternViewportState extends State<PatternViewport> {
     if (oldWidget.document != widget.document) {
       _camera = null;
       _gestureStartCamera = null;
+      _symbolRenderCache = PatternSymbolRenderCache(widget.document);
     }
   }
 
@@ -173,6 +185,7 @@ class _PatternViewportState extends State<PatternViewport> {
                 regionColor: colors.primary,
                 completionSelectionColor: colors.primary,
                 glyphLayoutCache: _glyphLayoutCache,
+                symbolRenderCache: _symbolRenderCache,
               ),
               child: const SizedBox.expand(),
             ),

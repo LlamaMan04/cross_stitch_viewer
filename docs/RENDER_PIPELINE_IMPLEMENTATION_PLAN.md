@@ -45,12 +45,13 @@ Implemented today:
 
 The renderer is therefore visible-range bounded, but it is not yet frame-cost
 bounded. At fitted or overview zoom, the visible range can still contain most
-of a dense document. Each visible cell currently reparses its thread color,
-allocates paint objects, and may construct and lay out a fresh `TextPainter`.
-Each visible grid rule also creates a paint and issues a separate draw call.
-There is no render LOD, glyph/layout cache, batched path generation, tile
-picture cache, or renderer-specific frame instrumentation yet. Camera updates
-also call `setState` for every gesture update, rebuilding the viewport subtree
+of a dense document. Visible-cell queries are shared within a paint pass, and
+document-scoped render metadata plus a bounded glyph-layout cache now avoid
+per-cell color parsing, fill-paint allocation, and text layout. Each visible
+cell and grid rule still issues a separate draw call, and each grid rule still
+creates a paint. There is no render LOD, batched path generation, tile picture
+cache, or renderer-specific frame instrumentation yet. Camera updates also
+call `setState` for every gesture update, rebuilding the viewport subtree
 before painting.
 
 The existing 100-by-200, 95%-populated fixture verifies range-query and gesture
@@ -474,19 +475,19 @@ pointer events do not write progress state on every update.
 
 ### Phase 3A: Make frame cost proportional to visible detail
 
-1. Add a pure LOD resolver with hysteresis at approximately 3 px/cell and
+1. [ ] Add a pure LOD resolver with hysteresis at approximately 3 px/cell and
    12 px/cell; verify overview, grid, and detail transitions independently.
-2. Add immutable per-tile summaries for overview density, dominant color, and
+2. [ ] Add immutable per-tile summaries for overview density, dominant color, and
    selection/completion presence. Overview rendering must not enumerate every
    cell in a visible tile.
-3. Precompute symbol render metadata, including parsed colors and contrast
-   inputs. Add a bounded glyph-layout cache keyed by glyph, size bucket,
+3. [x] Precompute symbol render metadata, including parsed colors and contrast
+   inputs. Add a bounded glyph-layout cache keyed by glyph, font size,
    foreground, and style.
-4. Batch fills by color and grid rules by rule class. Reuse `Paint` instances
+4. [ ] Batch fills by color and grid rules by rule class. Reuse `Paint` instances
    and compare draw-call/frame-time measurements before and after batching.
-5. Add `RepaintBoundary` and notifier-driven camera repainting so pointer
+5. [ ] Add `RepaintBoundary` and notifier-driven camera repainting so pointer
    updates do not rebuild unrelated workspace widgets.
-6. Add frame counters and profiling hooks for visible cells, glyphs, grid
+6. [ ] Add frame counters and profiling hooks for visible cells, glyphs, grid
    rules, draw calls, build time, and raster time.
 
 ### Phase 3B: Reuse static work during scrolling

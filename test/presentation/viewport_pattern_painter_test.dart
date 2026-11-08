@@ -10,6 +10,7 @@ import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_layout_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_symbol_render_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 
 /// Verifies that renderer layers share one visible-cell spatial query.
@@ -35,6 +36,7 @@ void main() {
       regionColor: Colors.blue,
       completionSelectionColor: Colors.teal,
       glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(fixture.document),
     );
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
@@ -67,6 +69,7 @@ void main() {
       regionColor: Colors.blue,
       completionSelectionColor: Colors.teal,
       glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(fixture.document),
     );
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);

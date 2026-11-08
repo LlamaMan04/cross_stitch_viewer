@@ -11,6 +11,7 @@ import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
+import 'pattern_symbol_render_cache.dart';
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
 class ViewportPatternPainter extends CustomPainter {
@@ -27,6 +28,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.regionColor,
     required this.completionSelectionColor,
     required this.glyphLayoutCache,
+    required this.symbolRenderCache,
   });
 
   /// Normalized source document rendered by this painter.
@@ -61,6 +63,18 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Shared glyph layouts retained across otherwise short-lived painters.
   final PatternGlyphLayoutCache glyphLayoutCache;
+
+  /// Parsed symbol colors and fill paints shared across viewport painters.
+  final PatternSymbolRenderCache symbolRenderCache;
+
+  /// Completed-cell color and opacity resolved once for this paint delegate.
+  late final Color _completedOverlayColor = _parseColor(
+    settings.completedCellColor.colorHex,
+  ).withValues(alpha: settings.completedCellOpacity);
+
+  /// Paint reused for every completed-cell overlay in this delegate.
+  late final Paint _completedOverlayPaint = Paint()
+    ..color = _completedOverlayColor;
 
   /// Visible populated cells materialized only when a cell layer needs them.
   late final List<StitchCell> _visibleCells = List<StitchCell>.unmodifiable(
@@ -149,11 +163,8 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paints the configured neutral overlay on completed visible cells.
   void _paintCompletedCells(Canvas canvas) {
     if (completedCells.isEmpty) return;
-    final completedPaint = Paint()
-      ..color = _parseColor(settings.completedCellColor.colorHex)
-          .withValues(alpha: settings.completedCellOpacity);
     for (final cell in completedVisibleCells) {
-      canvas.drawRect(_cellRect(cell), completedPaint);
+      canvas.drawRect(_cellRect(cell), _completedOverlayPaint);
     }
   }
 
@@ -174,14 +185,12 @@ class ViewportPatternPainter extends CustomPainter {
   void _paintCellFills(Canvas canvas) {
     if (!settings.showCellColor) return;
     for (final cell in _visibleCells) {
-      final symbol = document.symbolById(cell.symbolId);
-      if (symbol == null) continue;
-      final threadColor = _parseColor(symbol.thread.color);
-      canvas.drawRect(
-        _cellRect(cell),
-        Paint()
-          ..color = threadColor.withValues(alpha: settings.cellColorOpacity),
+      final fillPaint = symbolRenderCache.fillPaintFor(
+        cell.symbolId,
+        settings.cellColorOpacity,
       );
+      if (fillPaint == null) continue;
+      canvas.drawRect(_cellRect(cell), fillPaint);
     }
   }
 
@@ -189,34 +198,32 @@ class ViewportPatternPainter extends CustomPainter {
   void _paintGlyphs(Canvas canvas) {
     if (!settings.showSymbols || camera.cellSize < 12) return;
     for (final cell in _visibleCells) {
-      final symbol = document.symbolById(cell.symbolId);
-      if (symbol == null) continue;
+      final metadata = symbolRenderCache.metadataFor(cell.symbolId);
+      if (metadata == null) continue;
       _paintGlyph(
         canvas,
         _cellRect(cell),
-        symbol,
-        _effectiveCellBackground(cell, symbol),
+        metadata.symbol,
+        _effectiveCellBackground(cell, metadata),
       );
     }
   }
 
   /// Resolves the composited background used for glyph contrast selection.
-  Color _effectiveCellBackground(StitchCell cell, SymbolDefinition symbol) {
+  Color _effectiveCellBackground(
+    StitchCell cell,
+    PatternSymbolRenderMetadata metadata,
+  ) {
     var background = surfaceColor;
     if (settings.showCellColor) {
       background = Color.alphaBlend(
-        _parseColor(symbol.thread.color)
-            .withValues(alpha: settings.cellColorOpacity),
+        metadata.threadColor.withValues(alpha: settings.cellColorOpacity),
         background,
       );
     }
     if (settings.showCompletedCellOverlay &&
         completedCells.contains(cell.coordinate)) {
-      background = Color.alphaBlend(
-        _parseColor(settings.completedCellColor.colorHex)
-            .withValues(alpha: settings.completedCellOpacity),
-        background,
-      );
+      background = Color.alphaBlend(_completedOverlayColor, background);
     }
     return background;
   }
