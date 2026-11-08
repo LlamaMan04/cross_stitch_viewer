@@ -8,6 +8,7 @@ import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
+import 'pattern_glyph_layout_cache.dart';
 import 'pattern_interaction.dart';
 import 'pattern_render_selection.dart';
 import 'viewport_pattern_painter.dart';
@@ -70,6 +71,9 @@ class PatternViewport extends StatefulWidget {
 
 /// Owns camera initialization, resizing, panning, and focal-point zoom.
 class _PatternViewportState extends State<PatternViewport> {
+  /// Glyph layouts shared by every painter created for this viewport.
+  final PatternGlyphLayoutCache _glyphLayoutCache = PatternGlyphLayoutCache();
+
   /// Current camera, initialized after the viewport receives a layout size.
   PatternCamera? _camera;
 
@@ -102,6 +106,13 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Most recent non-empty viewport layout size.
   Size? _viewportSize;
+
+  /// Releases cached native text layouts with the owning viewport.
+  @override
+  void dispose() {
+    _glyphLayoutCache.dispose();
+    super.dispose();
+  }
 
   /// Resets the camera when a different document is placed in this viewport.
   @override
@@ -161,6 +172,7 @@ class _PatternViewportState extends State<PatternViewport> {
                 surfaceColor: colors.surfaceContainerLowest,
                 regionColor: colors.primary,
                 completionSelectionColor: colors.primary,
+                glyphLayoutCache: _glyphLayoutCache,
               ),
               child: const SizedBox.expand(),
             ),

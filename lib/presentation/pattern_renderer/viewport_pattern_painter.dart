@@ -9,6 +9,7 @@ import '../../domain/pattern_grid.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
+import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
@@ -25,6 +26,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.surfaceColor,
     required this.regionColor,
     required this.completionSelectionColor,
+    required this.glyphLayoutCache,
   });
 
   /// Normalized source document rendered by this painter.
@@ -56,6 +58,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Primary application color used by completion-selection overlays.
   final Color completionSelectionColor;
+
+  /// Shared glyph layouts retained across otherwise short-lived painters.
+  final PatternGlyphLayoutCache glyphLayoutCache;
 
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
@@ -292,18 +297,12 @@ class ViewportPatternPainter extends CustomPainter {
     final foreground = backgroundColor.computeLuminance() > 0.45
         ? Colors.black87
         : Colors.white;
-    // Text metrics provide exact centering within the screen-space cell.
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: symbol.displayGlyph,
-        style: TextStyle(
-          color: foreground,
-          fontSize: (camera.cellSize * 0.58).clamp(12, 32),
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
+    // Text metrics are cached because many cells share the same symbol style.
+    final textPainter = glyphLayoutCache.layoutFor(
+      glyph: symbol.displayGlyph,
+      foreground: foreground,
+      fontSize: (camera.cellSize * 0.58).clamp(12, 32),
+    );
     textPainter.paint(
       canvas,
       rect.center - Offset(textPainter.width / 2, textPainter.height / 2),
