@@ -1,0 +1,120 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:stitch_scope/app/sample_pattern_fixture.dart';
+import 'package:stitch_scope/domain/pattern_document.dart';
+import 'package:stitch_scope/domain/pattern_grid.dart';
+import 'package:stitch_scope/domain/progress_models.dart';
+import 'package:stitch_scope/domain/value_objects.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_layout_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
+
+/// Verifies that renderer layers share one visible-cell spatial query.
+void main() {
+  test('reuses one visible-cell snapshot across every enabled layer', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    addTearDown(glyphLayoutCache.dispose);
+    final painter = ViewportPatternPainter(
+      document: fixture.document,
+      camera: const PatternCamera(cellSize: 40, origin: Offset.zero),
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: 4,
+        startColumn: 0,
+        endColumn: 5,
+      ),
+      settings: const PatternRenderSettings(showCellColor: true),
+      selection: const PatternRenderSelection(selectedSymbolId: 'flower'),
+      completedCells: <GridCoordinate>{const GridCoordinate(0, 0)},
+      completionSelection: <GridCoordinate>{const GridCoordinate(1, 2)},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+    );
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    painter.paint(canvas, const Size(400, 300));
+    final picture = recorder.endRecording();
+    picture.dispose();
+
+    expect(fixture.grid.queryCount, 1);
+  });
+
+  test('does not query cells when overview layers need no cell data', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    addTearDown(glyphLayoutCache.dispose);
+    final painter = ViewportPatternPainter(
+      document: fixture.document,
+      camera: const PatternCamera(cellSize: 5, origin: Offset.zero),
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: 4,
+        startColumn: 0,
+        endColumn: 5,
+      ),
+      settings: const PatternRenderSettings(),
+      selection: const PatternRenderSelection(),
+      completedCells: const <GridCoordinate>{},
+      completionSelection: const <GridCoordinate>{},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+    );
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    painter.paint(canvas, const Size(400, 300));
+    final picture = recorder.endRecording();
+    picture.dispose();
+
+    expect(fixture.grid.queryCount, 0);
+  });
+}
+
+/// Creates a representative document backed by an observable spatial grid.
+({PatternDocument document, _CountingPatternGrid grid})
+_createCountingDocument() {
+  final sourceDocument = SamplePatternFixture.create();
+  final countingGrid = _CountingPatternGrid(
+    dimensions: sourceDocument.grid.dimensions,
+    cells: sourceDocument.grid.cells,
+  );
+  return (
+    document: PatternDocument(
+      id: sourceDocument.id,
+      title: sourceDocument.title,
+      schemaVersion: sourceDocument.schemaVersion,
+      grid: countingGrid,
+      symbols: sourceDocument.symbols,
+      regions: sourceDocument.regions,
+      sourceMetadata: sourceDocument.sourceMetadata,
+      sourceChecksum: sourceDocument.sourceChecksum,
+      diagnostics: sourceDocument.diagnostics,
+    ),
+    grid: countingGrid,
+  );
+}
+
+/// Pattern grid that records visible-range queries made by the painter.
+class _CountingPatternGrid extends PatternGrid {
+  /// Creates a counting grid over representative immutable cells.
+  _CountingPatternGrid({required super.dimensions, required super.cells});
+
+  /// Number of spatial range queries requested from this grid.
+  int queryCount = 0;
+
+  /// Records and delegates one visible-cell range query.
+  @override
+  Iterable<StitchCell> cellsIntersecting(GridBounds bounds) {
+    queryCount++;
+    return super.cellsIntersecting(bounds);
+  }
+}
