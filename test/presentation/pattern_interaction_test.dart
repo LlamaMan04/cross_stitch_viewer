@@ -17,4 +17,14 @@ void main() {
     expect(deselectedFirst.coordinates, <GridCoordinate>{second});
     expect(deselectedFirst.clear().isEmpty, isTrue);
   });
+
+  test('adds exact coordinates without toggling existing selection', () {
+    final coordinate = const GridCoordinate(1, 2);
+
+    final selected = CompletionCellSelection.empty().add(coordinate);
+    final selectedAgain = selected.add(coordinate);
+
+    expect(selected.coordinates, <GridCoordinate>{coordinate});
+    expect(selectedAgain.coordinates, <GridCoordinate>{coordinate});
+  });
 }

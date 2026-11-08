@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
@@ -23,6 +24,7 @@ class PatternViewport extends StatefulWidget {
     required this.completionSelection,
     this.onSymbolSelected,
     this.onCompletionCellSelected,
+    this.onCompletionCellAdded,
     this.onCompletionEditUnavailable,
     this.onInteraction,
     super.key,
@@ -52,6 +54,9 @@ class PatternViewport extends StatefulWidget {
   /// Reports a populated coordinate tapped in completion-edit mode.
   final ValueChanged<GridCoordinate>? onCompletionCellSelected;
 
+  /// Reports a populated coordinate crossed by an additive selection drag.
+  final ValueChanged<GridCoordinate>? onCompletionCellAdded;
+
   /// Reports that completion editing requires a more legible zoom level.
   final VoidCallback? onCompletionEditUnavailable;
 
@@ -73,6 +78,27 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Focal point captured at the start of a scale gesture.
   Offset _gestureStartFocalPoint = Offset.zero;
+
+  /// Pointer currently driving an additive completion-selection drag.
+  int? _selectionDragPointer;
+
+  /// Coordinates already reported during the current additive drag.
+  final Set<GridCoordinate> _selectionDragCoordinates = <GridCoordinate>{};
+
+  /// Last local pointer position sampled by the additive drag.
+  Offset? _selectionDragLastPosition;
+
+  /// Whether zoom guidance was already reported for the active drag.
+  bool _selectionDragUnavailableReported = false;
+
+  /// Prevents a modifier click from being handled again as a normal tap.
+  bool _suppressNextTap = false;
+
+  /// Release time of the most recent unmodified mobile tap.
+  Duration? _lastMobileTapTime;
+
+  /// Release position of the most recent unmodified mobile tap.
+  Offset? _lastMobileTapPosition;
 
   /// Most recent non-empty viewport layout size.
   Size? _viewportSize;
@@ -108,6 +134,10 @@ class _PatternViewportState extends State<PatternViewport> {
         );
         return Listener(
           key: const ValueKey('pattern-viewport'),
+          onPointerDown: _handlePointerDown,
+          onPointerMove: _handlePointerMove,
+          onPointerUp: _handlePointerUp,
+          onPointerCancel: _handlePointerCancel,
           onPointerSignal: _handlePointerSignal,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -142,6 +172,10 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Converts a tap into a populated cell's symbol selection.
   void _handleTapUp(TapUpDetails details) {
+    if (_suppressNextTap) {
+      _suppressNextTap = false;
+      return;
+    }
     widget.onInteraction?.call();
     final camera = _camera;
     if (camera == null) return;
@@ -167,6 +201,143 @@ class _PatternViewportState extends State<PatternViewport> {
       return;
     }
     widget.onSymbolSelected?.call(cell?.symbolId);
+  }
+
+  /// Whether this target uses keyboard-modified desktop pointer gestures.
+  bool get _supportsDesktopAdditiveDrag => switch (Theme.of(context).platform) {
+    TargetPlatform.linux ||
+    TargetPlatform.macOS ||
+    TargetPlatform.windows => true,
+    TargetPlatform.android ||
+    TargetPlatform.fuchsia ||
+    TargetPlatform.iOS => false,
+  };
+
+  /// Whether this target uses the double-tap-and-drag mobile gesture.
+  bool get _supportsMobileAdditiveDrag => switch (Theme.of(context).platform) {
+    TargetPlatform.android || TargetPlatform.iOS => true,
+    TargetPlatform.fuchsia ||
+    TargetPlatform.linux ||
+    TargetPlatform.macOS ||
+    TargetPlatform.windows => false,
+  };
+
+  /// Begins an additive drag for a desktop modifier or mobile second tap.
+  void _handlePointerDown(PointerDownEvent event) {
+    if (widget.interactionMode != PatternInteractionMode.editCompletion) {
+      return;
+    }
+    if (_supportsMobileAdditiveDrag &&
+        (event.kind == PointerDeviceKind.touch ||
+            event.kind == PointerDeviceKind.stylus)) {
+      final lastTapTime = _lastMobileTapTime;
+      final lastTapPosition = _lastMobileTapPosition;
+      final isTimelySecondTap =
+          lastTapTime != null &&
+          event.timeStamp - lastTapTime <= const Duration(milliseconds: 300);
+      final isNearbySecondTap =
+          lastTapPosition != null &&
+          (event.localPosition - lastTapPosition).distance <= 48;
+      if (isTimelySecondTap && isNearbySecondTap) {
+        _lastMobileTapTime = null;
+        _lastMobileTapPosition = null;
+        _beginSelectionDrag(event.pointer, event.localPosition);
+      }
+      return;
+    }
+    if (!_supportsDesktopAdditiveDrag) return;
+    final pressedKeys = HardwareKeyboard.instance.logicalKeysPressed;
+    final modifierPressed =
+        pressedKeys.contains(LogicalKeyboardKey.controlLeft) ||
+        pressedKeys.contains(LogicalKeyboardKey.controlRight) ||
+        pressedKeys.contains(LogicalKeyboardKey.metaLeft) ||
+        pressedKeys.contains(LogicalKeyboardKey.metaRight);
+    if (!modifierPressed) return;
+    _suppressNextTap = true;
+    _beginSelectionDrag(event.pointer, event.localPosition);
+  }
+
+  /// Starts one additive drag and reports its initial populated cell.
+  void _beginSelectionDrag(int pointer, Offset localPosition) {
+    widget.onInteraction?.call();
+    _selectionDragPointer = pointer;
+    _selectionDragCoordinates.clear();
+    _selectionDragLastPosition = localPosition;
+    _selectionDragUnavailableReported = false;
+    _addCompletionCellAt(localPosition);
+  }
+
+  /// Adds newly crossed populated cells while the selection pointer moves.
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (event.pointer != _selectionDragPointer) return;
+    final previousPosition = _selectionDragLastPosition;
+    final camera = _camera;
+    if (previousPosition == null || camera == null) return;
+    final distance = (event.localPosition - previousPosition).distance;
+    final sampleCount = math.max(1, (distance / (camera.cellSize / 2)).ceil());
+    for (var sample = 1; sample <= sampleCount; sample++) {
+      _addCompletionCellAt(
+        Offset.lerp(
+          previousPosition,
+          event.localPosition,
+          sample / sampleCount,
+        )!,
+      );
+    }
+    _selectionDragLastPosition = event.localPosition;
+  }
+
+  /// Ends the active additive drag after its pointer is released.
+  void _handlePointerUp(PointerUpEvent event) {
+    final endedSelectionDrag = event.pointer == _selectionDragPointer;
+    if (endedSelectionDrag) _endSelectionDrag();
+    if (!endedSelectionDrag &&
+        widget.interactionMode == PatternInteractionMode.editCompletion &&
+        _supportsMobileAdditiveDrag &&
+        (event.kind == PointerDeviceKind.touch ||
+            event.kind == PointerDeviceKind.stylus)) {
+      _lastMobileTapTime = event.timeStamp;
+      _lastMobileTapPosition = event.localPosition;
+    }
+  }
+
+  /// Ends the active additive drag after its pointer is cancelled.
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (event.pointer == _selectionDragPointer) _endSelectionDrag();
+    _lastMobileTapTime = null;
+    _lastMobileTapPosition = null;
+  }
+
+  /// Clears transient state belonging to an additive drag.
+  void _endSelectionDrag() {
+    _selectionDragPointer = null;
+    _selectionDragCoordinates.clear();
+    _selectionDragLastPosition = null;
+    _selectionDragUnavailableReported = false;
+  }
+
+  /// Reports the populated cell beneath [localPosition] at most once per drag.
+  void _addCompletionCellAt(Offset localPosition) {
+    final camera = _camera;
+    if (camera == null) return;
+    if (camera.cellSize < 12) {
+      if (!_selectionDragUnavailableReported) {
+        _selectionDragUnavailableReported = true;
+        widget.onCompletionEditUnavailable?.call();
+      }
+      return;
+    }
+    final gridPoint = camera.screenToGrid(localPosition);
+    final coordinate = GridCoordinate(
+      gridPoint.dy.floor(),
+      gridPoint.dx.floor(),
+    );
+    if (!widget.document.grid.dimensions.contains(coordinate) ||
+        widget.document.grid.cellAt(coordinate) == null ||
+        !_selectionDragCoordinates.add(coordinate)) {
+      return;
+    }
+    widget.onCompletionCellAdded?.call(coordinate);
   }
 
   /// Initializes a fitted camera or clamps the existing camera after resize.
@@ -211,12 +382,18 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Captures stable camera inputs for the duration of one scale gesture.
   void _handleScaleStart(ScaleStartDetails details) {
     widget.onInteraction?.call();
+    if (_selectionDragPointer != null) {
+      _suppressNextTap = false;
+      _gestureStartCamera = null;
+      return;
+    }
     _gestureStartCamera = _camera;
     _gestureStartFocalPoint = details.localFocalPoint;
   }
 
   /// Applies combined drag and pinch input from the gesture's initial camera.
   void _handleScaleUpdate(ScaleUpdateDetails details) {
+    if (_selectionDragPointer != null) return;
     // Gesture updates always derive from the same start snapshot.
     final startCamera = _gestureStartCamera;
     final viewportSize = _viewportSize;

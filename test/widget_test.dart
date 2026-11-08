@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
@@ -454,6 +456,114 @@ void main() {
     expect(painter.completionSelection, isEmpty);
   });
 
+  testWidgets('control-drag adds completion cells without panning on desktop', (
+    tester,
+  ) async {
+    final addedCoordinates = <GridCoordinate>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(platform: TargetPlatform.windows),
+        home: SizedBox(
+          width: 400,
+          height: 300,
+          child: PatternRenderView(
+            document: SamplePatternFixture.create(),
+            interactionMode: PatternInteractionMode.editCompletion,
+            onCompletionCellAdded: addedCoordinates.add,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final painter =
+        tester.widget<CustomPaint>(canvasFinder).painter!
+            as ViewportPatternPainter;
+    final canvasOrigin = tester.getTopLeft(canvasFinder);
+    final firstCell =
+        canvasOrigin + painter.camera.gridToScreen(row: 0.5, column: 0.5);
+    final secondCell =
+        canvasOrigin + painter.camera.gridToScreen(row: 1.5, column: 2.5);
+    final cameraBefore = painter.camera;
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    final gesture = await tester.startGesture(
+      firstCell,
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveTo(secondCell);
+    await tester.pump();
+    await gesture.up();
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    final cameraAfter =
+        (tester.widget<CustomPaint>(canvasFinder).painter!
+                as ViewportPatternPainter)
+            .camera;
+    expect(addedCoordinates, <GridCoordinate>[
+      const GridCoordinate(0, 0),
+      const GridCoordinate(1, 2),
+    ]);
+    expect(cameraAfter.origin, cameraBefore.origin);
+    expect(cameraAfter.cellSize, cameraBefore.cellSize);
+  });
+
+  testWidgets(
+    'double-tap-drag adds completion cells without panning on mobile',
+    (tester) async {
+      final addedCoordinates = <GridCoordinate>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.android),
+          home: SizedBox(
+            width: 400,
+            height: 300,
+            child: PatternRenderView(
+              document: SamplePatternFixture.create(),
+              interactionMode: PatternInteractionMode.editCompletion,
+              onCompletionCellAdded: addedCoordinates.add,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+      final painter =
+          tester.widget<CustomPaint>(canvasFinder).painter!
+              as ViewportPatternPainter;
+      final canvasOrigin = tester.getTopLeft(canvasFinder);
+      final firstCell =
+          canvasOrigin + painter.camera.gridToScreen(row: 0.5, column: 0.5);
+      final secondCell =
+          canvasOrigin + painter.camera.gridToScreen(row: 1.5, column: 2.5);
+      final cameraBefore = painter.camera;
+
+      final firstTap = await tester.startGesture(firstCell);
+      await firstTap.up();
+      await tester.pump(const Duration(milliseconds: 50));
+      final selectionDrag = await tester.startGesture(firstCell);
+      await tester.pump();
+      await selectionDrag.moveTo(secondCell);
+      await tester.pump();
+      await selectionDrag.up();
+      await tester.pump();
+
+      final cameraAfter =
+          (tester.widget<CustomPaint>(canvasFinder).painter!
+                  as ViewportPatternPainter)
+              .camera;
+      expect(addedCoordinates, <GridCoordinate>[
+        const GridCoordinate(0, 0),
+        const GridCoordinate(1, 2),
+      ]);
+      expect(cameraAfter.origin, cameraBefore.origin);
+      expect(cameraAfter.cellSize, cameraBefore.cellSize);
+    },
+  );
+
   testWidgets('reports completion coordinates without a symbol callback', (
     tester,
   ) async {
@@ -560,6 +670,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 4900));
     expect(undoFinder, findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
+    expect(undoFinder, findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('floating-menu-toggle')));
+    await tester.pump();
     expect(undoFinder, findsNothing);
   });
 

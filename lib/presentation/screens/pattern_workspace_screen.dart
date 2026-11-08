@@ -92,8 +92,11 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   /// Inline Undo notice shown without covering workspace controls.
   _CompletionUndoNotice? _completionUndoNotice;
 
-  /// Timer that dismisses the completion Undo notice after five seconds.
+  /// Timer that makes the completion Undo notice eligible for dismissal.
   Timer? _completionUndoTimer;
+
+  /// Whether the visible completion Undo notice has completed its minimum time.
+  bool _completionUndoCanDismiss = false;
 
   /// Serializes settings writes so rapid interactions cannot save out of order.
   Future<void> _saveChain = Future<void>.value();
@@ -207,6 +210,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   completionSelection: _completionSelection,
                   onSymbolSelected: _selectSymbol,
                   onCompletionCellSelected: _toggleCompletionCell,
+                  onCompletionCellAdded: _addCompletionCell,
                   onCompletionEditUnavailable: _showCompletionZoomGuidance,
                   onInteraction: _dismissCompletionUndo,
                 ),
@@ -347,6 +351,14 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     });
   }
 
+  /// Adds one populated coordinate without toggling existing selection.
+  void _addCompletionCell(GridCoordinate coordinate) {
+    _dismissCompletionUndo();
+    setState(() {
+      _completionSelection = _completionSelection.add(coordinate);
+    });
+  }
+
   /// Clears exact-cell selection without changing persisted progress.
   void _clearCompletionSelection() {
     _dismissCompletionUndo();
@@ -382,12 +394,13 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     _showCompletionUndo(previousCells: previousCells, message: message);
   }
 
-  /// Shows an inline Undo notice for exactly five seconds.
+  /// Shows an inline Undo notice that remains visible for at least five seconds.
   void _showCompletionUndo({
     required Set<GridCoordinate> previousCells,
     required String message,
   }) {
     _completionUndoTimer?.cancel();
+    _completionUndoCanDismiss = false;
     setState(() {
       _completionUndoNotice = _CompletionUndoNotice(
         message: message,
@@ -396,7 +409,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     });
     _completionUndoTimer = Timer(const Duration(seconds: 5), () {
       if (!mounted || _completionUndoNotice == null) return;
-      setState(() => _completionUndoNotice = null);
+      _completionUndoCanDismiss = true;
       _completionUndoTimer = null;
     });
   }
@@ -407,6 +420,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     if (notice == null) return;
     _completionUndoTimer?.cancel();
     _completionUndoTimer = null;
+    _completionUndoCanDismiss = false;
     setState(() {
       _completionUndoNotice = null;
       _completedCells = notice.previousCells;
@@ -414,11 +428,12 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     _persistCompletedCells(_completedCells);
   }
 
-  /// Removes completion Undo feedback when another interaction begins.
+  /// Removes eligible completion Undo feedback when another interaction begins.
   void _dismissCompletionUndo() {
-    if (_completionUndoNotice == null) return;
+    if (_completionUndoNotice == null || !_completionUndoCanDismiss) return;
     _completionUndoTimer?.cancel();
     _completionUndoTimer = null;
+    _completionUndoCanDismiss = false;
     setState(() => _completionUndoNotice = null);
   }
 
@@ -1253,6 +1268,7 @@ class PatternRenderView extends StatelessWidget {
     CompletionCellSelection? completionSelection,
     this.onSymbolSelected,
     this.onCompletionCellSelected,
+    this.onCompletionCellAdded,
     this.onCompletionEditUnavailable,
     this.onInteraction,
     super.key,
@@ -1283,6 +1299,9 @@ class PatternRenderView extends StatelessWidget {
   /// Reports exact-cell selection changes in completion-edit mode.
   final ValueChanged<GridCoordinate>? onCompletionCellSelected;
 
+  /// Reports cells crossed by an additive completion-selection drag.
+  final ValueChanged<GridCoordinate>? onCompletionCellAdded;
+
   /// Reports completion taps attempted below the legible zoom threshold.
   final VoidCallback? onCompletionEditUnavailable;
 
@@ -1308,6 +1327,7 @@ class PatternRenderView extends StatelessWidget {
         completionSelection: completionSelection,
         onSymbolSelected: onSymbolSelected,
         onCompletionCellSelected: onCompletionCellSelected,
+        onCompletionCellAdded: onCompletionCellAdded,
         onCompletionEditUnavailable: onCompletionEditUnavailable,
         onInteraction: onInteraction,
       ),
