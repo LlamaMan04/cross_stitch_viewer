@@ -142,7 +142,9 @@ class PatternTileCoordinate {
   /// Compares tile coordinates by row and column.
   @override
   bool operator ==(Object other) =>
-      other is PatternTileCoordinate && row == other.row && column == other.column;
+      other is PatternTileCoordinate &&
+      row == other.row &&
+      column == other.column;
 
   /// Hash code consistent with [operator ==].
   @override
@@ -154,13 +156,20 @@ class PatternTileSummary {
   /// Creates one summary from its coordinate and symbol population counts.
   PatternTileSummary({
     required this.coordinate,
+    required this.blockSize,
     required Map<String, int> symbolCounts,
   }) : symbolCounts = Map<String, int>.unmodifiable(symbolCounts),
-       populatedCellCount = symbolCounts.values.fold(0, (sum, count) => sum + count),
+       populatedCellCount = symbolCounts.values.fold(
+         0,
+         (sum, count) => sum + count,
+       ),
        dominantSymbolId = _dominantSymbol(symbolCounts);
 
   /// Spatial tile represented by this summary.
   final PatternTileCoordinate coordinate;
+
+  /// Number of grid cells covered along each side of this summary block.
+  final int blockSize;
 
   /// Number of populated cells associated with each symbol ID.
   final Map<String, int> symbolCounts;
@@ -191,6 +200,9 @@ class PatternGrid {
   /// Number of rows and columns grouped into one immutable spatial tile.
   static const int tileSize = 32;
 
+  /// Available immutable aggregation sizes for overview rendering.
+  static const List<int> overviewBlockSizes = <int>[2, 4, 8, 16, 32];
+
   /// Creates a grid and copies [cells] into an unmodifiable list.
   PatternGrid({required this.dimensions, required Iterable<StitchCell> cells}) {
     // Preserve stable source order while preventing mutation after indexing.
@@ -213,13 +225,11 @@ class PatternGrid {
       for (final entry in mutableTiles.entries)
         entry.key: List<StitchCell>.unmodifiable(entry.value),
     });
-    _tileSummaries = Map.unmodifiable({
-      for (final entry in mutableTiles.entries)
-        PatternTileCoordinate(entry.key.$1, entry.key.$2): PatternTileSummary(
-          coordinate: PatternTileCoordinate(entry.key.$1, entry.key.$2),
-          symbolCounts: _symbolCounts(entry.value),
-        ),
-    });
+    _overviewSummariesByBlockSize =
+        Map<int, Map<PatternTileCoordinate, PatternTileSummary>>.unmodifiable({
+          for (final blockSize in overviewBlockSizes)
+            blockSize: _buildSummaries(immutableCells, blockSize),
+        });
   }
 
   /// Full grid extent, including coordinates without stitches.
@@ -234,8 +244,9 @@ class PatternGrid {
   /// Immutable populated cells grouped into fixed-size spatial tiles.
   late final Map<(int, int), List<StitchCell>> _cellsByTile;
 
-  /// Immutable summaries keyed by their fixed spatial tile coordinates.
-  late final Map<PatternTileCoordinate, PatternTileSummary> _tileSummaries;
+  /// Immutable overview summaries grouped by aggregation block size.
+  late final Map<int, Map<PatternTileCoordinate, PatternTileSummary>>
+  _overviewSummariesByBlockSize;
 
   /// Returns the tile coordinate containing [coordinate].
   static PatternTileCoordinate tileCoordinateFor(GridCoordinate coordinate) =>
@@ -249,36 +260,65 @@ class PatternGrid {
       _cellsByCoordinate[coordinate];
 
   /// Yields populated tile summaries intersecting [bounds].
-  Iterable<PatternTileSummary> tileSummariesIntersecting(
+  Iterable<PatternTileSummary> tileSummariesIntersecting(GridBounds bounds) =>
+      overviewSummariesIntersecting(bounds, tileSize);
+
+  /// Yields populated overview summaries at one supported [blockSize].
+  Iterable<PatternTileSummary> overviewSummariesIntersecting(
     GridBounds bounds,
+    int blockSize,
   ) sync* {
+    final summaries = _overviewSummariesByBlockSize[blockSize];
+    if (summaries == null) {
+      throw ArgumentError.value(
+        blockSize,
+        'blockSize',
+        'Must be one of $overviewBlockSizes.',
+      );
+    }
     final query = bounds.clampTo(dimensions);
     if (query.isEmpty) return;
-    final firstTileRow = query.startRow ~/ tileSize;
-    final lastTileRow = (query.endRow - 1) ~/ tileSize;
-    final firstTileColumn = query.startColumn ~/ tileSize;
-    final lastTileColumn = (query.endColumn - 1) ~/ tileSize;
+    final firstTileRow = query.startRow ~/ blockSize;
+    final lastTileRow = (query.endRow - 1) ~/ blockSize;
+    final firstTileColumn = query.startColumn ~/ blockSize;
+    final lastTileColumn = (query.endColumn - 1) ~/ blockSize;
     for (var tileRow = firstTileRow; tileRow <= lastTileRow; tileRow++) {
       for (
         var tileColumn = firstTileColumn;
         tileColumn <= lastTileColumn;
         tileColumn++
       ) {
-        final summary = _tileSummaries[
-          PatternTileCoordinate(tileRow, tileColumn)
-        ];
+        final summary = summaries[PatternTileCoordinate(tileRow, tileColumn)];
         if (summary != null) yield summary;
       }
     }
   }
 
-  /// Counts symbol occurrences while retaining first-seen key ordering.
-  static Map<String, int> _symbolCounts(Iterable<StitchCell> cells) {
-    final counts = <String, int>{};
+  /// Builds immutable symbol aggregates for one overview resolution.
+  static Map<PatternTileCoordinate, PatternTileSummary> _buildSummaries(
+    Iterable<StitchCell> cells,
+    int blockSize,
+  ) {
+    final mutableCounts = <PatternTileCoordinate, Map<String, int>>{};
     for (final cell in cells) {
+      final coordinate = PatternTileCoordinate(
+        cell.coordinate.row ~/ blockSize,
+        cell.coordinate.column ~/ blockSize,
+      );
+      final counts = mutableCounts.putIfAbsent(
+        coordinate,
+        () => <String, int>{},
+      );
       counts.update(cell.symbolId, (count) => count + 1, ifAbsent: () => 1);
     }
-    return counts;
+    return Map<PatternTileCoordinate, PatternTileSummary>.unmodifiable({
+      for (final entry in mutableCounts.entries)
+        entry.key: PatternTileSummary(
+          coordinate: entry.key,
+          blockSize: blockSize,
+          symbolCounts: entry.value,
+        ),
+    });
   }
 
   /// Yields populated cells inside [bounds] without scanning off-screen tiles.

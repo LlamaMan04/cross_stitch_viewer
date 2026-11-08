@@ -31,7 +31,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.glyphLayoutCache,
     required this.symbolRenderCache,
     required this.renderLod,
-    required this.completedTileCoordinates,
+    required this.completedOverviewCoordinates,
   });
 
   /// Normalized source document rendered by this painter.
@@ -73,8 +73,8 @@ class ViewportPatternPainter extends CustomPainter {
   /// Automatic detail policy resolved by the viewport with hysteresis.
   final RenderLod renderLod;
 
-  /// Tiles containing completed cells, indexed outside the paint loop.
-  final Set<PatternTileCoordinate> completedTileCoordinates;
+  /// Completed summary blocks indexed by every supported overview resolution.
+  final Map<int, Set<PatternTileCoordinate>> completedOverviewCoordinates;
 
   /// Completed-cell color and opacity resolved once for this paint delegate.
   late final Color _completedOverlayColor = _parseColor(
@@ -89,18 +89,6 @@ class ViewportPatternPainter extends CustomPainter {
   late final List<StitchCell> _visibleCells = List<StitchCell>.unmodifiable(
     document.grid.cellsIntersecting(visibleBounds),
   );
-
-  /// Tile summaries queried lazily only by overview rendering.
-  late final List<PatternTileSummary> _visibleTileSummaries =
-      List<PatternTileSummary>.unmodifiable(
-        document.grid.tileSummariesIntersecting(visibleBounds),
-      );
-
-  /// Tiles containing pending exact-cell completion selections.
-  late final Set<PatternTileCoordinate> _completionSelectionTiles =
-      Set<PatternTileCoordinate>.unmodifiable(
-        completionSelection.map(PatternGrid.tileCoordinateFor),
-      );
 
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
@@ -233,43 +221,110 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints density plus dynamic tile accents without enumerating tile cells.
   void _paintOverviewTiles(Canvas canvas) {
-    final gridColor = _parseColor(settings.gridColor.colorHex);
-    final selectedSymbolId = selection.selectedSymbolId;
-    final selectedColor = _parseColor(
-      settings.selectionHighlightColor.colorHex,
+    final levels = resolveOverviewRenderLevels(cellSize: camera.cellSize);
+    final fineSummaries = List<PatternTileSummary>.unmodifiable(
+      document.grid.overviewSummariesIntersecting(
+        visibleBounds,
+        levels.fineBlockSize,
+      ),
     );
+    final coarseSummaries = levels.blendsLevels
+        ? List<PatternTileSummary>.unmodifiable(
+            document.grid.overviewSummariesIntersecting(
+              visibleBounds,
+              levels.coarseBlockSize,
+            ),
+          )
+        : fineSummaries;
+    _paintOverviewDensityLayer(canvas, fineSummaries, 1 - levels.coarseWeight);
+    if (levels.blendsLevels) {
+      _paintOverviewDensityLayer(canvas, coarseSummaries, levels.coarseWeight);
+    }
+    _paintOverviewAccents(
+      canvas,
+      fineSummaries,
+      levels.fineBlockSize,
+      1 - levels.coarseWeight,
+    );
+    if (levels.blendsLevels) {
+      _paintOverviewAccents(
+        canvas,
+        coarseSummaries,
+        levels.coarseBlockSize,
+        levels.coarseWeight,
+      );
+    }
+  }
+
+  /// Paints one summary resolution with the supplied cross-fade [opacity].
+  void _paintOverviewDensityLayer(
+    Canvas canvas,
+    Iterable<PatternTileSummary> summaries,
+    double opacity,
+  ) {
+    if (opacity <= 0) return;
+    final gridColor = _parseColor(settings.gridColor.colorHex);
+    for (final summary in summaries) {
+      final tileRect = _tileRect(summary);
+      final tileRows = math.min(
+        summary.blockSize,
+        document.grid.dimensions.rows -
+            summary.coordinate.row * summary.blockSize,
+      );
+      final tileColumns = math.min(
+        summary.blockSize,
+        document.grid.dimensions.columns -
+            summary.coordinate.column * summary.blockSize,
+      );
+      final density = summary.populatedCellCount / (tileRows * tileColumns);
+      final averageColor = symbolRenderCache.weightedAverageColorFor(
+        summary.symbolCounts,
+      );
+      final densityColor = settings.showCellColor && averageColor != null
+          ? averageColor.withValues(
+              alpha: settings.cellColorOpacity * density * opacity,
+            )
+          : gridColor.withValues(alpha: 0.18 * density * opacity);
+      canvas.drawRect(tileRect, Paint()..color = densityColor);
+    }
+  }
+
+  /// Paints dynamic completion and selection accents at one summary level.
+  void _paintOverviewAccents(
+    Canvas canvas,
+    Iterable<PatternTileSummary> summaries,
+    int blockSize,
+    double opacity,
+  ) {
+    if (opacity <= 0) return;
+    final selectedSymbolId = selection.selectedSymbolId;
+    final selectedColor = _parseColor(settings.selectionHighlightColor.colorHex)
+        .withValues(alpha: opacity);
     final selectedPaint = Paint()
       ..color = selectedColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.min(2, camera.cellSize * 2);
     final pendingPaint = Paint()
-      ..color = completionSelectionColor.withValues(alpha: 0.4);
+      ..color = completionSelectionColor.withValues(alpha: 0.4 * opacity);
     final completedPaint = Paint()
       ..color = _completedOverlayColor.withValues(
-        alpha: settings.completedCellOpacity * 0.45,
+        alpha: settings.completedCellOpacity * 0.45 * opacity,
       );
-    for (final summary in _visibleTileSummaries) {
-      final tileRect = _tileRect(summary.coordinate);
-      final tileRows = math.min(
-        PatternGrid.tileSize,
-        document.grid.dimensions.rows -
-            summary.coordinate.row * PatternGrid.tileSize,
-      );
-      final tileColumns = math.min(
-        PatternGrid.tileSize,
-        document.grid.dimensions.columns -
-            summary.coordinate.column * PatternGrid.tileSize,
-      );
-      final density = summary.populatedCellCount / (tileRows * tileColumns);
-      final metadata = symbolRenderCache.metadataFor(summary.dominantSymbolId);
-      final densityColor = settings.showCellColor && metadata != null
-          ? metadata.threadColor.withValues(
-              alpha: settings.cellColorOpacity * density,
-            )
-          : gridColor.withValues(alpha: 0.18 * density);
-      canvas.drawRect(tileRect, Paint()..color = densityColor);
+    final completedCoordinates =
+        completedOverviewCoordinates[blockSize] ??
+        const <PatternTileCoordinate>{};
+    final pendingCoordinates = completionSelection
+        .map(
+          (coordinate) => PatternTileCoordinate(
+            coordinate.row ~/ blockSize,
+            coordinate.column ~/ blockSize,
+          ),
+        )
+        .toSet();
+    for (final summary in summaries) {
+      final tileRect = _tileRect(summary);
       if (settings.showCompletedCellOverlay &&
-          completedTileCoordinates.contains(summary.coordinate)) {
+          completedCoordinates.contains(summary.coordinate)) {
         canvas.drawRect(tileRect, completedPaint);
       }
       if (selectedSymbolId != null &&
@@ -279,22 +334,24 @@ class ViewportPatternPainter extends CustomPainter {
           selectedPaint,
         );
       }
-      if (_completionSelectionTiles.contains(summary.coordinate)) {
+      if (pendingCoordinates.contains(summary.coordinate)) {
         canvas.drawRect(tileRect, pendingPaint);
       }
     }
   }
 
-  /// Calculates the full screen-space rectangle occupied by one tile.
-  Rect _tileRect(PatternTileCoordinate coordinate) {
-    final startRow = coordinate.row * PatternGrid.tileSize;
-    final startColumn = coordinate.column * PatternGrid.tileSize;
+  /// Calculates the full screen-space rectangle occupied by one summary.
+  Rect _tileRect(PatternTileSummary summary) {
+    final blockSize = summary.blockSize;
+    final coordinate = summary.coordinate;
+    final startRow = coordinate.row * blockSize;
+    final startColumn = coordinate.column * blockSize;
     final endRow = math.min(
-      startRow + PatternGrid.tileSize,
+      startRow + blockSize,
       document.grid.dimensions.rows,
     );
     final endColumn = math.min(
-      startColumn + PatternGrid.tileSize,
+      startColumn + blockSize,
       document.grid.dimensions.columns,
     );
     return Rect.fromLTWH(
@@ -465,10 +522,6 @@ class ViewportPatternPainter extends CustomPainter {
       !setEquals(oldDelegate.completedCells, completedCells) ||
       !setEquals(oldDelegate.completionSelection, completionSelection) ||
       oldDelegate.renderLod != renderLod ||
-      !setEquals(
-        oldDelegate.completedTileCoordinates,
-        completedTileCoordinates,
-      ) ||
       oldDelegate.surfaceColor != surfaceColor ||
       oldDelegate.regionColor != regionColor ||
       oldDelegate.completionSelectionColor != completionSelectionColor;

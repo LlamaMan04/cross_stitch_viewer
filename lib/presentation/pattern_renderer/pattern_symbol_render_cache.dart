@@ -57,6 +57,30 @@ class PatternSymbolRenderCache {
     );
   }
 
+  /// Calculates a population-weighted RGB color from symbol [counts].
+  Color? weightedAverageColorFor(Map<String, int> counts) {
+    var red = 0;
+    var green = 0;
+    var blue = 0;
+    var colorCellCount = 0;
+    for (final entry in counts.entries) {
+      final metadata = _metadataById[entry.key];
+      if (metadata == null || entry.value <= 0) continue;
+      final colorValue = metadata.threadColor.toARGB32();
+      red += ((colorValue >> 16) & 0xFF) * entry.value;
+      green += ((colorValue >> 8) & 0xFF) * entry.value;
+      blue += (colorValue & 0xFF) * entry.value;
+      colorCellCount += entry.value;
+    }
+    if (colorCellCount == 0) return null;
+    return Color.fromARGB(
+      255,
+      (red / colorCellCount).round(),
+      (green / colorCellCount).round(),
+      (blue / colorCellCount).round(),
+    );
+  }
+
   /// Converts a validated canonical RGB value into an opaque color.
   static Color _parseColor(String value) =>
       Color(int.parse('FF${value.substring(1)}', radix: 16));

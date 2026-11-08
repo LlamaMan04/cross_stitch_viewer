@@ -23,4 +23,19 @@ void main() {
       expect(cache.fillPaintFor('missing', 0.22), isNull);
     },
   );
+
+  test('averages thread colors by their summary populations', () {
+    final cache = PatternSymbolRenderCache(SamplePatternFixture.create());
+
+    final average = cache.weightedAverageColorFor(const <String, int>{
+      'flower': 2,
+      'leaf': 1,
+    });
+
+    expect(average, const Color(0xFFA34C3F));
+    expect(
+      cache.weightedAverageColorFor(const <String, int>{'missing': 3}),
+      isNull,
+    );
+  });
 }

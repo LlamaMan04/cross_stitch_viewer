@@ -83,8 +83,8 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Detail level retained across camera changes for threshold hysteresis.
   RenderLod? _renderLod;
 
-  /// Tiles containing at least one completed coordinate.
-  late Set<PatternTileCoordinate> _completedTileCoordinates;
+  /// Summary blocks containing completion at every overview resolution.
+  late Map<int, Set<PatternTileCoordinate>> _completedOverviewCoordinates;
 
   /// Current camera, initialized after the viewport receives a layout size.
   PatternCamera? _camera;
@@ -124,7 +124,9 @@ class _PatternViewportState extends State<PatternViewport> {
   void initState() {
     super.initState();
     _symbolRenderCache = PatternSymbolRenderCache(widget.document);
-    _completedTileCoordinates = _indexCompletedTiles(widget.completedCells);
+    _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
+      widget.completedCells,
+    );
   }
 
   /// Releases cached native text layouts with the owning viewport.
@@ -146,7 +148,9 @@ class _PatternViewportState extends State<PatternViewport> {
     }
     if (oldWidget.document != widget.document ||
         !identical(oldWidget.completedCells, widget.completedCells)) {
-      _completedTileCoordinates = _indexCompletedTiles(widget.completedCells);
+      _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
+        widget.completedCells,
+      );
     }
   }
 
@@ -205,7 +209,7 @@ class _PatternViewportState extends State<PatternViewport> {
                 glyphLayoutCache: _glyphLayoutCache,
                 symbolRenderCache: _symbolRenderCache,
                 renderLod: _renderLod!,
-                completedTileCoordinates: _completedTileCoordinates,
+                completedOverviewCoordinates: _completedOverviewCoordinates,
               ),
               child: const SizedBox.expand(),
             ),
@@ -215,12 +219,20 @@ class _PatternViewportState extends State<PatternViewport> {
     );
   }
 
-  /// Indexes completed coordinates once when progress input changes.
-  Set<PatternTileCoordinate> _indexCompletedTiles(
+  /// Indexes completed coordinates at every supported overview resolution.
+  Map<int, Set<PatternTileCoordinate>> _indexCompletedOverviewCoordinates(
     Set<GridCoordinate> completedCells,
-  ) => Set<PatternTileCoordinate>.unmodifiable(
-    completedCells.map(PatternGrid.tileCoordinateFor),
-  );
+  ) => Map<int, Set<PatternTileCoordinate>>.unmodifiable({
+    for (final blockSize in PatternGrid.overviewBlockSizes)
+      blockSize: Set<PatternTileCoordinate>.unmodifiable(
+        completedCells.map(
+          (coordinate) => PatternTileCoordinate(
+            coordinate.row ~/ blockSize,
+            coordinate.column ~/ blockSize,
+          ),
+        ),
+      ),
+  });
 
   /// Converts a tap into a populated cell's symbol selection.
   void _handleTapUp(TapUpDetails details) {

@@ -43,9 +43,11 @@ Implemented today:
    source-region visibility; settings are persisted.
 5. The workspace has a compact app bar and a collapsible settings panel.
 6. A hysteretic three-level LOD policy switches between tile summaries,
-   glyph-free cell rendering, and complete detail rendering. Immutable tile
-   summaries retain population and dominant-symbol data, while dynamic
-   completion and pending-selection tile indexes are maintained outside paint.
+   glyph-free cell rendering, and complete detail rendering. Immutable 2, 4,
+   8, 16, and 32-cell summary levels retain population and symbol-distribution
+   data. Overview rendering selects levels from projected screen size,
+   cross-fades adjacent levels, and uses population-weighted thread colors;
+   dynamic completion indexes are maintained outside paint.
 
 The renderer is therefore visible-range and visible-detail bounded. At fitted
 or overview zoom, it queries only intersecting immutable tile summaries and

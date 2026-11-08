@@ -82,12 +82,46 @@ void main() {
 
     expect(summaries, hasLength(1));
     expect(summaries.single.coordinate, const PatternTileCoordinate(0, 0));
+    expect(summaries.single.blockSize, PatternGrid.tileSize);
     expect(summaries.single.populatedCellCount, 3);
     expect(summaries.single.symbolCounts, <String, int>{'a': 2, 'b': 1});
     expect(summaries.single.dominantSymbolId, 'a');
     expect(
       () => summaries.single.symbolCounts['a'] = 4,
       throwsUnsupportedError,
+    );
+  });
+
+  test('provides finer immutable summaries for overview rendering', () {
+    final grid = PatternGrid(
+      dimensions: const PatternDimensions(8, 8),
+      cells: const [
+        StitchCell(coordinate: GridCoordinate(0, 0), symbolId: 'a'),
+        StitchCell(coordinate: GridCoordinate(3, 3), symbolId: 'b'),
+        StitchCell(coordinate: GridCoordinate(4, 4), symbolId: 'c'),
+      ],
+    );
+
+    final summaries = grid
+        .overviewSummariesIntersecting(
+          const GridBounds(
+            startRow: 0,
+            endRow: 4,
+            startColumn: 0,
+            endColumn: 4,
+          ),
+          2,
+        )
+        .toList();
+
+    expect(summaries, hasLength(2));
+    expect(summaries.every((summary) => summary.blockSize == 2), isTrue);
+    expect(
+      summaries.map((summary) => summary.coordinate).toSet(),
+      <PatternTileCoordinate>{
+        const PatternTileCoordinate(0, 0),
+        const PatternTileCoordinate(1, 1),
+      },
     );
   });
 }

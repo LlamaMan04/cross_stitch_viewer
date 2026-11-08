@@ -47,4 +47,20 @@ void main() {
       RenderLod.overview,
     );
   });
+
+  test('selects and cross-fades projected overview block sizes', () {
+    final nearOverviewBoundary = resolveOverviewRenderLevels(cellSize: 2.5);
+    final middleScale = resolveOverviewRenderLevels(cellSize: 1);
+    final minimumScale = resolveOverviewRenderLevels(cellSize: 0.1);
+
+    expect(nearOverviewBoundary.fineBlockSize, 2);
+    expect(nearOverviewBoundary.coarseBlockSize, 4);
+    expect(nearOverviewBoundary.coarseWeight, closeTo(0.263, 0.001));
+    expect(middleScale.fineBlockSize, 4);
+    expect(middleScale.coarseBlockSize, 8);
+    expect(middleScale.coarseWeight, closeTo(0.585, 0.001));
+    expect(minimumScale.fineBlockSize, 32);
+    expect(minimumScale.coarseBlockSize, 32);
+    expect(minimumScale.blendsLevels, isFalse);
+  });
 }

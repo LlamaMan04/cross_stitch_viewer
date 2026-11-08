@@ -39,9 +39,7 @@ void main() {
       glyphLayoutCache: glyphLayoutCache,
       symbolRenderCache: PatternSymbolRenderCache(fixture.document),
       renderLod: RenderLod.detail,
-      completedTileCoordinates: <PatternTileCoordinate>{
-        const PatternTileCoordinate(0, 0),
-      },
+      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{},
     );
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
@@ -76,7 +74,7 @@ void main() {
       glyphLayoutCache: glyphLayoutCache,
       symbolRenderCache: PatternSymbolRenderCache(fixture.document),
       renderLod: RenderLod.grid,
-      completedTileCoordinates: const <PatternTileCoordinate>{},
+      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{},
     );
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
@@ -112,8 +110,8 @@ void main() {
       glyphLayoutCache: glyphLayoutCache,
       symbolRenderCache: PatternSymbolRenderCache(fixture.document),
       renderLod: RenderLod.overview,
-      completedTileCoordinates: <PatternTileCoordinate>{
-        const PatternTileCoordinate(0, 0),
+      completedOverviewCoordinates: <int, Set<PatternTileCoordinate>>{
+        4: <PatternTileCoordinate>{const PatternTileCoordinate(0, 0)},
       },
     );
     final recorder = PictureRecorder();
@@ -124,7 +122,7 @@ void main() {
     picture.dispose();
 
     expect(fixture.grid.queryCount, 0);
-    expect(fixture.grid.tileSummaryQueryCount, 1);
+    expect(fixture.grid.tileSummaryQueryCount, 2);
   });
 }
 
@@ -172,8 +170,11 @@ class _CountingPatternGrid extends PatternGrid {
 
   /// Records and delegates one visible-tile summary query.
   @override
-  Iterable<PatternTileSummary> tileSummariesIntersecting(GridBounds bounds) {
+  Iterable<PatternTileSummary> overviewSummariesIntersecting(
+    GridBounds bounds,
+    int blockSize,
+  ) {
     tileSummaryQueryCount++;
-    return super.tileSummariesIntersecting(bounds);
+    return super.overviewSummariesIntersecting(bounds, blockSize);
   }
 }
