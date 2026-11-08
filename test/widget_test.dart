@@ -456,13 +456,13 @@ void main() {
     expect(painter.completionSelection, isEmpty);
   });
 
-  testWidgets('control-drag adds completion cells without panning on desktop', (
+  testWidgets('control-drag adds completion cells without panning on Android', (
     tester,
   ) async {
     final addedCoordinates = <GridCoordinate>[];
     await tester.pumpWidget(
       MaterialApp(
-        theme: ThemeData(platform: TargetPlatform.windows),
+        theme: ThemeData(platform: TargetPlatform.android),
         home: SizedBox(
           width: 400,
           height: 300,
@@ -511,12 +511,12 @@ void main() {
   });
 
   testWidgets(
-    'double-tap-drag adds completion cells without panning on mobile',
+    'double-click-drag adds completion cells without panning on Windows',
     (tester) async {
       final addedCoordinates = <GridCoordinate>[];
       await tester.pumpWidget(
         MaterialApp(
-          theme: ThemeData(platform: TargetPlatform.android),
+          theme: ThemeData(platform: TargetPlatform.windows),
           home: SizedBox(
             width: 400,
             height: 300,
@@ -541,10 +541,16 @@ void main() {
           canvasOrigin + painter.camera.gridToScreen(row: 1.5, column: 2.5);
       final cameraBefore = painter.camera;
 
-      final firstTap = await tester.startGesture(firstCell);
+      final firstTap = await tester.startGesture(
+        firstCell,
+        kind: PointerDeviceKind.mouse,
+      );
       await firstTap.up();
       await tester.pump(const Duration(milliseconds: 50));
-      final selectionDrag = await tester.startGesture(firstCell);
+      final selectionDrag = await tester.startGesture(
+        firstCell,
+        kind: PointerDeviceKind.mouse,
+      );
       await tester.pump();
       await selectionDrag.moveTo(secondCell);
       await tester.pump();

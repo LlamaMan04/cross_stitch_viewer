@@ -94,11 +94,11 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Prevents a modifier click from being handled again as a normal tap.
   bool _suppressNextTap = false;
 
-  /// Release time of the most recent unmodified mobile tap.
-  Duration? _lastMobileTapTime;
+  /// Release time of the most recent unmodified tap or click.
+  Duration? _lastTapTime;
 
-  /// Release position of the most recent unmodified mobile tap.
-  Offset? _lastMobileTapPosition;
+  /// Release position of the most recent unmodified tap or click.
+  Offset? _lastTapPosition;
 
   /// Most recent non-empty viewport layout size.
   Size? _viewportSize;
@@ -203,35 +203,19 @@ class _PatternViewportState extends State<PatternViewport> {
     widget.onSymbolSelected?.call(cell?.symbolId);
   }
 
-  /// Whether this target uses keyboard-modified desktop pointer gestures.
-  bool get _supportsDesktopAdditiveDrag => switch (Theme.of(context).platform) {
-    TargetPlatform.linux ||
-    TargetPlatform.macOS ||
-    TargetPlatform.windows => true,
-    TargetPlatform.android ||
-    TargetPlatform.fuchsia ||
-    TargetPlatform.iOS => false,
-  };
-
-  /// Whether this target uses the double-tap-and-drag mobile gesture.
-  bool get _supportsMobileAdditiveDrag => switch (Theme.of(context).platform) {
-    TargetPlatform.android || TargetPlatform.iOS => true,
-    TargetPlatform.fuchsia ||
-    TargetPlatform.linux ||
-    TargetPlatform.macOS ||
-    TargetPlatform.windows => false,
-  };
-
-  /// Begins an additive drag for a desktop modifier or mobile second tap.
+  /// Begins an additive drag for a modifier or nearby second tap/click.
   void _handlePointerDown(PointerDownEvent event) {
     if (widget.interactionMode != PatternInteractionMode.editCompletion) {
       return;
     }
-    if (_supportsMobileAdditiveDrag &&
-        (event.kind == PointerDeviceKind.touch ||
-            event.kind == PointerDeviceKind.stylus)) {
-      final lastTapTime = _lastMobileTapTime;
-      final lastTapPosition = _lastMobileTapPosition;
+    if (_isSelectionModifierPressed) {
+      _suppressNextTap = true;
+      _beginSelectionDrag(event.pointer, event.localPosition);
+      return;
+    }
+    {
+      final lastTapTime = _lastTapTime;
+      final lastTapPosition = _lastTapPosition;
       final isTimelySecondTap =
           lastTapTime != null &&
           event.timeStamp - lastTapTime <= const Duration(milliseconds: 300);
@@ -239,22 +223,20 @@ class _PatternViewportState extends State<PatternViewport> {
           lastTapPosition != null &&
           (event.localPosition - lastTapPosition).distance <= 48;
       if (isTimelySecondTap && isNearbySecondTap) {
-        _lastMobileTapTime = null;
-        _lastMobileTapPosition = null;
+        _lastTapTime = null;
+        _lastTapPosition = null;
         _beginSelectionDrag(event.pointer, event.localPosition);
       }
-      return;
     }
-    if (!_supportsDesktopAdditiveDrag) return;
+  }
+
+  /// Whether Control or Command is held for additive selection.
+  bool get _isSelectionModifierPressed {
     final pressedKeys = HardwareKeyboard.instance.logicalKeysPressed;
-    final modifierPressed =
-        pressedKeys.contains(LogicalKeyboardKey.controlLeft) ||
+    return pressedKeys.contains(LogicalKeyboardKey.controlLeft) ||
         pressedKeys.contains(LogicalKeyboardKey.controlRight) ||
         pressedKeys.contains(LogicalKeyboardKey.metaLeft) ||
         pressedKeys.contains(LogicalKeyboardKey.metaRight);
-    if (!modifierPressed) return;
-    _suppressNextTap = true;
-    _beginSelectionDrag(event.pointer, event.localPosition);
   }
 
   /// Starts one additive drag and reports its initial populated cell.
@@ -292,20 +274,17 @@ class _PatternViewportState extends State<PatternViewport> {
     final endedSelectionDrag = event.pointer == _selectionDragPointer;
     if (endedSelectionDrag) _endSelectionDrag();
     if (!endedSelectionDrag &&
-        widget.interactionMode == PatternInteractionMode.editCompletion &&
-        _supportsMobileAdditiveDrag &&
-        (event.kind == PointerDeviceKind.touch ||
-            event.kind == PointerDeviceKind.stylus)) {
-      _lastMobileTapTime = event.timeStamp;
-      _lastMobileTapPosition = event.localPosition;
+        widget.interactionMode == PatternInteractionMode.editCompletion) {
+      _lastTapTime = event.timeStamp;
+      _lastTapPosition = event.localPosition;
     }
   }
 
   /// Ends the active additive drag after its pointer is cancelled.
   void _handlePointerCancel(PointerCancelEvent event) {
     if (event.pointer == _selectionDragPointer) _endSelectionDrag();
-    _lastMobileTapTime = null;
-    _lastMobileTapPosition = null;
+    _lastTapTime = null;
+    _lastTapPosition = null;
   }
 
   /// Clears transient state belonging to an additive drag.
