@@ -12,6 +12,7 @@ import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
+import 'pattern_viewport_controller.dart';
 import 'render_lod.dart';
 
 /// Counts batched primitives and canvas calls for one renderer frame.
@@ -42,8 +43,8 @@ class ViewportPatternPainter extends CustomPainter {
   /// Creates a painter from immutable document, camera, bounds, and theme data.
   ViewportPatternPainter({
     required this.document,
-    required this.camera,
-    required this.visibleBounds,
+    required PatternCamera camera,
+    required GridBounds visibleBounds,
     required this.settings,
     required this.selection,
     required this.completedCells,
@@ -53,19 +54,49 @@ class ViewportPatternPainter extends CustomPainter {
     required this.completionSelectionColor,
     required this.glyphLayoutCache,
     required this.symbolRenderCache,
-    required this.renderLod,
+    required RenderLod renderLod,
     required this.completedOverviewCoordinates,
     this.onBatchMetrics,
-  });
+    this.cameraController,
+    this.viewportSize,
+  }) : _staticGeometry = _StaticPaintGeometry(
+         camera: camera,
+         visibleBounds: visibleBounds,
+         renderLod: renderLod,
+       ),
+       assert(
+         (cameraController == null) == (viewportSize == null),
+         'A notifier-driven painter requires its viewport size.',
+       ),
+       super(repaint: cameraController);
 
   /// Normalized source document rendered by this painter.
   final PatternDocument document;
 
-  /// Camera that maps grid coordinates directly into screen coordinates.
-  final PatternCamera camera;
+  /// Geometry used when no notifier-driven controller is supplied.
+  final _StaticPaintGeometry _staticGeometry;
 
-  /// Half-open grid range that this paint pass may inspect.
-  final GridBounds visibleBounds;
+  /// Optional notifier supplying camera values without widget rebuilds.
+  final PatternViewportController? cameraController;
+
+  /// Fixed paint-surface size used for notifier-driven visible bounds.
+  final Size? viewportSize;
+
+  /// Camera used for the current interaction or direct painter invocation.
+  PatternCamera get camera =>
+      cameraController?.camera ?? _staticGeometry.camera;
+
+  /// Current half-open grid range derived from the active camera.
+  GridBounds get visibleBounds {
+    final dynamicViewportSize = viewportSize;
+    if (cameraController == null || dynamicViewportSize == null) {
+      return _staticGeometry.visibleBounds;
+    }
+    return camera.visibleBounds(
+      viewportSize: dynamicViewportSize,
+      dimensions: document.grid.dimensions,
+    );
+  }
 
   /// Persisted visual switches and colors for this paint pass.
   final PatternRenderSettings settings;
@@ -94,8 +125,9 @@ class ViewportPatternPainter extends CustomPainter {
   /// Parsed symbol colors and fill paints shared across viewport painters.
   final PatternSymbolRenderCache symbolRenderCache;
 
-  /// Automatic detail policy resolved by the viewport with hysteresis.
-  final RenderLod renderLod;
+  /// Detail level retained by the camera controller across paint frames.
+  RenderLod get renderLod =>
+      cameraController?.renderLod ?? _staticGeometry.renderLod;
 
   /// Completed summary blocks indexed by every supported overview resolution.
   final Map<int, Set<PatternTileCoordinate>> completedOverviewCoordinates;
@@ -118,25 +150,35 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paint reused for the path containing every visible minor grid rule.
   late final Paint _minorGridPaint = Paint()
     ..color = _gridColor
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = math.min(1.0, camera.cellSize * 0.18);
+    ..style = PaintingStyle.stroke;
 
   /// Paint reused for the path containing every visible ten-cell grid rule.
   late final Paint _majorGridPaint = Paint()
     ..color = _gridColor
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = math.min(2.0, camera.cellSize * 0.3);
+    ..style = PaintingStyle.stroke;
 
   /// Paint reused for the path containing visible document-edge rules.
   late final Paint _outsideGridPaint = Paint()
     ..color = _gridColor
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = math.min(2.25, camera.cellSize * 0.38);
+    ..style = PaintingStyle.stroke;
 
-  /// Visible populated cells materialized only when a cell layer needs them.
-  late final List<StitchCell> _visibleCells = List<StitchCell>.unmodifiable(
-    document.grid.cellsIntersecting(visibleBounds),
-  );
+  /// Bounds associated with the current cached visible-cell snapshot.
+  GridBounds? _cachedCellBounds;
+
+  /// Populated cells cached for all layers in the current visible range.
+  List<StitchCell>? _cachedVisibleCells;
+
+  /// Visible cells materialized once and refreshed only when bounds change.
+  List<StitchCell> get _visibleCells {
+    final currentBounds = visibleBounds;
+    if (_cachedCellBounds != currentBounds || _cachedVisibleCells == null) {
+      _cachedCellBounds = currentBounds;
+      _cachedVisibleCells = List<StitchCell>.unmodifiable(
+        document.grid.cellsIntersecting(currentBounds),
+      );
+    }
+    return _cachedVisibleCells!;
+  }
 
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
@@ -475,6 +517,9 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paints only visible minor, ten-cell, and document-edge rules.
   _LayerBatchMetrics _paintGrid(Canvas canvas) {
     if (visibleBounds.isEmpty) return const _LayerBatchMetrics();
+    _minorGridPaint.strokeWidth = math.min(1.0, camera.cellSize * 0.18);
+    _majorGridPaint.strokeWidth = math.min(2.0, camera.cellSize * 0.3);
+    _outsideGridPaint.strokeWidth = math.min(2.25, camera.cellSize * 0.38);
     // Visible endpoints bound both the horizontal and vertical rule segments.
     final dimensions = document.grid.dimensions;
     final left = camera.origin.dx + visibleBounds.startColumn * camera.cellSize;
@@ -636,6 +681,7 @@ class ViewportPatternPainter extends CustomPainter {
   @override
   bool shouldRepaint(ViewportPatternPainter oldDelegate) =>
       oldDelegate.document != document ||
+      oldDelegate.cameraController != cameraController ||
       oldDelegate.camera != camera ||
       oldDelegate.visibleBounds != visibleBounds ||
       oldDelegate.settings != settings ||
@@ -670,4 +716,23 @@ class _LayerBatchMetrics {
 
   /// Number of paths submitted to the canvas.
   final int drawCallCount;
+}
+
+/// Groups fixed geometry for direct, non-notifier painter use.
+class _StaticPaintGeometry {
+  /// Creates one immutable direct-paint geometry snapshot.
+  const _StaticPaintGeometry({
+    required this.camera,
+    required this.visibleBounds,
+    required this.renderLod,
+  });
+
+  /// Camera supplied when the painter was constructed.
+  final PatternCamera camera;
+
+  /// Half-open bounds supplied when the painter was constructed.
+  final GridBounds visibleBounds;
+
+  /// Detail level supplied when the painter was constructed.
+  final RenderLod renderLod;
 }

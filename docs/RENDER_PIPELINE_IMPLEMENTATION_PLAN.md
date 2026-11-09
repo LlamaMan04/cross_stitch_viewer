@@ -491,7 +491,7 @@ pointer events do not write progress state on every update.
    foreground, and style.
 4. [x] Batch fills by color and grid rules by rule class. Reuse `Paint` instances
    and expose focused primitive/draw-call measurements for profiling and tests.
-5. [ ] Add `RepaintBoundary` and notifier-driven camera repainting so pointer
+5. [x] Add `RepaintBoundary` and notifier-driven camera repainting so pointer
    updates do not rebuild unrelated workspace widgets.
 6. [ ] Add frame counters and profiling hooks for visible cells, glyphs, grid
    rules, draw calls, build time, and raster time.

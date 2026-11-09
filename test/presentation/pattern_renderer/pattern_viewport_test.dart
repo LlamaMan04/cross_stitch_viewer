@@ -46,6 +46,42 @@ void main() {
     expect(after.cellSize, before.cellSize);
   });
 
+  testWidgets('camera movement repaints without rebuilding the canvas widget', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 400,
+          height: 300,
+          child: PatternRenderView(
+            document: LargeSamplePatternFixture.create(),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final canvasBefore = tester.widget<CustomPaint>(canvasFinder);
+    final painter = canvasBefore.painter! as ViewportPatternPainter;
+    final cameraBefore = painter.camera;
+
+    await tester.drag(
+      find.byKey(const ValueKey('pattern-viewport')),
+      const Offset(0, -20),
+    );
+    await tester.pump();
+
+    final canvasAfter = tester.widget<CustomPaint>(canvasFinder);
+    expect(identical(canvasAfter, canvasBefore), isTrue);
+    expect(painter.camera.origin.dy, lessThan(cameraBefore.origin.dy));
+    expect(
+      find.byKey(const ValueKey('pattern-render-boundary')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('keeps drag navigation separate from completion cell selection', (
     tester,
   ) async {

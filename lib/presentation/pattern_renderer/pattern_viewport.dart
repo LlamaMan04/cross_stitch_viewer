@@ -13,7 +13,7 @@ import 'pattern_glyph_layout_cache.dart';
 import 'pattern_interaction.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
-import 'render_lod.dart';
+import 'pattern_viewport_controller.dart';
 import 'viewport_pattern_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
@@ -80,14 +80,11 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Parsed symbol colors and fill paints shared across viewport painters.
   late PatternSymbolRenderCache _symbolRenderCache;
 
-  /// Detail level retained across camera changes for threshold hysteresis.
-  RenderLod? _renderLod;
-
   /// Summary blocks containing completion at every overview resolution.
   late Map<int, Set<PatternTileCoordinate>> _completedOverviewCoordinates;
 
-  /// Current camera, initialized after the viewport receives a layout size.
-  PatternCamera? _camera;
+  /// Camera notifier created after the viewport receives a layout size.
+  PatternViewportController? _cameraController;
 
   /// Camera snapshot captured at the start of a scale gesture.
   PatternCamera? _gestureStartCamera;
@@ -132,6 +129,7 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Releases cached native text layouts with the owning viewport.
   @override
   void dispose() {
+    _cameraController?.dispose();
     _glyphLayoutCache.dispose();
     super.dispose();
   }
@@ -141,9 +139,9 @@ class _PatternViewportState extends State<PatternViewport> {
   void didUpdateWidget(covariant PatternViewport oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.document != widget.document) {
-      _camera = null;
+      _cameraController?.dispose();
+      _cameraController = null;
       _gestureStartCamera = null;
-      _renderLod = null;
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
     }
     if (oldWidget.document != widget.document ||
@@ -168,11 +166,8 @@ class _PatternViewportState extends State<PatternViewport> {
         );
         _updateCameraForLayout(viewportSize);
         // Camera and bounds are immutable inputs for this paint pass.
-        final camera = _camera!;
-        _renderLod = resolveRenderLod(
-          cellSize: camera.cellSize,
-          previous: _renderLod,
-        );
+        final cameraController = _cameraController!;
+        final camera = cameraController.camera;
         final visibleBounds = camera.visibleBounds(
           viewportSize: viewportSize,
           dimensions: widget.document.grid.dimensions,
@@ -193,25 +188,30 @@ class _PatternViewportState extends State<PatternViewport> {
                     widget.onCompletionCellSelected == null
                 ? null
                 : _handleTapUp,
-            child: CustomPaint(
-              key: const ValueKey('pattern-grid-canvas'),
-              painter: ViewportPatternPainter(
-                document: widget.document,
-                camera: camera,
-                visibleBounds: visibleBounds,
-                settings: widget.settings,
-                selection: widget.selection,
-                completedCells: widget.completedCells,
-                completionSelection: widget.completionSelection.coordinates,
-                surfaceColor: colors.surfaceContainerLowest,
-                regionColor: colors.primary,
-                completionSelectionColor: colors.primary,
-                glyphLayoutCache: _glyphLayoutCache,
-                symbolRenderCache: _symbolRenderCache,
-                renderLod: _renderLod!,
-                completedOverviewCoordinates: _completedOverviewCoordinates,
+            child: RepaintBoundary(
+              key: const ValueKey('pattern-render-boundary'),
+              child: CustomPaint(
+                key: const ValueKey('pattern-grid-canvas'),
+                painter: ViewportPatternPainter(
+                  document: widget.document,
+                  camera: camera,
+                  visibleBounds: visibleBounds,
+                  settings: widget.settings,
+                  selection: widget.selection,
+                  completedCells: widget.completedCells,
+                  completionSelection: widget.completionSelection.coordinates,
+                  surfaceColor: colors.surfaceContainerLowest,
+                  regionColor: colors.primary,
+                  completionSelectionColor: colors.primary,
+                  glyphLayoutCache: _glyphLayoutCache,
+                  symbolRenderCache: _symbolRenderCache,
+                  renderLod: cameraController.renderLod,
+                  completedOverviewCoordinates: _completedOverviewCoordinates,
+                  cameraController: cameraController,
+                  viewportSize: viewportSize,
+                ),
+                child: const SizedBox.expand(),
               ),
-              child: const SizedBox.expand(),
             ),
           ),
         );
@@ -241,7 +241,7 @@ class _PatternViewportState extends State<PatternViewport> {
       return;
     }
     widget.onInteraction?.call();
-    final camera = _camera;
+    final camera = _cameraController?.camera;
     if (camera == null) return;
     if (widget.interactionMode == PatternInteractionMode.editCompletion &&
         camera.cellSize < 12) {
@@ -317,7 +317,7 @@ class _PatternViewportState extends State<PatternViewport> {
   void _handlePointerMove(PointerMoveEvent event) {
     if (event.pointer != _selectionDragPointer) return;
     final previousPosition = _selectionDragLastPosition;
-    final camera = _camera;
+    final camera = _cameraController?.camera;
     if (previousPosition == null || camera == null) return;
     final distance = (event.localPosition - previousPosition).distance;
     final sampleCount = math.max(1, (distance / (camera.cellSize / 2)).ceil());
@@ -361,7 +361,7 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Reports the populated cell beneath [localPosition] at most once per drag.
   void _addCompletionCellAt(Offset localPosition) {
-    final camera = _camera;
+    final camera = _cameraController?.camera;
     if (camera == null) return;
     if (camera.cellSize < 12) {
       if (!_selectionDragUnavailableReported) {
@@ -385,12 +385,16 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Initializes a fitted camera or clamps the existing camera after resize.
   void _updateCameraForLayout(Size viewportSize) {
-    if (_camera == null) {
-      _camera = PatternCamera.fit(
-        dimensions: widget.document.grid.dimensions,
-        viewportSize: viewportSize,
+    final cameraController = _cameraController;
+    if (cameraController == null) {
+      _cameraController = PatternViewportController(
+        camera: PatternCamera.fit(
+          dimensions: widget.document.grid.dimensions,
+          viewportSize: viewportSize,
+        ),
       );
     } else if (_viewportSize != viewportSize) {
+      final currentCamera = cameraController.camera;
       // A larger layout can raise the fitted minimum scale.
       final minimumCellSize = PatternCamera.minimumCellSizeFor(
         dimensions: widget.document.grid.dimensions,
@@ -400,24 +404,22 @@ class _PatternViewportState extends State<PatternViewport> {
         dimensions: widget.document.grid.dimensions,
         viewportSize: viewportSize,
       );
-      if (_camera!.cellSize < minimumCellSize) {
-        _camera = PatternCamera.fit(
-          dimensions: widget.document.grid.dimensions,
-          viewportSize: viewportSize,
-        );
-      } else {
-        _camera =
-            PatternCamera(
-              cellSize: _camera!.cellSize.clamp(
+      final layoutCamera = currentCamera.cellSize < minimumCellSize
+          ? PatternCamera.fit(
+              dimensions: widget.document.grid.dimensions,
+              viewportSize: viewportSize,
+            )
+          : PatternCamera(
+              cellSize: currentCamera.cellSize.clamp(
                 minimumCellSize,
                 maximumCellSize,
               ),
-              origin: _camera!.origin,
+              origin: currentCamera.origin,
             ).clampTo(
               dimensions: widget.document.grid.dimensions,
               viewportSize: viewportSize,
             );
-      }
+      cameraController.replaceCameraForLayout(layoutCamera);
     }
     _viewportSize = viewportSize;
   }
@@ -430,7 +432,7 @@ class _PatternViewportState extends State<PatternViewport> {
       _gestureStartCamera = null;
       return;
     }
-    _gestureStartCamera = _camera;
+    _gestureStartCamera = _cameraController?.camera;
     _gestureStartFocalPoint = details.localFocalPoint;
   }
 
@@ -462,30 +464,30 @@ class _PatternViewportState extends State<PatternViewport> {
       details.localFocalPoint.dx - gridPoint.dx * nextCellSize,
       details.localFocalPoint.dy - gridPoint.dy * nextCellSize,
     );
-    setState(() {
-      _camera = PatternCamera(cellSize: nextCellSize, origin: nextOrigin)
-          .clampTo(
-            dimensions: widget.document.grid.dimensions,
-            viewportSize: viewportSize,
-          );
-    });
+    _cameraController?.updateCamera(
+      PatternCamera(cellSize: nextCellSize, origin: nextOrigin).clampTo(
+        dimensions: widget.document.grid.dimensions,
+        viewportSize: viewportSize,
+      ),
+    );
   }
 
   /// Converts mouse-wheel movement into focal zoom at the pointer location.
   void _handlePointerSignal(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent || _camera == null) return;
+    final cameraController = _cameraController;
+    if (event is! PointerScrollEvent || cameraController == null) return;
     widget.onInteraction?.call();
     final viewportSize = _viewportSize;
     if (viewportSize == null) return;
     // Exponential scaling makes equal wheel deltas feel symmetric.
     final scale = math.exp(-event.scrollDelta.dy * 0.0015);
-    setState(() {
-      _camera = _camera!.zoomAround(
+    cameraController.updateCamera(
+      cameraController.camera.zoomAround(
         focalPoint: event.localPosition,
         scale: scale,
         dimensions: widget.document.grid.dimensions,
         viewportSize: viewportSize,
-      );
-    });
+      ),
+    );
   }
 }
