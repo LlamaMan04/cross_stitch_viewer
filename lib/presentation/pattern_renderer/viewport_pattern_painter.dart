@@ -14,6 +14,29 @@ import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'render_lod.dart';
 
+/// Counts batched primitives and canvas calls for one renderer frame.
+class PatternRenderBatchMetrics {
+  /// Creates immutable measurements for the two batched static layers.
+  const PatternRenderBatchMetrics({
+    required this.cellFillCount,
+    required this.cellFillDrawCalls,
+    required this.gridRuleCount,
+    required this.gridDrawCalls,
+  });
+
+  /// Number of populated-cell rectangles included in fill paths.
+  final int cellFillCount;
+
+  /// Number of color-grouped fill paths submitted to the canvas.
+  final int cellFillDrawCalls;
+
+  /// Number of visible horizontal and vertical rules included in grid paths.
+  final int gridRuleCount;
+
+  /// Number of minor, major, or outside grid paths submitted to the canvas.
+  final int gridDrawCalls;
+}
+
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
 class ViewportPatternPainter extends CustomPainter {
   /// Creates a painter from immutable document, camera, bounds, and theme data.
@@ -32,6 +55,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.symbolRenderCache,
     required this.renderLod,
     required this.completedOverviewCoordinates,
+    this.onBatchMetrics,
   });
 
   /// Normalized source document rendered by this painter.
@@ -76,6 +100,9 @@ class ViewportPatternPainter extends CustomPainter {
   /// Completed summary blocks indexed by every supported overview resolution.
   final Map<int, Set<PatternTileCoordinate>> completedOverviewCoordinates;
 
+  /// Optional profiling hook called after the batched layers are painted.
+  final ValueChanged<PatternRenderBatchMetrics>? onBatchMetrics;
+
   /// Completed-cell color and opacity resolved once for this paint delegate.
   late final Color _completedOverlayColor = _parseColor(
     settings.completedCellColor.colorHex,
@@ -84,6 +111,27 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paint reused for every completed-cell overlay in this delegate.
   late final Paint _completedOverlayPaint = Paint()
     ..color = _completedOverlayColor;
+
+  /// Parsed grid color shared by every rule-class paint in this delegate.
+  late final Color _gridColor = _parseColor(settings.gridColor.colorHex);
+
+  /// Paint reused for the path containing every visible minor grid rule.
+  late final Paint _minorGridPaint = Paint()
+    ..color = _gridColor
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = math.min(1.0, camera.cellSize * 0.18);
+
+  /// Paint reused for the path containing every visible ten-cell grid rule.
+  late final Paint _majorGridPaint = Paint()
+    ..color = _gridColor
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = math.min(2.0, camera.cellSize * 0.3);
+
+  /// Paint reused for the path containing visible document-edge rules.
+  late final Paint _outsideGridPaint = Paint()
+    ..color = _gridColor
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = math.min(2.25, camera.cellSize * 0.38);
 
   /// Visible populated cells materialized only when a cell layer needs them.
   late final List<StitchCell> _visibleCells = List<StitchCell>.unmodifiable(
@@ -119,16 +167,26 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.clipRect(Offset.zero & size);
     _paintDocumentBackground(canvas);
     if (renderLod == RenderLod.overview) _paintOverviewTiles(canvas);
-    _paintCellFills(canvas);
+    final fillMetrics = _paintCellFills(canvas);
     if (settings.showCompletedCellOverlay) {
       _paintCompletedCells(canvas);
     }
     _paintSelectedSymbol(canvas);
     _paintCompletionSelection(canvas);
     _paintGlyphs(canvas);
-    if (settings.showGrid) _paintGrid(canvas);
+    final gridMetrics = settings.showGrid
+        ? _paintGrid(canvas)
+        : const _LayerBatchMetrics();
     if (settings.showRegions) _paintRegions(canvas);
     canvas.restore();
+    onBatchMetrics?.call(
+      PatternRenderBatchMetrics(
+        cellFillCount: fillMetrics.primitiveCount,
+        cellFillDrawCalls: fillMetrics.drawCallCount,
+        gridRuleCount: gridMetrics.primitiveCount,
+        gridDrawCalls: gridMetrics.drawCallCount,
+      ),
+    );
   }
 
   /// Theme-derived color used to overlay exact completion-cell selections.
@@ -192,16 +250,33 @@ class ViewportPatternPainter extends CustomPainter {
   }
 
   /// Paints configured thread-color fills for visible populated cells.
-  void _paintCellFills(Canvas canvas) {
-    if (!settings.showCellColor || renderLod == RenderLod.overview) return;
+  _LayerBatchMetrics _paintCellFills(Canvas canvas) {
+    if (!settings.showCellColor || renderLod == RenderLod.overview) {
+      return const _LayerBatchMetrics();
+    }
+    final batches = <int, _CellFillBatch>{};
+    var fillCount = 0;
     for (final cell in _visibleCells) {
       final fillPaint = symbolRenderCache.fillPaintFor(
         cell.symbolId,
         settings.cellColorOpacity,
       );
       if (fillPaint == null) continue;
-      canvas.drawRect(_cellRect(cell), fillPaint);
+      final colorKey = fillPaint.color.toARGB32();
+      final batch = batches.putIfAbsent(
+        colorKey,
+        () => _CellFillBatch(fillPaint),
+      );
+      batch.path.addRect(_cellRect(cell));
+      fillCount++;
     }
+    for (final batch in batches.values) {
+      canvas.drawPath(batch.path, batch.paint);
+    }
+    return _LayerBatchMetrics(
+      primitiveCount: fillCount,
+      drawCallCount: batches.length,
+    );
   }
 
   /// Paints glyphs after dynamic overlays so symbols remain legible.
@@ -263,7 +338,6 @@ class ViewportPatternPainter extends CustomPainter {
     double opacity,
   ) {
     if (opacity <= 0) return;
-    final gridColor = _parseColor(settings.gridColor.colorHex);
     for (final summary in summaries) {
       final tileRect = _tileRect(summary);
       final tileRows = math.min(
@@ -284,7 +358,7 @@ class ViewportPatternPainter extends CustomPainter {
           ? averageColor.withValues(
               alpha: settings.cellColorOpacity * density * opacity,
             )
-          : gridColor.withValues(alpha: 0.18 * density * opacity);
+          : _gridColor.withValues(alpha: 0.18 * density * opacity);
       canvas.drawRect(tileRect, Paint()..color = densityColor);
     }
   }
@@ -399,14 +473,20 @@ class ViewportPatternPainter extends CustomPainter {
   }
 
   /// Paints only visible minor, ten-cell, and document-edge rules.
-  void _paintGrid(Canvas canvas) {
-    if (visibleBounds.isEmpty) return;
+  _LayerBatchMetrics _paintGrid(Canvas canvas) {
+    if (visibleBounds.isEmpty) return const _LayerBatchMetrics();
     // Visible endpoints bound both the horizontal and vertical rule segments.
     final dimensions = document.grid.dimensions;
     final left = camera.origin.dx + visibleBounds.startColumn * camera.cellSize;
     final right = camera.origin.dx + visibleBounds.endColumn * camera.cellSize;
     final top = camera.origin.dy + visibleBounds.startRow * camera.cellSize;
     final bottom = camera.origin.dy + visibleBounds.endRow * camera.cellSize;
+    final minorPath = Path();
+    final majorPath = Path();
+    final outsidePath = Path();
+    var minorCount = 0;
+    var majorCount = 0;
+    var outsideCount = 0;
 
     final overview = renderLod == RenderLod.overview;
     for (final row in _ruleCoordinates(
@@ -416,11 +496,23 @@ class ViewportPatternPainter extends CustomPainter {
       dimensions.rows,
     )) {
       final y = camera.origin.dy + row * camera.cellSize;
-      canvas.drawLine(
-        Offset(left, y),
-        Offset(right, y),
-        _rulePaint(row, dimensions.rows),
+      final path = _rulePath(
+        coordinate: row,
+        documentExtent: dimensions.rows,
+        minorPath: minorPath,
+        majorPath: majorPath,
+        outsidePath: outsidePath,
       );
+      path
+        ..moveTo(left, y)
+        ..lineTo(right, y);
+      if (identical(path, outsidePath)) {
+        outsideCount++;
+      } else if (identical(path, majorPath)) {
+        majorCount++;
+      } else {
+        minorCount++;
+      }
     }
     for (final column in _ruleCoordinates(
       visibleBounds.startColumn,
@@ -429,12 +521,41 @@ class ViewportPatternPainter extends CustomPainter {
       dimensions.columns,
     )) {
       final x = camera.origin.dx + column * camera.cellSize;
-      canvas.drawLine(
-        Offset(x, top),
-        Offset(x, bottom),
-        _rulePaint(column, dimensions.columns),
+      final path = _rulePath(
+        coordinate: column,
+        documentExtent: dimensions.columns,
+        minorPath: minorPath,
+        majorPath: majorPath,
+        outsidePath: outsidePath,
       );
+      path
+        ..moveTo(x, top)
+        ..lineTo(x, bottom);
+      if (identical(path, outsidePath)) {
+        outsideCount++;
+      } else if (identical(path, majorPath)) {
+        majorCount++;
+      } else {
+        minorCount++;
+      }
     }
+    var drawCallCount = 0;
+    if (minorCount > 0) {
+      canvas.drawPath(minorPath, _minorGridPaint);
+      drawCallCount++;
+    }
+    if (majorCount > 0) {
+      canvas.drawPath(majorPath, _majorGridPaint);
+      drawCallCount++;
+    }
+    if (outsideCount > 0) {
+      canvas.drawPath(outsidePath, _outsideGridPaint);
+      drawCallCount++;
+    }
+    return _LayerBatchMetrics(
+      primitiveCount: minorCount + majorCount + outsideCount,
+      drawCallCount: drawCallCount,
+    );
   }
 
   /// Yields every visible rule or only ten-cell rules in overview mode.
@@ -461,19 +582,19 @@ class ViewportPatternPainter extends CustomPainter {
     }
   }
 
-  /// Selects a capped stroke width for a rule at [coordinate].
-  Paint _rulePaint(int coordinate, int documentExtent) {
-    // Outside and ten-cell rules take precedence over ordinary minor rules.
+  /// Selects the batched path for a rule at [coordinate].
+  Path _rulePath({
+    required int coordinate,
+    required int documentExtent,
+    required Path minorPath,
+    required Path majorPath,
+    required Path outsidePath,
+  }) {
     final isOutside = coordinate == 0 || coordinate == documentExtent;
     final isMajor = coordinate % 10 == 0;
-    final strokeWidth = isOutside
-        ? math.min(2.25, camera.cellSize * 0.38)
-        : isMajor
-        ? math.min(2.0, camera.cellSize * 0.3)
-        : math.min(1.0, camera.cellSize * 0.18);
-    return Paint()
-      ..color = _parseColor(settings.gridColor.colorHex)
-      ..strokeWidth = strokeWidth;
+    if (isOutside) return outsidePath;
+    if (isMajor) return majorPath;
+    return minorPath;
   }
 
   /// Calculates one cell's screen-space rectangle.
@@ -525,4 +646,28 @@ class ViewportPatternPainter extends CustomPainter {
       oldDelegate.surfaceColor != surfaceColor ||
       oldDelegate.regionColor != regionColor ||
       oldDelegate.completionSelectionColor != completionSelectionColor;
+}
+
+/// Accumulates same-color cell rectangles into one canvas path.
+class _CellFillBatch {
+  /// Creates a fill batch that will be submitted with [paint].
+  _CellFillBatch(this.paint);
+
+  /// Shared color and opacity used for every rectangle in [path].
+  final Paint paint;
+
+  /// Visible cell rectangles sharing [paint].
+  final Path path = Path();
+}
+
+/// Reports primitive and canvas-call counts for one batched layer.
+class _LayerBatchMetrics {
+  /// Creates layer metrics, defaulting to an inactive layer.
+  const _LayerBatchMetrics({this.primitiveCount = 0, this.drawCallCount = 0});
+
+  /// Number of source rectangles or lines accumulated into paths.
+  final int primitiveCount;
+
+  /// Number of paths submitted to the canvas.
+  final int drawCallCount;
 }

@@ -489,8 +489,8 @@ pointer events do not write progress state on every update.
 3. [x] Precompute symbol render metadata, including parsed colors and contrast
    inputs. Add a bounded glyph-layout cache keyed by glyph, font size,
    foreground, and style.
-4. [ ] Batch fills by color and grid rules by rule class. Reuse `Paint` instances
-   and compare draw-call/frame-time measurements before and after batching.
+4. [x] Batch fills by color and grid rules by rule class. Reuse `Paint` instances
+   and expose focused primitive/draw-call measurements for profiling and tests.
 5. [ ] Add `RepaintBoundary` and notifier-driven camera repainting so pointer
    updates do not rebuild unrelated workspace widgets.
 6. [ ] Add frame counters and profiling hooks for visible cells, glyphs, grid

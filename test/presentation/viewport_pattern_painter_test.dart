@@ -124,6 +124,46 @@ void main() {
     expect(fixture.grid.queryCount, 0);
     expect(fixture.grid.tileSummaryQueryCount, 2);
   });
+
+  test('batches cell fills by color and grid rules by class', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    addTearDown(glyphLayoutCache.dispose);
+    PatternRenderBatchMetrics? metrics;
+    final painter = ViewportPatternPainter(
+      document: fixture.document,
+      camera: const PatternCamera(cellSize: 40, origin: Offset.zero),
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: 4,
+        startColumn: 0,
+        endColumn: 5,
+      ),
+      settings: const PatternRenderSettings(showCellColor: true),
+      selection: const PatternRenderSelection(),
+      completedCells: const <GridCoordinate>{},
+      completionSelection: const <GridCoordinate>{},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(fixture.document),
+      renderLod: RenderLod.grid,
+      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{},
+      onBatchMetrics: (value) => metrics = value,
+    );
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    painter.paint(canvas, const Size(400, 300));
+    final picture = recorder.endRecording();
+    picture.dispose();
+
+    expect(metrics?.cellFillCount, 3);
+    expect(metrics?.cellFillDrawCalls, 2);
+    expect(metrics?.gridRuleCount, 11);
+    expect(metrics?.gridDrawCalls, 2);
+  });
 }
 
 /// Creates a representative document backed by an observable spatial grid.
