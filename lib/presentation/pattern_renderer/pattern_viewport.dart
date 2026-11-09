@@ -11,6 +11,7 @@ import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_interaction.dart';
+import 'pattern_render_instrumentation.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'pattern_viewport_controller.dart';
@@ -80,6 +81,9 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Parsed symbol colors and fill paints shared across viewport painters.
   late PatternSymbolRenderCache _symbolRenderCache;
 
+  /// Optional debug-only sink for renderer counters and frame timings.
+  PatternRenderInstrumentation? _instrumentation;
+
   /// Summary blocks containing completion at every overview resolution.
   late Map<int, Set<PatternTileCoordinate>> _completedOverviewCoordinates;
 
@@ -121,6 +125,8 @@ class _PatternViewportState extends State<PatternViewport> {
   void initState() {
     super.initState();
     _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+    _instrumentation = PatternRenderInstrumentation.createIfEnabled();
+    _instrumentation?.attach();
     _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
       widget.completedCells,
     );
@@ -129,6 +135,7 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Releases cached native text layouts with the owning viewport.
   @override
   void dispose() {
+    _instrumentation?.dispose();
     _cameraController?.dispose();
     _glyphLayoutCache.dispose();
     super.dispose();
@@ -209,6 +216,7 @@ class _PatternViewportState extends State<PatternViewport> {
                   completedOverviewCoordinates: _completedOverviewCoordinates,
                   cameraController: cameraController,
                   viewportSize: viewportSize,
+                  onBatchMetrics: _instrumentation?.recordPaint,
                 ),
                 child: const SizedBox.expand(),
               ),

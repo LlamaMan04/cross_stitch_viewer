@@ -493,8 +493,10 @@ pointer events do not write progress state on every update.
    and expose focused primitive/draw-call measurements for profiling and tests.
 5. [x] Add `RepaintBoundary` and notifier-driven camera repainting so pointer
    updates do not rebuild unrelated workspace widgets.
-6. [ ] Add frame counters and profiling hooks for visible cells, glyphs, grid
-   rules, draw calls, build time, and raster time.
+6. [x] Add frame counters and profiling hooks for visible cells, glyphs, grid
+   rules, draw calls, build time, and raster time. Enable the debug-only sink
+   with `--dart-define=PATTERN_RENDER_INSTRUMENTATION=true`; it remains disabled
+   in release builds.
 
 ### Phase 3B: Reuse static work during scrolling
 

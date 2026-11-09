@@ -23,6 +23,9 @@ class PatternRenderBatchMetrics {
     required this.cellFillDrawCalls,
     required this.gridRuleCount,
     required this.gridDrawCalls,
+    required this.visibleCellCount,
+    required this.glyphCount,
+    required this.drawCallCount,
   });
 
   /// Number of populated-cell rectangles included in fill paths.
@@ -36,6 +39,15 @@ class PatternRenderBatchMetrics {
 
   /// Number of minor, major, or outside grid paths submitted to the canvas.
   final int gridDrawCalls;
+
+  /// Number of populated cells materialized for this visible paint frame.
+  final int visibleCellCount;
+
+  /// Number of glyph layouts painted in this frame.
+  final int glyphCount;
+
+  /// Number of canvas draw calls issued by the measured renderer layers.
+  final int drawCallCount;
 }
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
@@ -208,18 +220,29 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
     _paintDocumentBackground(canvas);
-    if (renderLod == RenderLod.overview) _paintOverviewTiles(canvas);
-    final fillMetrics = _paintCellFills(canvas);
-    if (settings.showCompletedCellOverlay) {
-      _paintCompletedCells(canvas);
+    var drawCallCount = 2;
+    if (renderLod == RenderLod.overview) {
+      drawCallCount += _paintOverviewTiles(canvas);
     }
-    _paintSelectedSymbol(canvas);
-    _paintCompletionSelection(canvas);
-    _paintGlyphs(canvas);
+    final fillMetrics = _paintCellFills(canvas);
+    drawCallCount += fillMetrics.drawCallCount;
+    final completedCount = settings.showCompletedCellOverlay
+        ? _paintCompletedCells(canvas)
+        : 0;
+    drawCallCount += completedCount;
+    final selectedCount = _paintSelectedSymbol(canvas);
+    drawCallCount += selectedCount * 2;
+    final completionSelectionCount = _paintCompletionSelection(canvas);
+    drawCallCount += completionSelectionCount;
+    final glyphCount = _paintGlyphs(canvas);
+    drawCallCount += glyphCount;
     final gridMetrics = settings.showGrid
         ? _paintGrid(canvas)
         : const _LayerBatchMetrics();
-    if (settings.showRegions) _paintRegions(canvas);
+    drawCallCount += gridMetrics.drawCallCount;
+    if (settings.showRegions) {
+      drawCallCount += _paintRegions(canvas);
+    }
     canvas.restore();
     onBatchMetrics?.call(
       PatternRenderBatchMetrics(
@@ -227,6 +250,11 @@ class ViewportPatternPainter extends CustomPainter {
         cellFillDrawCalls: fillMetrics.drawCallCount,
         gridRuleCount: gridMetrics.primitiveCount,
         gridDrawCalls: gridMetrics.drawCallCount,
+        visibleCellCount: renderLod == RenderLod.overview
+            ? 0
+            : (_cachedVisibleCells?.length ?? 0),
+        glyphCount: glyphCount,
+        drawCallCount: drawCallCount,
       ),
     );
   }
@@ -238,20 +266,25 @@ class ViewportPatternPainter extends CustomPainter {
   }
 
   /// Paints a high-contrast theme-color overlay on selected exact cells.
-  void _paintCompletionSelection(Canvas canvas) {
-    if (completionSelection.isEmpty || renderLod == RenderLod.overview) return;
+  int _paintCompletionSelection(Canvas canvas) {
+    if (completionSelection.isEmpty || renderLod == RenderLod.overview) {
+      return 0;
+    }
     final overlayPaint = Paint()..color = completionSelectionOverlayColor;
+    var count = 0;
     for (final coordinate in completionSelection) {
       if (!visibleBounds.contains(coordinate)) continue;
       final cell = document.grid.cellAt(coordinate);
       if (cell == null) continue;
       canvas.drawRect(_cellRect(cell), overlayPaint);
+      count++;
     }
+    return count;
   }
 
   /// Paints a translucent accent and outline across selected visible cells.
-  void _paintSelectedSymbol(Canvas canvas) {
-    if (!selection.hasSelection || renderLod == RenderLod.overview) return;
+  int _paintSelectedSymbol(Canvas canvas) {
+    if (!selection.hasSelection || renderLod == RenderLod.overview) return 0;
     final highlightColor = _parseColor(
       settings.selectionHighlightColor.colorHex,
     );
@@ -260,6 +293,7 @@ class ViewportPatternPainter extends CustomPainter {
       ..color = highlightColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.min(2, camera.cellSize * 0.16);
+    var count = 0;
     for (final cell in selectedVisibleCells) {
       final cellRect = _cellRect(cell);
       canvas.drawRect(cellRect, fillPaint);
@@ -267,15 +301,20 @@ class ViewportPatternPainter extends CustomPainter {
         cellRect.deflate(outlinePaint.strokeWidth / 2),
         outlinePaint,
       );
+      count++;
     }
+    return count;
   }
 
   /// Paints the configured neutral overlay on completed visible cells.
-  void _paintCompletedCells(Canvas canvas) {
-    if (completedCells.isEmpty || renderLod == RenderLod.overview) return;
+  int _paintCompletedCells(Canvas canvas) {
+    if (completedCells.isEmpty || renderLod == RenderLod.overview) return 0;
+    var count = 0;
     for (final cell in completedVisibleCells) {
       canvas.drawRect(_cellRect(cell), _completedOverlayPaint);
+      count++;
     }
+    return count;
   }
 
   /// Paints the document rectangle without iterating through empty cells.
@@ -322,8 +361,9 @@ class ViewportPatternPainter extends CustomPainter {
   }
 
   /// Paints glyphs after dynamic overlays so symbols remain legible.
-  void _paintGlyphs(Canvas canvas) {
-    if (!settings.showSymbols || renderLod != RenderLod.detail) return;
+  int _paintGlyphs(Canvas canvas) {
+    if (!settings.showSymbols || renderLod != RenderLod.detail) return 0;
+    var count = 0;
     for (final cell in _visibleCells) {
       final metadata = symbolRenderCache.metadataFor(cell.symbolId);
       if (metadata == null) continue;
@@ -333,11 +373,13 @@ class ViewportPatternPainter extends CustomPainter {
         metadata.symbol,
         _effectiveCellBackground(cell, metadata),
       );
+      count++;
     }
+    return count;
   }
 
   /// Paints density plus dynamic tile accents without enumerating tile cells.
-  void _paintOverviewTiles(Canvas canvas) {
+  int _paintOverviewTiles(Canvas canvas) {
     final levels = resolveOverviewRenderLevels(cellSize: camera.cellSize);
     final fineSummaries = List<PatternTileSummary>.unmodifiable(
       document.grid.overviewSummariesIntersecting(
@@ -353,33 +395,43 @@ class ViewportPatternPainter extends CustomPainter {
             ),
           )
         : fineSummaries;
-    _paintOverviewDensityLayer(canvas, fineSummaries, 1 - levels.coarseWeight);
+    var drawCallCount = _paintOverviewDensityLayer(
+      canvas,
+      fineSummaries,
+      1 - levels.coarseWeight,
+    );
     if (levels.blendsLevels) {
-      _paintOverviewDensityLayer(canvas, coarseSummaries, levels.coarseWeight);
+      drawCallCount += _paintOverviewDensityLayer(
+        canvas,
+        coarseSummaries,
+        levels.coarseWeight,
+      );
     }
-    _paintOverviewAccents(
+    drawCallCount += _paintOverviewAccents(
       canvas,
       fineSummaries,
       levels.fineBlockSize,
       1 - levels.coarseWeight,
     );
     if (levels.blendsLevels) {
-      _paintOverviewAccents(
+      drawCallCount += _paintOverviewAccents(
         canvas,
         coarseSummaries,
         levels.coarseBlockSize,
         levels.coarseWeight,
       );
     }
+    return drawCallCount;
   }
 
   /// Paints one summary resolution with the supplied cross-fade [opacity].
-  void _paintOverviewDensityLayer(
+  int _paintOverviewDensityLayer(
     Canvas canvas,
     Iterable<PatternTileSummary> summaries,
     double opacity,
   ) {
-    if (opacity <= 0) return;
+    if (opacity <= 0) return 0;
+    var drawCallCount = 0;
     for (final summary in summaries) {
       final tileRect = _tileRect(summary);
       final tileRows = math.min(
@@ -402,17 +454,19 @@ class ViewportPatternPainter extends CustomPainter {
             )
           : _gridColor.withValues(alpha: 0.18 * density * opacity);
       canvas.drawRect(tileRect, Paint()..color = densityColor);
+      drawCallCount++;
     }
+    return drawCallCount;
   }
 
   /// Paints dynamic completion and selection accents at one summary level.
-  void _paintOverviewAccents(
+  int _paintOverviewAccents(
     Canvas canvas,
     Iterable<PatternTileSummary> summaries,
     int blockSize,
     double opacity,
   ) {
-    if (opacity <= 0) return;
+    if (opacity <= 0) return 0;
     final selectedSymbolId = selection.selectedSymbolId;
     final selectedColor = _parseColor(settings.selectionHighlightColor.colorHex)
         .withValues(alpha: opacity);
@@ -437,11 +491,13 @@ class ViewportPatternPainter extends CustomPainter {
           ),
         )
         .toSet();
+    var drawCallCount = 0;
     for (final summary in summaries) {
       final tileRect = _tileRect(summary);
       if (settings.showCompletedCellOverlay &&
           completedCoordinates.contains(summary.coordinate)) {
         canvas.drawRect(tileRect, completedPaint);
+        drawCallCount++;
       }
       if (selectedSymbolId != null &&
           summary.symbolCounts.containsKey(selectedSymbolId)) {
@@ -449,11 +505,14 @@ class ViewportPatternPainter extends CustomPainter {
           tileRect.deflate(selectedPaint.strokeWidth / 2),
           selectedPaint,
         );
+        drawCallCount++;
       }
       if (pendingCoordinates.contains(summary.coordinate)) {
         canvas.drawRect(tileRect, pendingPaint);
+        drawCallCount++;
       }
     }
+    return drawCallCount;
   }
 
   /// Calculates the full screen-space rectangle occupied by one summary.
@@ -498,11 +557,12 @@ class ViewportPatternPainter extends CustomPainter {
   }
 
   /// Paints outlines for source regions intersecting the visible grid range.
-  void _paintRegions(Canvas canvas) {
+  int _paintRegions(Canvas canvas) {
     final paint = Paint()
       ..color = regionColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
+    var count = 0;
     for (final region in document.regionsIntersecting(visibleBounds)) {
       final regionRect = Rect.fromLTWH(
         camera.origin.dx + region.origin.column * camera.cellSize,
@@ -511,7 +571,9 @@ class ViewportPatternPainter extends CustomPainter {
         region.rows * camera.cellSize,
       );
       canvas.drawRect(regionRect, paint);
+      count++;
     }
+    return count;
   }
 
   /// Paints only visible minor, ten-cell, and document-edge rules.

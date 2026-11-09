@@ -163,6 +163,9 @@ void main() {
     expect(metrics?.cellFillDrawCalls, 2);
     expect(metrics?.gridRuleCount, 11);
     expect(metrics?.gridDrawCalls, 2);
+    expect(metrics?.visibleCellCount, 3);
+    expect(metrics?.glyphCount, 0);
+    expect(metrics?.drawCallCount, greaterThanOrEqualTo(4));
   });
 }
 
