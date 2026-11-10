@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
+import 'pattern_tile_picture_cache.dart';
 import 'pattern_viewport_controller.dart';
 import 'render_lod.dart';
 
@@ -26,6 +28,12 @@ class PatternRenderBatchMetrics {
     required this.visibleCellCount,
     required this.glyphCount,
     required this.drawCallCount,
+    this.tilePictureHits = 0,
+    this.tilePictureMisses = 0,
+    this.tilePictureCacheEntries = 0,
+    this.tilePictureCacheBytes = 0,
+    this.tilePictureEvictions = 0,
+    this.tilePictureBypasses = 0,
   });
 
   /// Number of populated-cell rectangles included in fill paths.
@@ -48,6 +56,24 @@ class PatternRenderBatchMetrics {
 
   /// Number of canvas draw calls issued by the measured renderer layers.
   final int drawCallCount;
+
+  /// Number of static source tiles replayed from the picture cache.
+  final int tilePictureHits;
+
+  /// Number of static source tiles absent from the picture cache.
+  final int tilePictureMisses;
+
+  /// Number of tile entries retained after this paint frame.
+  final int tilePictureCacheEntries;
+
+  /// Estimated native display-list bytes retained after this paint frame.
+  final int tilePictureCacheBytes;
+
+  /// Number of budget-driven tile evictions over the cache lifetime.
+  final int tilePictureEvictions;
+
+  /// Number of tiles painted directly because zoom temporarily bypassed reuse.
+  final int tilePictureBypasses;
 }
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
@@ -69,6 +95,7 @@ class ViewportPatternPainter extends CustomPainter {
     required RenderLod renderLod,
     required this.completedOverviewCoordinates,
     this.onBatchMetrics,
+    this.tilePictureCache,
     this.cameraController,
     this.viewportSize,
   }) : _staticGeometry = _StaticPaintGeometry(
@@ -136,6 +163,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Parsed symbol colors and fill paints shared across viewport painters.
   final PatternSymbolRenderCache symbolRenderCache;
+
+  /// Shared bounded cache that survives short-lived painter delegates.
+  final PatternTilePictureCache? tilePictureCache;
 
   /// Detail level retained by the camera controller across paint frames.
   RenderLod get renderLod =>
@@ -224,7 +254,12 @@ class ViewportPatternPainter extends CustomPainter {
     if (renderLod == RenderLod.overview) {
       drawCallCount += _paintOverviewTiles(canvas);
     }
-    final fillMetrics = _paintCellFills(canvas);
+    final staticTileFrame = tilePictureCache == null
+        ? null
+        : _prepareStaticTileFrame();
+    final fillMetrics = staticTileFrame == null
+        ? _paintCellFills(canvas)
+        : staticTileFrame.paintFills(canvas, this);
     drawCallCount += fillMetrics.drawCallCount;
     final completedCount = settings.showCompletedCellOverlay
         ? _paintCompletedCells(canvas)
@@ -234,8 +269,15 @@ class ViewportPatternPainter extends CustomPainter {
     drawCallCount += selectedCount * 2;
     final completionSelectionCount = _paintCompletionSelection(canvas);
     drawCallCount += completionSelectionCount;
-    final glyphCount = _paintGlyphs(canvas);
-    drawCallCount += glyphCount;
+    final glyphMetrics = staticTileFrame == null
+        ? _LayerBatchMetrics(
+            primitiveCount: _paintGlyphs(canvas),
+            drawCallCount: renderLod == RenderLod.detail && settings.showSymbols
+                ? _cachedVisibleCells?.length ?? 0
+                : 0,
+          )
+        : staticTileFrame.paintGlyphs(canvas, this);
+    drawCallCount += glyphMetrics.drawCallCount;
     final gridMetrics = settings.showGrid
         ? _paintGrid(canvas)
         : const _LayerBatchMetrics();
@@ -253,10 +295,17 @@ class ViewportPatternPainter extends CustomPainter {
         visibleCellCount: renderLod == RenderLod.overview
             ? 0
             : (_cachedVisibleCells?.length ?? 0),
-        glyphCount: glyphCount,
+        glyphCount: glyphMetrics.primitiveCount,
         drawCallCount: drawCallCount,
+        tilePictureHits: staticTileFrame?.cacheHitCount ?? 0,
+        tilePictureMisses: staticTileFrame?.cacheMissCount ?? 0,
+        tilePictureCacheEntries: tilePictureCache?.entryCount ?? 0,
+        tilePictureCacheBytes: tilePictureCache?.estimatedBytes ?? 0,
+        tilePictureEvictions: tilePictureCache?.evictionCount ?? 0,
+        tilePictureBypasses: staticTileFrame?.cacheBypassCount ?? 0,
       ),
     );
+    staticTileFrame?.release();
   }
 
   /// Theme-derived color used to overlay exact completion-cell selections.
@@ -330,14 +379,239 @@ class ViewportPatternPainter extends CustomPainter {
     canvas.drawRect(documentRect, Paint()..color = surfaceColor);
   }
 
+  /// Resolves cached or direct static content for every visible source tile.
+  _StaticTileFrame _prepareStaticTileFrame() {
+    final cache = tilePictureCache!;
+    final hasFillLayer =
+        settings.showCellColor && renderLod != RenderLod.overview;
+    final hasGlyphLayer = settings.showSymbols && renderLod == RenderLod.detail;
+    if ((!hasFillLayer && !hasGlyphLayer) || visibleBounds.isEmpty) {
+      return const _StaticTileFrame();
+    }
+    final query = visibleBounds.clampTo(document.grid.dimensions);
+    if (query.isEmpty) return const _StaticTileFrame();
+
+    final cellSizeBucket = PatternTilePictureCache.quantizeCellSize(
+      camera.cellSize,
+    );
+    final recordedCellSize = PatternTilePictureCache.cellSizeForBucket(
+      cellSizeBucket,
+    );
+    final style = PatternTilePictureStyle(
+      showCellColor: settings.showCellColor,
+      cellColorOpacity: settings.cellColorOpacity,
+      showSymbols: settings.showSymbols,
+      surfaceColor: surfaceColor,
+    );
+    final contents = <_StaticTileContent>[];
+    var cacheHitCount = 0;
+    var cacheMissCount = 0;
+    var cacheBypassCount = 0;
+    final firstTileRow = query.startRow ~/ PatternGrid.tileSize;
+    final lastTileRow = (query.endRow - 1) ~/ PatternGrid.tileSize;
+    final firstTileColumn = query.startColumn ~/ PatternGrid.tileSize;
+    final lastTileColumn = (query.endColumn - 1) ~/ PatternGrid.tileSize;
+    for (var tileRow = firstTileRow; tileRow <= lastTileRow; tileRow++) {
+      for (
+        var tileColumn = firstTileColumn;
+        tileColumn <= lastTileColumn;
+        tileColumn++
+      ) {
+        final coordinate = PatternTileCoordinate(tileRow, tileColumn);
+        final key = PatternTilePictureKey(
+          documentIdentity: document,
+          coordinate: coordinate,
+          renderLod: renderLod,
+          cellSizeBucket: cellSizeBucket,
+          style: style,
+        );
+        final lease = cache.reuseEnabled ? cache.acquire(key) : null;
+        if (lease != null) {
+          cacheHitCount++;
+          contents.add(
+            _StaticTileContent.cached(
+              coordinate: coordinate,
+              recordedCellSize: recordedCellSize,
+              lease: lease,
+            ),
+          );
+          continue;
+        }
+
+        if (cache.reuseEnabled) {
+          cacheMissCount++;
+        } else {
+          cacheBypassCount++;
+        }
+        final tileBounds = _tileBounds(coordinate);
+        final tileCells = List<StitchCell>.unmodifiable(
+          document.grid.cellsIntersecting(tileBounds),
+        );
+        if (!cache.writesEnabled || !cache.reuseEnabled) {
+          contents.add(
+            _StaticTileContent.direct(
+              coordinate: coordinate,
+              recordedCellSize: recordedCellSize,
+              cells: tileCells,
+            ),
+          );
+          continue;
+        }
+
+        final pictures = _recordStaticTilePictures(
+          coordinate: coordinate,
+          recordedCellSize: recordedCellSize,
+          cells: tileCells,
+        );
+        final insertedLease = cache.putAndAcquire(key, pictures);
+        contents.add(
+          insertedLease == null
+              ? _StaticTileContent.ephemeral(
+                  coordinate: coordinate,
+                  recordedCellSize: recordedCellSize,
+                  pictures: pictures,
+                )
+              : _StaticTileContent.cached(
+                  coordinate: coordinate,
+                  recordedCellSize: recordedCellSize,
+                  lease: insertedLease,
+                ),
+        );
+      }
+    }
+    return _StaticTileFrame(
+      contents: contents,
+      cacheHitCount: cacheHitCount,
+      cacheMissCount: cacheMissCount,
+      cacheBypassCount: cacheBypassCount,
+    );
+  }
+
+  /// Calculates document-clamped source bounds for one fixed spatial tile.
+  GridBounds _tileBounds(PatternTileCoordinate coordinate) {
+    final startRow = coordinate.row * PatternGrid.tileSize;
+    final startColumn = coordinate.column * PatternGrid.tileSize;
+    return GridBounds(
+      startRow: startRow,
+      endRow: math.min(
+        startRow + PatternGrid.tileSize,
+        document.grid.dimensions.rows,
+      ),
+      startColumn: startColumn,
+      endColumn: math.min(
+        startColumn + PatternGrid.tileSize,
+        document.grid.dimensions.columns,
+      ),
+    );
+  }
+
+  /// Records tile-local base and foreground pictures at one scale bucket.
+  PatternTilePictures _recordStaticTilePictures({
+    required PatternTileCoordinate coordinate,
+    required double recordedCellSize,
+    required List<StitchCell> cells,
+  }) {
+    ui.Picture? fillPicture;
+    var fillMetrics = const _LayerBatchMetrics();
+    if (settings.showCellColor) {
+      final recorder = ui.PictureRecorder();
+      final recordingCanvas = Canvas(recorder);
+      fillMetrics = _paintCellFillsForCells(
+        recordingCanvas,
+        cells,
+        (cell) => _tileLocalCellRect(cell, coordinate, recordedCellSize),
+      );
+      final recordedPicture = recorder.endRecording();
+      if (fillMetrics.primitiveCount == 0) {
+        recordedPicture.dispose();
+      } else {
+        fillPicture = recordedPicture;
+      }
+    }
+
+    ui.Picture? glyphPicture;
+    var glyphCount = 0;
+    if (settings.showSymbols && renderLod == RenderLod.detail) {
+      final recorder = ui.PictureRecorder();
+      final recordingCanvas = Canvas(recorder);
+      glyphCount = _paintGlyphsForCells(
+        recordingCanvas,
+        cells,
+        (cell) => _tileLocalCellRect(cell, coordinate, recordedCellSize),
+        recordedCellSize,
+      );
+      final recordedPicture = recorder.endRecording();
+      if (glyphCount == 0) {
+        recordedPicture.dispose();
+      } else {
+        glyphPicture = recordedPicture;
+      }
+    }
+
+    final estimatedByteSize =
+        128 +
+        (fillPicture?.approximateBytesUsed ?? 0) +
+        (glyphPicture?.approximateBytesUsed ?? 0);
+    return PatternTilePictures(
+      fillPicture: fillPicture,
+      glyphPicture: glyphPicture,
+      cellFillCount: fillMetrics.primitiveCount,
+      cellFillSourceDrawCalls: fillMetrics.drawCallCount,
+      glyphCount: glyphCount,
+      estimatedByteSize: estimatedByteSize,
+    );
+  }
+
+  /// Calculates a cell rectangle relative to its recorded tile origin.
+  Rect _tileLocalCellRect(
+    StitchCell cell,
+    PatternTileCoordinate coordinate,
+    double cellSize,
+  ) => Rect.fromLTWH(
+    (cell.coordinate.column - coordinate.column * PatternGrid.tileSize) *
+        cellSize,
+    (cell.coordinate.row - coordinate.row * PatternGrid.tileSize) * cellSize,
+    cellSize,
+    cellSize,
+  );
+
+  /// Replays one tile-local picture at the camera's exact scale and origin.
+  void _drawTilePicture(
+    Canvas canvas,
+    ui.Picture picture,
+    PatternTileCoordinate coordinate,
+    double recordedCellSize,
+  ) {
+    canvas.save();
+    canvas.translate(
+      camera.origin.dx +
+          coordinate.column * PatternGrid.tileSize * camera.cellSize,
+      camera.origin.dy +
+          coordinate.row * PatternGrid.tileSize * camera.cellSize,
+    );
+    final scale = camera.cellSize / recordedCellSize;
+    canvas.scale(scale, scale);
+    canvas.drawPicture(picture);
+    canvas.restore();
+  }
+
   /// Paints configured thread-color fills for visible populated cells.
   _LayerBatchMetrics _paintCellFills(Canvas canvas) {
     if (!settings.showCellColor || renderLod == RenderLod.overview) {
       return const _LayerBatchMetrics();
     }
+    return _paintCellFillsForCells(canvas, _visibleCells, _cellRect);
+  }
+
+  /// Batches thread-color fills for [cells] using caller-supplied rectangles.
+  _LayerBatchMetrics _paintCellFillsForCells(
+    Canvas canvas,
+    Iterable<StitchCell> cells,
+    Rect Function(StitchCell cell) rectForCell,
+  ) {
     final batches = <int, _CellFillBatch>{};
     var fillCount = 0;
-    for (final cell in _visibleCells) {
+    for (final cell in cells) {
       final fillPaint = symbolRenderCache.fillPaintFor(
         cell.symbolId,
         settings.cellColorOpacity,
@@ -348,7 +622,7 @@ class ViewportPatternPainter extends CustomPainter {
         colorKey,
         () => _CellFillBatch(fillPaint),
       );
-      batch.path.addRect(_cellRect(cell));
+      batch.path.addRect(rectForCell(cell));
       fillCount++;
     }
     for (final batch in batches.values) {
@@ -363,15 +637,31 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paints glyphs after dynamic overlays so symbols remain legible.
   int _paintGlyphs(Canvas canvas) {
     if (!settings.showSymbols || renderLod != RenderLod.detail) return 0;
+    return _paintGlyphsForCells(
+      canvas,
+      _visibleCells,
+      _cellRect,
+      camera.cellSize,
+    );
+  }
+
+  /// Paints immutable glyphs for [cells] at the supplied recording scale.
+  int _paintGlyphsForCells(
+    Canvas canvas,
+    Iterable<StitchCell> cells,
+    Rect Function(StitchCell cell) rectForCell,
+    double cellSize,
+  ) {
     var count = 0;
-    for (final cell in _visibleCells) {
+    for (final cell in cells) {
       final metadata = symbolRenderCache.metadataFor(cell.symbolId);
       if (metadata == null) continue;
       _paintGlyph(
         canvas,
-        _cellRect(cell),
+        rectForCell(cell),
         metadata.symbol,
-        _effectiveCellBackground(cell, metadata),
+        _staticCellBackground(metadata),
+        cellSize,
       );
       count++;
     }
@@ -537,21 +827,14 @@ class ViewportPatternPainter extends CustomPainter {
     );
   }
 
-  /// Resolves the composited background used for glyph contrast selection.
-  Color _effectiveCellBackground(
-    StitchCell cell,
-    PatternSymbolRenderMetadata metadata,
-  ) {
+  /// Resolves the immutable background used for cached glyph contrast.
+  Color _staticCellBackground(PatternSymbolRenderMetadata metadata) {
     var background = surfaceColor;
     if (settings.showCellColor) {
       background = Color.alphaBlend(
         metadata.threadColor.withValues(alpha: settings.cellColorOpacity),
         background,
       );
-    }
-    if (settings.showCompletedCellOverlay &&
-        completedCells.contains(cell.coordinate)) {
-      background = Color.alphaBlend(_completedOverlayColor, background);
     }
     return background;
   }
@@ -718,6 +1001,7 @@ class ViewportPatternPainter extends CustomPainter {
     Rect rect,
     SymbolDefinition symbol,
     Color backgroundColor,
+    double cellSize,
   ) {
     // Choose a non-color-dependent foreground contrast for each glyph.
     final foreground = backgroundColor.computeLuminance() > 0.45
@@ -727,7 +1011,7 @@ class ViewportPatternPainter extends CustomPainter {
     final textPainter = glyphLayoutCache.layoutFor(
       glyph: symbol.displayGlyph,
       foreground: foreground,
-      fontSize: (camera.cellSize * 0.58).clamp(12, 32),
+      fontSize: (cellSize * 0.58).clamp(12, 32),
     );
     textPainter.paint(
       canvas,
@@ -778,6 +1062,160 @@ class _LayerBatchMetrics {
 
   /// Number of paths submitted to the canvas.
   final int drawCallCount;
+}
+
+/// Static tile content resolved for one painter invocation.
+class _StaticTileFrame {
+  /// Creates a frame from cached, ephemeral, or direct tile content.
+  const _StaticTileFrame({
+    this.contents = const <_StaticTileContent>[],
+    this.cacheHitCount = 0,
+    this.cacheMissCount = 0,
+    this.cacheBypassCount = 0,
+  });
+
+  /// Visible tile content retained for the duration of this paint frame.
+  final List<_StaticTileContent> contents;
+
+  /// Number of visible tiles replayed from retained cache entries.
+  final int cacheHitCount;
+
+  /// Number of visible tiles that required direct or newly recorded content.
+  final int cacheMissCount;
+
+  /// Number of visible tiles intentionally painted directly during zoom.
+  final int cacheBypassCount;
+
+  /// Paints cached or direct thread-color fills below dynamic overlays.
+  _LayerBatchMetrics paintFills(Canvas canvas, ViewportPatternPainter painter) {
+    var primitiveCount = 0;
+    var drawCallCount = 0;
+    for (final content in contents) {
+      final pictures = content.pictures;
+      if (pictures != null) {
+        primitiveCount += pictures.cellFillCount;
+        final picture = pictures.fillPicture;
+        if (picture != null) {
+          painter._drawTilePicture(
+            canvas,
+            picture,
+            content.coordinate,
+            content.recordedCellSize,
+          );
+          drawCallCount++;
+        }
+        continue;
+      }
+      final metrics = painter._paintCellFillsForCells(
+        canvas,
+        content.cells!,
+        painter._cellRect,
+      );
+      primitiveCount += metrics.primitiveCount;
+      drawCallCount += metrics.drawCallCount;
+    }
+    return _LayerBatchMetrics(
+      primitiveCount: primitiveCount,
+      drawCallCount: drawCallCount,
+    );
+  }
+
+  /// Paints cached or direct glyphs above dynamic overlays.
+  _LayerBatchMetrics paintGlyphs(
+    Canvas canvas,
+    ViewportPatternPainter painter,
+  ) {
+    var primitiveCount = 0;
+    var drawCallCount = 0;
+    for (final content in contents) {
+      final pictures = content.pictures;
+      if (pictures != null) {
+        primitiveCount += pictures.glyphCount;
+        final picture = pictures.glyphPicture;
+        if (picture != null) {
+          painter._drawTilePicture(
+            canvas,
+            picture,
+            content.coordinate,
+            content.recordedCellSize,
+          );
+          drawCallCount++;
+        }
+        continue;
+      }
+      final glyphCount = painter._paintGlyphsForCells(
+        canvas,
+        content.cells!,
+        painter._cellRect,
+        painter.camera.cellSize,
+      );
+      primitiveCount += glyphCount;
+      drawCallCount += glyphCount;
+    }
+    return _LayerBatchMetrics(
+      primitiveCount: primitiveCount,
+      drawCallCount: drawCallCount,
+    );
+  }
+
+  /// Releases frame leases and ephemeral pictures after both layers paint.
+  void release() {
+    for (final content in contents) {
+      content.release();
+    }
+  }
+}
+
+/// One visible tile represented by a lease, ephemeral pictures, or cells.
+class _StaticTileContent {
+  /// Creates tile content protected by a cache [lease].
+  const _StaticTileContent.cached({
+    required this.coordinate,
+    required this.recordedCellSize,
+    required this._lease,
+  }) : _ephemeralPictures = null,
+       cells = null;
+
+  /// Creates over-budget tile content disposed after this frame.
+  const _StaticTileContent.ephemeral({
+    required this.coordinate,
+    required this.recordedCellSize,
+    required PatternTilePictures pictures,
+  }) : _lease = null,
+       _ephemeralPictures = pictures,
+       cells = null;
+
+  /// Creates uncached tile content painted directly during camera activity.
+  const _StaticTileContent.direct({
+    required this.coordinate,
+    required this.recordedCellSize,
+    required this.cells,
+  }) : _lease = null,
+       _ephemeralPictures = null;
+
+  /// Source tile coordinate used to place tile-local pictures.
+  final PatternTileCoordinate coordinate;
+
+  /// Quantized logical cell size used while recording tile-local pictures.
+  final double recordedCellSize;
+
+  /// Retained cache entry used by this frame, if available.
+  final PatternTilePictureLease? _lease;
+
+  /// Rejected over-budget pictures owned only by this frame.
+  final PatternTilePictures? _ephemeralPictures;
+
+  /// Source cells used when cache writes are suspended during interaction.
+  final List<StitchCell>? cells;
+
+  /// Recorded pictures represented by this content, if any.
+  PatternTilePictures? get pictures => _lease?.pictures ?? _ephemeralPictures;
+
+  /// Releases retained or ephemeral native resources after painting.
+  void release() {
+    _lease?.release();
+    _ephemeralPictures?.dispose();
+  }
 }
 
 /// Groups fixed geometry for direct, non-notifier painter use.

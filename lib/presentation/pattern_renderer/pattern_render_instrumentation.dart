@@ -137,6 +137,12 @@ class PatternRenderFrameMetrics {
       'glyphs: ${paint.glyphCount}, '
       'gridRules: ${paint.gridRuleCount}, '
       'drawCalls: ${paint.drawCallCount}, '
+      'tileHits: ${paint.tilePictureHits}, '
+      'tileMisses: ${paint.tilePictureMisses}, '
+      'tileEntries: ${paint.tilePictureCacheEntries}, '
+      'tileBytes: ${paint.tilePictureCacheBytes}, '
+      'tileEvictions: ${paint.tilePictureEvictions}, '
+      'tileBypasses: ${paint.tilePictureBypasses}, '
       'build: ${buildDuration?.inMicroseconds ?? '-'}us, '
       'raster: ${rasterDuration?.inMicroseconds ?? '-'}us)';
 }

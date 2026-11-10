@@ -54,11 +54,14 @@ or overview zoom, it queries only intersecting immutable tile summaries and
 does not enumerate visible cells. Visible-cell queries are shared within grid
 and detail paint passes, and document-scoped render metadata plus a bounded
 glyph-layout cache avoid per-cell color parsing, fill-paint allocation, and
-text layout. Each visible cell and grid rule still issues a separate draw call,
-and each grid rule still creates a paint. There is no batched path generation,
-tile picture cache, or renderer-specific frame instrumentation yet. Camera
-updates also call `setState` for every gesture update, rebuilding the viewport
-subtree before painting.
+text layout. Fill rectangles and grid rules are batched, camera updates repaint
+through a `Listenable` without rebuilding the viewport subtree, and optional
+instrumentation reports layer work plus build and raster timing. A bounded LRU
+picture cache records immutable tile fills and glyphs at quantized cell-size
+buckets. Panning replays retained tiles at the exact camera transform, while
+completion and selection accents remain dynamic. Cache misses paint directly
+during active gestures and populate on a settling repaint; zoom discards
+retained tile pictures so it always paints the current visual settings.
 
 The existing 100-by-200, 95%-populated fixture verifies range-query and gesture
 behavior, but is not sufficient as a production-scale performance target.
@@ -170,10 +173,12 @@ The visible-only foundations are complete: `PatternCamera`, domain
 `GridBounds`, `PatternViewport`, `ViewportPatternPainter`, the `PatternGrid`
 cell tile index, the `PatternDocument` region tile index, basic render
 settings, and the compact workspace/settings-panel composition. Camera
-restoration and debounced camera persistence, rulers, overview tile summaries,
-and the performance layers below remain planned work. Visible-only completion
-overlays and selected-symbol highlighting are implemented, including persisted
-controls for overlay visibility and whether selection includes completed cells.
+restoration, debounced camera persistence, and rulers remain planned work. LOD,
+overview tile summaries, render metadata, batching, repaint isolation,
+instrumentation, and bounded static-tile picture reuse are implemented.
+Visible-only completion overlays and selected-symbol highlighting are also
+implemented, including persisted controls for overlay visibility and whether
+selection includes completed cells.
 Users can enter a distinct completion-edit mode, select exact populated
 coordinates without changing symbol selection, batch-mark those cells complete
 or incomplete, and undo the last action. Completion changes persist through
@@ -316,14 +321,16 @@ workspace chrome or settings panel. Prefer a camera `ValueNotifier` or
 paint surface is invalidated; avoid rebuilding layout and gesture widgets for
 each pointer event.
 
-After LOD and batching are measured, add an optional picture cache for static
-tile content. A cache key should include tile coordinate, LOD, a quantized
-cell-size bucket, and all render settings affecting that tile. Cache only
-immutable document layers; completion and selection accents remain dynamic and
-must be painted or composited for visible tiles. Evict by a bounded memory
-budget and invalidate on document, theme, font, or relevant setting changes.
-Scrolling should reuse tiles that remain visible and paint only newly exposed
-tiles. Zoom should tolerate cache misses without blocking the UI thread.
+The renderer now uses an optional picture cache for static tile content. Its
+key includes document identity, tile coordinate, LOD, a quantized cell-size
+bucket, and settings affecting immutable tile output. Separate fill and glyph
+pictures preserve dynamic completion and selection overlays between those
+layers. The cache uses an engine-reported approximate memory budget, LRU
+eviction, and invalidation on document, theme, font, or setting changes.
+Scrolling reuses retained tiles; active-gesture misses paint directly and are
+recorded only on the settling repaint. Zooming discards retained tile pictures
+and paints directly until the gesture settles, preventing stale static layers
+from flashing through the current LOD or visual settings.
 
 ### Grid Rules
 
@@ -500,12 +507,14 @@ pointer events do not write progress state on every update.
 
 ### Phase 3B: Reuse static work during scrolling
 
-1. Add a bounded picture cache for immutable tile layers, keyed by tile,
+1. [x] Add a bounded picture cache for immutable tile layers, keyed by tile,
    LOD, quantized cell-size bucket, and relevant settings.
-2. Reuse still-visible tile pictures while panning and render only newly
+2. [x] Reuse still-visible tile pictures while panning and render only newly
    exposed tiles. Keep completion and selection accents dynamic.
-3. Validate cache memory, invalidation, and eviction behavior on desktop and
-   mobile. Do not block gesture frames waiting for cache generation.
+3. [x] Validate cache memory, invalidation, and eviction behavior with
+   platform-independent renderer tests, cache diagnostics, and successful
+   Windows and Android builds. Suspend recording during camera gestures so
+   misses never block gesture frames; populate them on the settling repaint.
 
 ### Phase 4: Add rulers and settings controls
 
