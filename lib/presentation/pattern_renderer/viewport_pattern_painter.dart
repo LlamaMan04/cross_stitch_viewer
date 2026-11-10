@@ -1088,6 +1088,10 @@ class _StaticTileFrame {
 
   /// Paints cached or direct thread-color fills below dynamic overlays.
   _LayerBatchMetrics paintFills(Canvas canvas, ViewportPatternPainter painter) {
+    if (!painter.settings.showCellColor ||
+        painter.renderLod == RenderLod.overview) {
+      return const _LayerBatchMetrics();
+    }
     var primitiveCount = 0;
     var drawCallCount = 0;
     for (final content in contents) {
@@ -1125,6 +1129,10 @@ class _StaticTileFrame {
     Canvas canvas,
     ViewportPatternPainter painter,
   ) {
+    if (!painter.settings.showSymbols ||
+        painter.renderLod != RenderLod.detail) {
+      return const _LayerBatchMetrics();
+    }
     var primitiveCount = 0;
     var drawCallCount = 0;
     for (final content in contents) {

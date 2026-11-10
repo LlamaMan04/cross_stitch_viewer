@@ -176,6 +176,7 @@ class _PatternViewportState extends State<PatternViewport> {
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
       _tilePictureCache.clear();
     } else if (oldWidget.settings != widget.settings) {
+      // Static fills and glyph contrast can change before the next paint.
       _tilePictureCache.clear();
     }
     if (oldWidget.document != widget.document ||
@@ -456,6 +457,9 @@ class _PatternViewportState extends State<PatternViewport> {
               dimensions: widget.document.grid.dimensions,
               viewportSize: viewportSize,
             );
+      if (layoutCamera.cellSize != currentCamera.cellSize) {
+        _tilePictureCache.clear();
+      }
       cameraController.replaceCameraForLayout(layoutCamera);
     }
     _viewportSize = viewportSize;
@@ -511,7 +515,7 @@ class _PatternViewportState extends State<PatternViewport> {
       details.localFocalPoint.dx - gridPoint.dx * nextCellSize,
       details.localFocalPoint.dy - gridPoint.dy * nextCellSize,
     );
-    _cameraController?.updateCamera(
+    _updateInteractionCamera(
       PatternCamera(cellSize: nextCellSize, origin: nextOrigin).clampTo(
         dimensions: widget.document.grid.dimensions,
         viewportSize: viewportSize,
@@ -529,7 +533,7 @@ class _PatternViewportState extends State<PatternViewport> {
     _beginCameraInteraction(bypassTilePictures: true);
     // Exponential scaling makes equal wheel deltas feel symmetric.
     final scale = math.exp(-event.scrollDelta.dy * 0.0015);
-    cameraController.updateCamera(
+    _updateInteractionCamera(
       cameraController.camera.zoomAround(
         focalPoint: event.localPosition,
         scale: scale,
@@ -550,12 +554,20 @@ class _PatternViewportState extends State<PatternViewport> {
     if (bypassTilePictures) _bypassTilePicturesForZoom();
   }
 
-  /// Discards stale static pictures once when an interaction becomes a zoom.
+  /// Stops picture replay as soon as an interaction becomes a zoom.
   void _bypassTilePicturesForZoom() {
     if (!_tilePictureCache.reuseEnabled) return;
-    _tilePictureCache
-      ..suspendReuse()
-      ..clear();
+    _tilePictureCache.suspendReuse();
+  }
+
+  /// Clears static pictures before applying any camera with a new cell scale.
+  void _updateInteractionCamera(PatternCamera nextCamera) {
+    final cameraController = _cameraController;
+    if (cameraController == null) return;
+    if (nextCamera.cellSize != cameraController.camera.cellSize) {
+      _tilePictureCache.clear();
+    }
+    cameraController.updateCamera(nextCamera);
   }
 
   /// Restores cache reuse and recording, then requests one settling repaint.
