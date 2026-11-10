@@ -593,6 +593,39 @@ pointer events do not write progress state on every update.
 - Verify painter inputs contain only the calculated visible bounds; expose
   test-only counters or a query spy instead of relying solely on pixels.
 
+### Renderer Items to Address
+
+- [ ] Batch or otherwise consolidate overview density and accent rendering so a
+  dense, low-zoom viewport does not issue one canvas draw call per populated
+  summary block (or per blended overview level).
+- [ ] Preserve useful tile-picture cache entries across scale changes. Avoid
+  clearing every entry on each zoom update; retain bounded, scale-keyed entries
+  where their recorded representation remains valid.
+- [ ] Restrict cache-miss and interaction-bypass work for boundary tiles to the
+  visible portion of the tile, or otherwise demonstrate through profiling that
+  recording an entire tile is cheaper.
+- [ ] Pre-index pending completion selections by overview block size when the
+  selection changes, rather than rebuilding a set for each overview paint
+  layer.
+- [ ] Remove hot-path paint and collection allocations where feasible,
+  especially the per-summary `Paint` created by overview density rendering.
+- [ ] Release tile-picture leases in a `try`/`finally` block so a paint or
+  metrics-callback exception cannot retain native pictures indefinitely.
+- [ ] Correct renderer instrumentation so `visibleCellCount` remains accurate
+  when static tile pictures are replayed instead of `_visibleCells`.
+- [ ] Remove the duplicate unreachable `coarseWeight >= 1` branch in the
+  overview-level resolver.
+- [ ] Narrow tile-picture invalidation to settings that change static fills or
+  glyphs; do not discard valid pictures for dynamic-only settings such as grid,
+  region, completion-overlay, or selection changes.
+- [ ] Add widget-level coverage for controller notification behavior, pan,
+  pinch and wheel zoom, cache lifecycle, and viewport resizing; include these
+  paths in the performance regression checks.
+- [ ] Reduce the size of the 32x32 cached tiles to 16x16 or 10x10 cells
+- [ ] Rework the way the pattern is rendered in overview mode, the current format
+  is not faithful to the actual pattern picture.
+
+
 ### Manual Performance Checks
 
 - Test dense and sparse patterns substantially larger than the 100-by-200
