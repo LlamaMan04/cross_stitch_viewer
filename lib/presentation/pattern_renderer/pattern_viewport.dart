@@ -17,6 +17,7 @@ import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'pattern_tile_picture_cache.dart';
 import 'pattern_viewport_controller.dart';
+import 'render_lod.dart';
 import 'viewport_pattern_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
@@ -314,6 +315,7 @@ class _PatternViewportState extends State<PatternViewport> {
     widget.onInteraction?.call();
     final camera = _cameraController?.camera;
     if (camera == null) return;
+    if (_cameraController?.renderLod == RenderLod.overview) return;
     if (widget.interactionMode == PatternInteractionMode.editCompletion &&
         camera.cellSize < 12) {
       widget.onCompletionEditUnavailable?.call();

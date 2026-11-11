@@ -8,6 +8,7 @@ import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
 
@@ -266,6 +267,37 @@ void main() {
     await tester.pump();
 
     expect(selectedCoordinate, const GridCoordinate(0, 0));
+  });
+
+  testWidgets('does not select cells while the renderer is in overview LOD', (
+    tester,
+  ) async {
+    var selectionCallbackCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 400,
+          height: 300,
+          child: PatternRenderView(
+            document: LargeSamplePatternFixture.create(),
+            onSymbolSelected: (_) => selectionCallbackCount++,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final viewport = find.byKey(const ValueKey('pattern-viewport'));
+    final painter = _painter(
+      tester,
+      find.byKey(const ValueKey('pattern-grid-canvas')),
+    );
+    expect(painter.renderLod, RenderLod.overview);
+
+    await tester.tapAt(tester.getCenter(viewport));
+    await tester.pump();
+
+    expect(selectionCallbackCount, 0);
   });
 
   testWidgets('pinch zoom updates the focal camera and settles repainting', (
