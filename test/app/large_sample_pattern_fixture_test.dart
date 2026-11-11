@@ -14,6 +14,18 @@ void main() {
       hasLength(LargeSamplePatternFixture.populatedCellCount),
     );
     expect(document.symbols, hasLength(12));
+    expect(
+      document.backstitches,
+      hasLength(LargeSamplePatternFixture.backstitchCount),
+    );
+    expect(
+      document.backstitches.map((backstitch) => backstitch.id),
+      containsAll(<String>{
+        'large-top-border',
+        'large-horizontal-guide',
+        'large-descending-detail',
+      }),
+    );
     expect(document.regions, hasLength(4));
     expect(
       document.regions.map((region) => region.id),

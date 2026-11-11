@@ -1,4 +1,5 @@
 import '../../domain/pattern_definitions.dart';
+import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_document.dart';
 import '../../domain/pattern_grid.dart';
 import '../../domain/pattern_provenance.dart';
@@ -14,6 +15,9 @@ abstract final class LargeSamplePatternFixture {
 
   /// Number of populated cells in the generated test pattern.
   static const int populatedCellCount = 19000;
+
+  /// Number of representative linear stitches in the generated test pattern.
+  static const int backstitchCount = 8;
 
   /// Number of rows contained in each fixture source region.
   static const int regionRows = 50;
@@ -31,6 +35,62 @@ abstract final class LargeSamplePatternFixture {
       cells: _buildCells(),
     ),
     symbols: symbols,
+    backstitches: const [
+      BackstitchSegment(
+        id: 'large-top-border',
+        start: BackstitchCoordinate(row: 0, column: 0),
+        end: BackstitchCoordinate(row: 0, column: columns * 1.0),
+        thread: _outlineThread,
+        provenanceId: 'large-top-left',
+      ),
+      BackstitchSegment(
+        id: 'large-right-border',
+        start: BackstitchCoordinate(row: 0, column: columns * 1.0),
+        end: BackstitchCoordinate(row: rows * 1.0, column: columns * 1.0),
+        thread: _outlineThread,
+        provenanceId: 'large-top-right',
+      ),
+      BackstitchSegment(
+        id: 'large-bottom-border',
+        start: BackstitchCoordinate(row: rows * 1.0, column: columns * 1.0),
+        end: BackstitchCoordinate(row: rows * 1.0, column: 0),
+        thread: _outlineThread,
+        provenanceId: 'large-bottom-right',
+      ),
+      BackstitchSegment(
+        id: 'large-left-border',
+        start: BackstitchCoordinate(row: rows * 1.0, column: 0),
+        end: BackstitchCoordinate(row: 0, column: 0),
+        thread: _outlineThread,
+        provenanceId: 'large-bottom-left',
+      ),
+      BackstitchSegment(
+        id: 'large-horizontal-guide',
+        start: BackstitchCoordinate(row: regionRows * 1.0, column: 0),
+        end: BackstitchCoordinate(row: regionRows * 1.0, column: columns * 1.0),
+        thread: _guideThread,
+      ),
+      BackstitchSegment(
+        id: 'large-vertical-guide',
+        start: BackstitchCoordinate(row: 0, column: regionColumns * 1.0),
+        end: BackstitchCoordinate(row: rows * 1.0, column: regionColumns * 1.0),
+        thread: _guideThread,
+      ),
+      BackstitchSegment(
+        id: 'large-descending-detail',
+        start: BackstitchCoordinate(row: 20.5, column: 30.5),
+        end: BackstitchCoordinate(row: 45.5, column: 80.5),
+        thread: _detailThread,
+        provenanceId: 'large-top-left',
+      ),
+      BackstitchSegment(
+        id: 'large-ascending-detail',
+        start: BackstitchCoordinate(row: 75.5, column: 120.5),
+        end: BackstitchCoordinate(row: 55.5, column: 170.5),
+        thread: _detailThread,
+        provenanceId: 'large-bottom-right',
+      ),
+    ],
     regions: const [
       PatternRegion(
         id: 'large-top-left',
@@ -264,4 +324,31 @@ abstract final class LargeSamplePatternFixture {
       ),
     ),
   ];
+
+  /// Dark thread used to outline the generated pattern boundary.
+  static const ThreadDefinition _outlineThread = ThreadDefinition(
+    id: 'dmc-310',
+    color: '#222222',
+    brand: 'DMC',
+    catalogNumber: '310',
+    name: 'Black',
+  );
+
+  /// Gray thread used for the generated major-grid guides.
+  static const ThreadDefinition _guideThread = ThreadDefinition(
+    id: 'dmc-645',
+    color: '#777777',
+    brand: 'DMC',
+    catalogNumber: '645',
+    name: 'Beaver Gray',
+  );
+
+  /// Blue thread used to make fractional-coordinate details visible in tests.
+  static const ThreadDefinition _detailThread = ThreadDefinition(
+    id: 'dmc-798',
+    color: '#2F5DA8',
+    brand: 'DMC',
+    catalogNumber: '798',
+    name: 'Delft Blue',
+  );
 }

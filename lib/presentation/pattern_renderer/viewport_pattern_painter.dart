@@ -229,6 +229,63 @@ class ViewportPatternPainter extends CustomPainter {
     return _cachedVisibleCells!;
   }
 
+  /// Bounds associated with the current cached backstitch snapshot.
+  GridBounds? _cachedBackstitchBounds;
+
+  /// Immutable visible backstitches shared by all backstitch layers.
+  List<BackstitchRenderMetadata>? _cachedBackstitches;
+
+  /// Returns the current visible segment snapshot without scanning at overview.
+  List<BackstitchRenderMetadata> get visibleBackstitches {
+    if (renderLod == RenderLod.overview) return const [];
+    final bounds = visibleBounds;
+    if (_cachedBackstitchBounds != bounds || _cachedBackstitches == null) {
+      _cachedBackstitchBounds = bounds;
+      _cachedBackstitches = symbolRenderCache.backstitchesIntersecting(bounds);
+    }
+    return _cachedBackstitches!;
+  }
+
+  /// Minimum screen-space backstitch width, exceeding major grid rules.
+  static const double minimumBackstitchStrokeWidth = 2.5;
+
+  /// Maximum screen-space backstitch width at high zoom.
+  static const double maximumBackstitchStrokeWidth = 6;
+
+  /// Fraction of a cell used to size backstitch strokes.
+  static const double backstitchStrokeScale = 0.1;
+
+  /// Current bounded screen-space width of backstitch strokes.
+  double get backstitchStrokeWidth => (camera.cellSize * backstitchStrokeScale)
+      .clamp(minimumBackstitchStrokeWidth, maximumBackstitchStrokeWidth);
+
+  /// Creates the shared stroke configuration for backstitch lines.
+  Paint _backstitchPaint() => Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = backstitchStrokeWidth
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+
+  /// Paints viewport-relevant lines above grid and region outlines.
+  int _paintBackstitches(Canvas canvas) {
+    final lines = visibleBackstitches;
+    if (lines.isEmpty) return 0;
+    final paint = _backstitchPaint();
+    for (final line in lines) {
+      final segment = line.segment;
+      paint.color = settings.showCellColor ? line.threadColor : Colors.black;
+      canvas.drawLine(
+        camera.gridToScreen(
+          row: segment.start.row,
+          column: segment.start.column,
+        ),
+        camera.gridToScreen(row: segment.end.row, column: segment.end.column),
+        paint,
+      );
+    }
+    return lines.length;
+  }
+
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
     for (final cell in _visibleCells) {
@@ -295,6 +352,7 @@ class ViewportPatternPainter extends CustomPainter {
       if (settings.showRegions) {
         drawCallCount += _paintRegions(canvas);
       }
+      drawCallCount += _paintBackstitches(canvas);
       canvas.restore();
       onBatchMetrics?.call(
         PatternRenderBatchMetrics(
@@ -305,8 +363,8 @@ class ViewportPatternPainter extends CustomPainter {
           visibleCellCount: renderLod == RenderLod.overview
               ? 0
               : staticTileFrame?.visibleCellCount ??
-                  _cachedVisibleCells?.length ??
-                  0,
+                    _cachedVisibleCells?.length ??
+                    0,
           glyphCount: glyphMetrics.primitiveCount,
           drawCallCount: drawCallCount,
           tilePictureHits: staticTileFrame?.cacheHitCount ?? 0,

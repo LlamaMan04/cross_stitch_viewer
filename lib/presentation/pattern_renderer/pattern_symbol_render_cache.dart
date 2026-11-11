@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_definitions.dart';
+import '../../domain/pattern_grid.dart';
 import '../../domain/pattern_document.dart';
 
 /// Immutable presentation metadata derived once from a pattern symbol.
@@ -18,6 +20,44 @@ class PatternSymbolRenderMetadata {
   final Color threadColor;
 }
 
+/// Cached geometry and opaque thread color for one backstitch.
+class BackstitchRenderMetadata {
+  /// Resolves immutable rendering information for [segment].
+  BackstitchRenderMetadata(this.segment)
+    : threadColor = PatternSymbolRenderCache._parseColor(segment.thread.color),
+      bounds = Rect.fromLTRB(
+        segment.start.column < segment.end.column
+            ? segment.start.column
+            : segment.end.column,
+        segment.start.row < segment.end.row
+            ? segment.start.row
+            : segment.end.row,
+        segment.start.column > segment.end.column
+            ? segment.start.column
+            : segment.end.column,
+        segment.start.row > segment.end.row
+            ? segment.start.row
+            : segment.end.row,
+      );
+
+  /// Source line and stable segment identity.
+  final BackstitchSegment segment;
+
+  /// Opaque color resolved before painting.
+  final Color threadColor;
+
+  /// Inclusive axis-aligned bounds in pattern coordinates.
+  final Rect bounds;
+
+  /// Whether the line's bounds touch the visible grid rectangle.
+  bool intersects(GridBounds visible) =>
+      !visible.isEmpty &&
+      bounds.right >= visible.startColumn &&
+      bounds.left <= visible.endColumn &&
+      bounds.bottom >= visible.startRow &&
+      bounds.top <= visible.endRow;
+}
+
 /// Reuses parsed symbol colors and opacity-specific fill paints.
 class PatternSymbolRenderCache {
   /// Creates render metadata for every symbol in [document].
@@ -28,10 +68,20 @@ class PatternSymbolRenderCache {
             symbol: symbol,
             threadColor: _parseColor(symbol.thread.color),
           ),
-      });
+      }),
+      _backstitches = List.unmodifiable(
+        document.backstitches.map(BackstitchRenderMetadata.new),
+      );
 
   /// Immutable render metadata keyed by stable symbol ID.
   final Map<String, PatternSymbolRenderMetadata> _metadataById;
+
+  /// Compact immutable list used for visible backstitch queries.
+  final List<BackstitchRenderMetadata> _backstitches;
+
+  /// Returns immutable candidates, including lines crossing the visible range.
+  List<BackstitchRenderMetadata> backstitchesIntersecting(GridBounds bounds) =>
+      List.unmodifiable(_backstitches.where((line) => line.intersects(bounds)));
 
   /// Fill paints for the single opacity currently used by the viewport.
   final Map<String, Paint> _fillPaints = <String, Paint>{};

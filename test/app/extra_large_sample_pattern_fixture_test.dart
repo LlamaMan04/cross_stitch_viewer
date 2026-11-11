@@ -16,6 +16,7 @@ void main() {
       hasLength(ExtraLargeSamplePatternFixture.populatedCellCount),
     );
     expect(firstDocument.symbols, hasLength(greaterThanOrEqualTo(10)));
+    expect(firstDocument.backstitches, isEmpty);
     expect(
       firstDocument.symbols.map((symbol) => symbol.thread.color).toSet(),
       hasLength(greaterThanOrEqualTo(10)),
