@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/pattern_document.dart';
 import '../../domain/repositories.dart';
 import 'pattern_workspace_screen.dart';
 
-/// Lists persisted patterns and upserts configured development fixtures.
+/// Lists patterns persisted in the application database.
 class LibraryScreen extends StatefulWidget {
   /// Creates a pattern library screen over the supplied document repository.
   const LibraryScreen({
     required this.patternDocuments,
     required this.progress,
-    this.seedDocuments = const [],
-    this.seedDocument,
     super.key,
   });
 
@@ -21,18 +18,12 @@ class LibraryScreen extends StatefulWidget {
   /// Repository providing mutable viewport and render settings.
   final ProgressRepository progress;
 
-  /// Documents used to repopulate the library when seeding is configured.
-  final List<PatternDocument> seedDocuments;
-
-  /// Legacy single-document seed accepted by focused tests and callers.
-  final PatternDocument? seedDocument;
-
   /// Creates state that loads the library once while this screen remains mounted.
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-/// Manages the asynchronous library summary query and seed replacement.
+/// Manages the asynchronous library summary query.
 class _LibraryScreenState extends State<LibraryScreen> {
   /// Pending library load retained across rebuilds.
   late Future<List<PatternSummary>> _summaries;
@@ -43,17 +34,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     _summaries = _loadSummaries();
   }
 
-  /// Upserts configured seed documents without deleting their progress graphs.
+  /// Loads only the documents already persisted in the database.
   Future<List<PatternSummary>> _loadSummaries() async {
-    final summaries = await widget.patternDocuments.listSummaries();
-    final seeds = [...widget.seedDocuments];
-    final seed = widget.seedDocument;
-    if (seed != null) seeds.add(seed);
-    if (seeds.isEmpty) return summaries;
-
-    for (final seed in seeds) {
-      await widget.patternDocuments.save(seed);
-    }
     return widget.patternDocuments.listSummaries();
   }
 

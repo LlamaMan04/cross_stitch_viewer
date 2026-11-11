@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
@@ -11,14 +13,17 @@ Widget buildLibraryApp(
   InMemoryProgressRepository? progress,
   List<PatternDocument> seedDocuments = const [],
   PatternDocument? seedDocument,
-}) => MaterialApp(
-  home: LibraryScreen(
-    patternDocuments: repository,
-    progress: progress ?? InMemoryProgressRepository(),
-    seedDocuments: seedDocuments,
-    seedDocument: seedDocument,
-  ),
-);
+}) {
+  for (final document in [...seedDocuments, ?seedDocument]) {
+    unawaited(repository.save(document));
+  }
+  return MaterialApp(
+    home: LibraryScreen(
+      patternDocuments: repository,
+      progress: progress ?? InMemoryProgressRepository(),
+    ),
+  );
+}
 
 /// Opens the workspace menu when necessary and selects one visible choice.
 Future<void> selectWorkspaceMenuOption(

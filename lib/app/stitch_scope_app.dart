@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import '../domain/repositories.dart';
 import '../presentation/screens/library_screen.dart';
 import '../presentation/screens/settings_screen.dart';
-import 'test_patterns/extra_large_sample_pattern_fixture.dart';
-import 'test_patterns/large_sample_pattern_fixture.dart';
-import 'test_patterns/sample_pattern_fixture.dart';
 
 /// Root Material application configuration for StitchScope.
 class StitchScopeApp extends StatelessWidget {
@@ -69,6 +66,9 @@ class _AppShellState extends State<_AppShell> {
   /// Index of the currently visible screen.
   int _selectedIndex = 0;
 
+  /// Changes when Settings has added documents that the mounted library must read.
+  int _libraryRevision = 0;
+
   /// Navigation labels and icons shared by the mobile and desktop layouts.
   static const _destinations = <NavigationDestinationData>[
     NavigationDestinationData(
@@ -91,15 +91,15 @@ class _AppShellState extends State<_AppShell> {
     // Keeping both screens mounted preserves each screen's local UI state.
     final screens = <Widget>[
       LibraryScreen(
+        key: ValueKey(_libraryRevision),
         patternDocuments: widget.patternDocuments,
         progress: widget.progress,
-        seedDocuments: [
-          SamplePatternFixture.create(),
-          LargeSamplePatternFixture.create(),
-          ExtraLargeSamplePatternFixture.create(),
-        ],
       ),
-      const SettingsScreen(),
+      SettingsScreen(
+        patternDocuments: widget.patternDocuments,
+        onSamplePatternsLoaded: () =>
+            setState(() => _libraryRevision++),
+      ),
     ];
 
     if (isWide) {
