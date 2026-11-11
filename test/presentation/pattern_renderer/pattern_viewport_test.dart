@@ -8,6 +8,7 @@ import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
 
@@ -268,8 +269,6 @@ void main() {
     expect(selectedCoordinate, const GridCoordinate(0, 0));
   });
 
-<<<<<<< Updated upstream
-=======
   testWidgets('does not select cells while the renderer is in overview LOD', (
     tester,
   ) async {
@@ -303,7 +302,6 @@ void main() {
     expect(selectionCallbackCount, 0);
   });
 
->>>>>>> Stashed changes
   testWidgets('pinch zoom updates the focal camera and settles repainting', (
     tester,
   ) async {
