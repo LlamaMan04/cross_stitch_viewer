@@ -388,7 +388,7 @@ void main() {
     expect(painter.selectedVisibleCells, isEmpty);
   });
 
-  testWidgets('retains tile cache entries while panning and settling', (
+  testWidgets('reads and writes tile cache entries while panning', (
     tester,
   ) async {
     await tester.pumpWidget(_viewportApp(SamplePatternFixture.create()));
@@ -399,11 +399,17 @@ void main() {
     final entriesBefore = painterBefore.tilePictureCache!.entryCount;
     expect(entriesBefore, greaterThan(0));
 
-    await tester.drag(
-      find.byKey(const ValueKey('pattern-viewport')),
-      const Offset(-20, 0),
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('pattern-viewport'))),
     );
+    await gesture.moveBy(const Offset(-20, 0));
     await tester.pump();
+
+    final cacheDuringPan = _painter(tester, canvasFinder).tilePictureCache!;
+    expect(cacheDuringPan.reuseEnabled, isTrue);
+    expect(cacheDuringPan.writesEnabled, isTrue);
+
+    await gesture.up();
     await tester.pump(const Duration(milliseconds: 150));
 
     expect(
