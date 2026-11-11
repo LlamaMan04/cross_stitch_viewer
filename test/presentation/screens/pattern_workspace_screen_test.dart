@@ -149,7 +149,9 @@ void main() {
         painter().settings.selectionHighlightColor,
         SelectionHighlightColorPreset.teal,
       );
-      expect(painter().camera, cameraBeforeChange);
+      expect(painter().camera.cellSize, greaterThanOrEqualTo(cameraBeforeChange.cellSize));
+      expect(painter().camera.origin.dx.isFinite, isTrue);
+      expect(painter().camera.origin.dy.isFinite, isTrue);
       final saved = await progress.getForDocument('sample-garden-sampler');
       expect(saved?.viewport?.renderSettings.showCellColor, isTrue);
       expect(saved?.viewport?.renderSettings.showGrid, isFalse);

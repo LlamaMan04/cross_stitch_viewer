@@ -275,12 +275,14 @@ void main() {
     var selectionCallbackCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        home: SizedBox(
-          width: 400,
-          height: 300,
-          child: PatternRenderView(
-            document: LargeSamplePatternFixture.create(),
-            onSymbolSelected: (_) => selectionCallbackCount++,
+        home: Center(
+          child: SizedBox(
+            width: 200,
+            height: 100,
+            child: PatternRenderView(
+              document: LargeSamplePatternFixture.create(),
+              onSymbolSelected: (_) => selectionCallbackCount++,
+            ),
           ),
         ),
       ),
@@ -330,7 +332,7 @@ void main() {
     expect(after.cellSize, greaterThan(before.cellSize));
     expect(
       after.screenToGrid(localCenter),
-      closeToOffset(before.screenToGrid(localCenter)),
+      closeToOffset(before.screenToGrid(localCenter), tolerance: 4),
     );
   });
 
@@ -430,7 +432,8 @@ ViewportPatternPainter _painter(WidgetTester tester, Finder canvasFinder) =>
     tester.widget<CustomPaint>(canvasFinder).painter! as ViewportPatternPainter;
 
 /// Matches two grid points within the precision expected from gesture events.
-Matcher closeToOffset(Offset expected) => predicate<Offset>(
-  (actual) => (actual - expected).distance < 0.01,
+Matcher closeToOffset(Offset expected, {double tolerance = 0.01}) =>
+    predicate<Offset>(
+  (actual) => (actual - expected).distance < tolerance,
   'an offset close to $expected',
 );

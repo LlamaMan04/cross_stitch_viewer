@@ -975,6 +975,22 @@ class _PatternRenderSettingsPanel extends StatelessWidget {
             ),
           ),
           SwitchListTile(
+            key: const ValueKey('show-top-ruler-setting'),
+            dense: true,
+            title: const Text('Top ruler'),
+            value: settings.showTopRuler,
+            onChanged: (value) =>
+                onChanged(settings.copyWith(showTopRuler: value)),
+          ),
+          SwitchListTile(
+            key: const ValueKey('show-left-ruler-setting'),
+            dense: true,
+            title: const Text('Left ruler'),
+            value: settings.showLeftRuler,
+            onChanged: (value) =>
+                onChanged(settings.copyWith(showLeftRuler: value)),
+          ),
+          SwitchListTile(
             key: const ValueKey('show-regions-setting'),
             dense: true,
             title: const Text('Source regions'),
