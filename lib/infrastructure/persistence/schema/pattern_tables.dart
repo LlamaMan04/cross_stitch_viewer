@@ -159,6 +159,91 @@ class PatternSymbols extends Table {
   ];
 }
 
+/// Stores linear backstitch segments belonging to a normalized pattern.
+@DataClassName('PatternBackstitchRow')
+@TableIndex(
+  name: 'pattern_backstitches_document_provenance',
+  columns: {#documentId, #provenanceId},
+)
+class PatternBackstitches extends Table {
+  /// Defines the parent pattern document.
+  TextColumn get documentId => text()();
+
+  /// Defines the stable segment identifier within the document.
+  TextColumn get id => text()();
+
+  /// Preserves segment order in the portable document.
+  IntColumn get sortOrder => integer()();
+
+  /// Defines the segment's starting row on the grid line lattice.
+  RealColumn get startRow => real()();
+
+  /// Defines the segment's starting column on the grid line lattice.
+  RealColumn get startColumn => real()();
+
+  /// Defines the segment's ending row on the grid line lattice.
+  RealColumn get endRow => real()();
+
+  /// Defines the segment's ending column on the grid line lattice.
+  RealColumn get endColumn => real()();
+
+  /// Defines the exact thread identifier used by the segment.
+  TextColumn get threadId => text()();
+
+  /// Defines the optional segment thread manufacturer.
+  TextColumn get threadBrand => text().nullable()();
+
+  /// Defines the optional segment manufacturer catalog number.
+  TextColumn get threadCatalogNumber => text().nullable()();
+
+  /// Defines the optional human-readable segment thread color name.
+  TextColumn get threadName => text().nullable()();
+
+  /// Defines the canonical segment thread color in `#RRGGBB` notation.
+  TextColumn get threadColor => text()();
+
+  /// Defines optional segment thread conversion notes.
+  TextColumn get threadConversionNotes => text().nullable()();
+
+  /// Defines whether the segment thread color was explicit or inferred.
+  TextColumn get threadEvidence => text()();
+
+  /// Defines the optional parser confidence for the segment.
+  RealColumn get confidence => real().nullable()();
+
+  /// Defines whether the segment requires confirmation.
+  BoolColumn get needsReview => boolean().withDefault(const Constant(false))();
+
+  /// Defines the optional source region that supplied the segment.
+  TextColumn get provenanceId => text().nullable()();
+
+  /// Uniquely identifies a segment within its parent document.
+  @override
+  Set<Column<Object>> get primaryKey => {documentId, id};
+
+  /// Links segments to their document and provenance and validates their data.
+  @override
+  List<String> get customConstraints => const [
+    'FOREIGN KEY (document_id) REFERENCES pattern_documents(id) '
+        'ON DELETE CASCADE',
+    'FOREIGN KEY (document_id, provenance_id) '
+        'REFERENCES pattern_regions(document_id, id)',
+    'UNIQUE (document_id, sort_order)',
+    'CHECK (length(id) > 0)',
+    'CHECK (sort_order >= 0)',
+    'CHECK (start_row >= 0)',
+    'CHECK (start_column >= 0)',
+    'CHECK (end_row >= 0)',
+    'CHECK (end_column >= 0)',
+    'CHECK (start_row != end_row OR start_column != end_column)',
+    'CHECK (length(thread_id) > 0)',
+    "CHECK (thread_color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
+        "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
+    "CHECK (thread_evidence IN ('explicit', 'inferred'))",
+    'CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))',
+  ];
+}
+
 /// Stores source-page regions mapped into global pattern coordinates.
 @DataClassName('PatternRegionRow')
 @TableIndex(

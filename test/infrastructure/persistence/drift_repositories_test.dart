@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/domain/pattern_definitions.dart';
+import 'package:stitch_scope/domain/pattern_backstitch.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
 import 'package:stitch_scope/domain/pattern_provenance.dart';
@@ -40,6 +41,18 @@ void main() {
     expect(loaded.symbols.first.thread.id, 'blue');
     expect(loaded.symbols.first.legendEvidence, 'unresolved');
     expect(loaded.symbols.first.thread.evidence, ColorEvidence.inferred);
+    expect(
+      loaded.backstitches.single.start,
+      const BackstitchCoordinate(row: 0, column: 0),
+    );
+    expect(
+      loaded.backstitches.single.end,
+      const BackstitchCoordinate(row: 1.5, column: 2),
+    );
+    expect(loaded.backstitches.single.thread.id, 'blue');
+    expect(loaded.backstitches.single.confidence?.value, 0.9);
+    expect(loaded.backstitches.single.needsReview, isTrue);
+    expect(loaded.backstitches.single.provenanceId, 'page');
     expect(loaded.symbols.first.thread.conversionNotes, 'approximate');
     expect(loaded.regions.first.label, 'top');
     expect(loaded.diagnostics.first.coordinate, const GridCoordinate(0, 1));
@@ -252,6 +265,25 @@ PatternDocument _document() => PatternDocument(
         evidence: ColorEvidence.inferred,
       ),
       legendEvidence: 'unresolved',
+    ),
+  ],
+  backstitches: const [
+    BackstitchSegment(
+      id: 'outline',
+      start: BackstitchCoordinate(row: 0, column: 0),
+      end: BackstitchCoordinate(row: 1.5, column: 2),
+      thread: ThreadDefinition(
+        id: 'blue',
+        color: '#123ABC',
+        brand: 'DMC',
+        catalogNumber: '1',
+        name: 'Blue',
+        conversionNotes: 'approximate',
+        evidence: ColorEvidence.inferred,
+      ),
+      confidence: Confidence(0.9),
+      needsReview: true,
+      provenanceId: 'page',
     ),
   ],
   regions: const [

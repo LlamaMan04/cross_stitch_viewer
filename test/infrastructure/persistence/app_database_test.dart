@@ -2,13 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/test_database.dart';
 
-/// Verifies the database boundary can create and configure the first schema.
+/// Verifies the database boundary can create and configure the current schema.
 void main() {
-  test('creates the version 6 schema and enables foreign keys', () async {
+  test('creates the version 7 schema and enables foreign keys', () async {
     final database = openTestDatabase();
     addTearDown(database.close);
 
-    expect(database.schemaVersion, 6);
+    expect(database.schemaVersion, 7);
 
     final foreignKeys = await database
         .customSelect('PRAGMA foreign_keys')
@@ -18,7 +18,7 @@ void main() {
     final userVersion = await database
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(userVersion.data['user_version'], 6);
+    expect(userVersion.data['user_version'], 7);
   });
 
   test('creates every initial pattern and progress table', () async {
@@ -38,6 +38,7 @@ void main() {
         'source_metadata_entries',
         'library_metadata',
         'pattern_symbols',
+        'pattern_backstitches',
         'pattern_regions',
         'pattern_cells',
         'parser_diagnostics',
@@ -61,6 +62,7 @@ void main() {
         'library_metadata_last_opened',
         'library_metadata_last_modified',
         'pattern_symbols_document_thread',
+        'pattern_backstitches_document_provenance',
         'pattern_regions_document_page',
         'pattern_cells_document_symbol',
       }),
@@ -207,6 +209,28 @@ void main() {
           )
           .every((row) => row.read<int>('notnull') == 1),
       isTrue,
+    );
+  });
+
+  test('stores backstitch geometry and thread fields', () async {
+    final database = openTestDatabase();
+    addTearDown(database.close);
+    final columns = await database
+        .customSelect('PRAGMA table_info(pattern_backstitches)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      containsAll({
+        'start_row',
+        'start_column',
+        'end_row',
+        'end_column',
+        'thread_id',
+        'thread_color',
+        'confidence',
+        'needs_review',
+        'provenance_id',
+      }),
     );
   });
 }

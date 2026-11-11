@@ -2887,6 +2887,1053 @@ class PatternRegionsCompanion extends UpdateCompanion<PatternRegionRow> {
   }
 }
 
+class $PatternBackstitchesTable extends PatternBackstitches
+    with TableInfo<$PatternBackstitchesTable, PatternBackstitchRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PatternBackstitchesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startRowMeta = const VerificationMeta(
+    'startRow',
+  );
+  @override
+  late final GeneratedColumn<double> startRow = GeneratedColumn<double>(
+    'start_row',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startColumnMeta = const VerificationMeta(
+    'startColumn',
+  );
+  @override
+  late final GeneratedColumn<double> startColumn = GeneratedColumn<double>(
+    'start_column',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endRowMeta = const VerificationMeta('endRow');
+  @override
+  late final GeneratedColumn<double> endRow = GeneratedColumn<double>(
+    'end_row',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endColumnMeta = const VerificationMeta(
+    'endColumn',
+  );
+  @override
+  late final GeneratedColumn<double> endColumn = GeneratedColumn<double>(
+    'end_column',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _threadIdMeta = const VerificationMeta(
+    'threadId',
+  );
+  @override
+  late final GeneratedColumn<String> threadId = GeneratedColumn<String>(
+    'thread_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _threadBrandMeta = const VerificationMeta(
+    'threadBrand',
+  );
+  @override
+  late final GeneratedColumn<String> threadBrand = GeneratedColumn<String>(
+    'thread_brand',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _threadCatalogNumberMeta =
+      const VerificationMeta('threadCatalogNumber');
+  @override
+  late final GeneratedColumn<String> threadCatalogNumber =
+      GeneratedColumn<String>(
+        'thread_catalog_number',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _threadNameMeta = const VerificationMeta(
+    'threadName',
+  );
+  @override
+  late final GeneratedColumn<String> threadName = GeneratedColumn<String>(
+    'thread_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _threadColorMeta = const VerificationMeta(
+    'threadColor',
+  );
+  @override
+  late final GeneratedColumn<String> threadColor = GeneratedColumn<String>(
+    'thread_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _threadConversionNotesMeta =
+      const VerificationMeta('threadConversionNotes');
+  @override
+  late final GeneratedColumn<String> threadConversionNotes =
+      GeneratedColumn<String>(
+        'thread_conversion_notes',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _threadEvidenceMeta = const VerificationMeta(
+    'threadEvidence',
+  );
+  @override
+  late final GeneratedColumn<String> threadEvidence = GeneratedColumn<String>(
+    'thread_evidence',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _confidenceMeta = const VerificationMeta(
+    'confidence',
+  );
+  @override
+  late final GeneratedColumn<double> confidence = GeneratedColumn<double>(
+    'confidence',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _needsReviewMeta = const VerificationMeta(
+    'needsReview',
+  );
+  @override
+  late final GeneratedColumn<bool> needsReview = GeneratedColumn<bool>(
+    'needs_review',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("needs_review" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _provenanceIdMeta = const VerificationMeta(
+    'provenanceId',
+  );
+  @override
+  late final GeneratedColumn<String> provenanceId = GeneratedColumn<String>(
+    'provenance_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    documentId,
+    id,
+    sortOrder,
+    startRow,
+    startColumn,
+    endRow,
+    endColumn,
+    threadId,
+    threadBrand,
+    threadCatalogNumber,
+    threadName,
+    threadColor,
+    threadConversionNotes,
+    threadEvidence,
+    confidence,
+    needsReview,
+    provenanceId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pattern_backstitches';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PatternBackstitchRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    if (data.containsKey('start_row')) {
+      context.handle(
+        _startRowMeta,
+        startRow.isAcceptableOrUnknown(data['start_row']!, _startRowMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startRowMeta);
+    }
+    if (data.containsKey('start_column')) {
+      context.handle(
+        _startColumnMeta,
+        startColumn.isAcceptableOrUnknown(
+          data['start_column']!,
+          _startColumnMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_startColumnMeta);
+    }
+    if (data.containsKey('end_row')) {
+      context.handle(
+        _endRowMeta,
+        endRow.isAcceptableOrUnknown(data['end_row']!, _endRowMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endRowMeta);
+    }
+    if (data.containsKey('end_column')) {
+      context.handle(
+        _endColumnMeta,
+        endColumn.isAcceptableOrUnknown(data['end_column']!, _endColumnMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_endColumnMeta);
+    }
+    if (data.containsKey('thread_id')) {
+      context.handle(
+        _threadIdMeta,
+        threadId.isAcceptableOrUnknown(data['thread_id']!, _threadIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_threadIdMeta);
+    }
+    if (data.containsKey('thread_brand')) {
+      context.handle(
+        _threadBrandMeta,
+        threadBrand.isAcceptableOrUnknown(
+          data['thread_brand']!,
+          _threadBrandMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thread_catalog_number')) {
+      context.handle(
+        _threadCatalogNumberMeta,
+        threadCatalogNumber.isAcceptableOrUnknown(
+          data['thread_catalog_number']!,
+          _threadCatalogNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thread_name')) {
+      context.handle(
+        _threadNameMeta,
+        threadName.isAcceptableOrUnknown(data['thread_name']!, _threadNameMeta),
+      );
+    }
+    if (data.containsKey('thread_color')) {
+      context.handle(
+        _threadColorMeta,
+        threadColor.isAcceptableOrUnknown(
+          data['thread_color']!,
+          _threadColorMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_threadColorMeta);
+    }
+    if (data.containsKey('thread_conversion_notes')) {
+      context.handle(
+        _threadConversionNotesMeta,
+        threadConversionNotes.isAcceptableOrUnknown(
+          data['thread_conversion_notes']!,
+          _threadConversionNotesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('thread_evidence')) {
+      context.handle(
+        _threadEvidenceMeta,
+        threadEvidence.isAcceptableOrUnknown(
+          data['thread_evidence']!,
+          _threadEvidenceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_threadEvidenceMeta);
+    }
+    if (data.containsKey('confidence')) {
+      context.handle(
+        _confidenceMeta,
+        confidence.isAcceptableOrUnknown(data['confidence']!, _confidenceMeta),
+      );
+    }
+    if (data.containsKey('needs_review')) {
+      context.handle(
+        _needsReviewMeta,
+        needsReview.isAcceptableOrUnknown(
+          data['needs_review']!,
+          _needsReviewMeta,
+        ),
+      );
+    }
+    if (data.containsKey('provenance_id')) {
+      context.handle(
+        _provenanceIdMeta,
+        provenanceId.isAcceptableOrUnknown(
+          data['provenance_id']!,
+          _provenanceIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {documentId, id};
+  @override
+  PatternBackstitchRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PatternBackstitchRow(
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      startRow: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}start_row'],
+      )!,
+      startColumn: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}start_column'],
+      )!,
+      endRow: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}end_row'],
+      )!,
+      endColumn: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}end_column'],
+      )!,
+      threadId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_id'],
+      )!,
+      threadBrand: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_brand'],
+      ),
+      threadCatalogNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_catalog_number'],
+      ),
+      threadName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_name'],
+      ),
+      threadColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_color'],
+      )!,
+      threadConversionNotes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_conversion_notes'],
+      ),
+      threadEvidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_evidence'],
+      )!,
+      confidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}confidence'],
+      ),
+      needsReview: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}needs_review'],
+      )!,
+      provenanceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provenance_id'],
+      ),
+    );
+  }
+
+  @override
+  $PatternBackstitchesTable createAlias(String alias) {
+    return $PatternBackstitchesTable(attachedDatabase, alias);
+  }
+}
+
+class PatternBackstitchRow extends DataClass
+    implements Insertable<PatternBackstitchRow> {
+  /// Defines the parent pattern document.
+  final String documentId;
+
+  /// Defines the stable segment identifier within the document.
+  final String id;
+
+  /// Preserves segment order in the portable document.
+  final int sortOrder;
+
+  /// Defines the segment's starting row on the grid line lattice.
+  final double startRow;
+
+  /// Defines the segment's starting column on the grid line lattice.
+  final double startColumn;
+
+  /// Defines the segment's ending row on the grid line lattice.
+  final double endRow;
+
+  /// Defines the segment's ending column on the grid line lattice.
+  final double endColumn;
+
+  /// Defines the exact thread identifier used by the segment.
+  final String threadId;
+
+  /// Defines the optional segment thread manufacturer.
+  final String? threadBrand;
+
+  /// Defines the optional segment manufacturer catalog number.
+  final String? threadCatalogNumber;
+
+  /// Defines the optional human-readable segment thread color name.
+  final String? threadName;
+
+  /// Defines the canonical segment thread color in `#RRGGBB` notation.
+  final String threadColor;
+
+  /// Defines optional segment thread conversion notes.
+  final String? threadConversionNotes;
+
+  /// Defines whether the segment thread color was explicit or inferred.
+  final String threadEvidence;
+
+  /// Defines the optional parser confidence for the segment.
+  final double? confidence;
+
+  /// Defines whether the segment requires confirmation.
+  final bool needsReview;
+
+  /// Defines the optional source region that supplied the segment.
+  final String? provenanceId;
+  const PatternBackstitchRow({
+    required this.documentId,
+    required this.id,
+    required this.sortOrder,
+    required this.startRow,
+    required this.startColumn,
+    required this.endRow,
+    required this.endColumn,
+    required this.threadId,
+    this.threadBrand,
+    this.threadCatalogNumber,
+    this.threadName,
+    required this.threadColor,
+    this.threadConversionNotes,
+    required this.threadEvidence,
+    this.confidence,
+    required this.needsReview,
+    this.provenanceId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['document_id'] = Variable<String>(documentId);
+    map['id'] = Variable<String>(id);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['start_row'] = Variable<double>(startRow);
+    map['start_column'] = Variable<double>(startColumn);
+    map['end_row'] = Variable<double>(endRow);
+    map['end_column'] = Variable<double>(endColumn);
+    map['thread_id'] = Variable<String>(threadId);
+    if (!nullToAbsent || threadBrand != null) {
+      map['thread_brand'] = Variable<String>(threadBrand);
+    }
+    if (!nullToAbsent || threadCatalogNumber != null) {
+      map['thread_catalog_number'] = Variable<String>(threadCatalogNumber);
+    }
+    if (!nullToAbsent || threadName != null) {
+      map['thread_name'] = Variable<String>(threadName);
+    }
+    map['thread_color'] = Variable<String>(threadColor);
+    if (!nullToAbsent || threadConversionNotes != null) {
+      map['thread_conversion_notes'] = Variable<String>(threadConversionNotes);
+    }
+    map['thread_evidence'] = Variable<String>(threadEvidence);
+    if (!nullToAbsent || confidence != null) {
+      map['confidence'] = Variable<double>(confidence);
+    }
+    map['needs_review'] = Variable<bool>(needsReview);
+    if (!nullToAbsent || provenanceId != null) {
+      map['provenance_id'] = Variable<String>(provenanceId);
+    }
+    return map;
+  }
+
+  PatternBackstitchesCompanion toCompanion(bool nullToAbsent) {
+    return PatternBackstitchesCompanion(
+      documentId: Value(documentId),
+      id: Value(id),
+      sortOrder: Value(sortOrder),
+      startRow: Value(startRow),
+      startColumn: Value(startColumn),
+      endRow: Value(endRow),
+      endColumn: Value(endColumn),
+      threadId: Value(threadId),
+      threadBrand: threadBrand == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadBrand),
+      threadCatalogNumber: threadCatalogNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadCatalogNumber),
+      threadName: threadName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadName),
+      threadColor: Value(threadColor),
+      threadConversionNotes: threadConversionNotes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadConversionNotes),
+      threadEvidence: Value(threadEvidence),
+      confidence: confidence == null && nullToAbsent
+          ? const Value.absent()
+          : Value(confidence),
+      needsReview: Value(needsReview),
+      provenanceId: provenanceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(provenanceId),
+    );
+  }
+
+  factory PatternBackstitchRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PatternBackstitchRow(
+      documentId: serializer.fromJson<String>(json['documentId']),
+      id: serializer.fromJson<String>(json['id']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      startRow: serializer.fromJson<double>(json['startRow']),
+      startColumn: serializer.fromJson<double>(json['startColumn']),
+      endRow: serializer.fromJson<double>(json['endRow']),
+      endColumn: serializer.fromJson<double>(json['endColumn']),
+      threadId: serializer.fromJson<String>(json['threadId']),
+      threadBrand: serializer.fromJson<String?>(json['threadBrand']),
+      threadCatalogNumber: serializer.fromJson<String?>(
+        json['threadCatalogNumber'],
+      ),
+      threadName: serializer.fromJson<String?>(json['threadName']),
+      threadColor: serializer.fromJson<String>(json['threadColor']),
+      threadConversionNotes: serializer.fromJson<String?>(
+        json['threadConversionNotes'],
+      ),
+      threadEvidence: serializer.fromJson<String>(json['threadEvidence']),
+      confidence: serializer.fromJson<double?>(json['confidence']),
+      needsReview: serializer.fromJson<bool>(json['needsReview']),
+      provenanceId: serializer.fromJson<String?>(json['provenanceId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'documentId': serializer.toJson<String>(documentId),
+      'id': serializer.toJson<String>(id),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'startRow': serializer.toJson<double>(startRow),
+      'startColumn': serializer.toJson<double>(startColumn),
+      'endRow': serializer.toJson<double>(endRow),
+      'endColumn': serializer.toJson<double>(endColumn),
+      'threadId': serializer.toJson<String>(threadId),
+      'threadBrand': serializer.toJson<String?>(threadBrand),
+      'threadCatalogNumber': serializer.toJson<String?>(threadCatalogNumber),
+      'threadName': serializer.toJson<String?>(threadName),
+      'threadColor': serializer.toJson<String>(threadColor),
+      'threadConversionNotes': serializer.toJson<String?>(
+        threadConversionNotes,
+      ),
+      'threadEvidence': serializer.toJson<String>(threadEvidence),
+      'confidence': serializer.toJson<double?>(confidence),
+      'needsReview': serializer.toJson<bool>(needsReview),
+      'provenanceId': serializer.toJson<String?>(provenanceId),
+    };
+  }
+
+  PatternBackstitchRow copyWith({
+    String? documentId,
+    String? id,
+    int? sortOrder,
+    double? startRow,
+    double? startColumn,
+    double? endRow,
+    double? endColumn,
+    String? threadId,
+    Value<String?> threadBrand = const Value.absent(),
+    Value<String?> threadCatalogNumber = const Value.absent(),
+    Value<String?> threadName = const Value.absent(),
+    String? threadColor,
+    Value<String?> threadConversionNotes = const Value.absent(),
+    String? threadEvidence,
+    Value<double?> confidence = const Value.absent(),
+    bool? needsReview,
+    Value<String?> provenanceId = const Value.absent(),
+  }) => PatternBackstitchRow(
+    documentId: documentId ?? this.documentId,
+    id: id ?? this.id,
+    sortOrder: sortOrder ?? this.sortOrder,
+    startRow: startRow ?? this.startRow,
+    startColumn: startColumn ?? this.startColumn,
+    endRow: endRow ?? this.endRow,
+    endColumn: endColumn ?? this.endColumn,
+    threadId: threadId ?? this.threadId,
+    threadBrand: threadBrand.present ? threadBrand.value : this.threadBrand,
+    threadCatalogNumber: threadCatalogNumber.present
+        ? threadCatalogNumber.value
+        : this.threadCatalogNumber,
+    threadName: threadName.present ? threadName.value : this.threadName,
+    threadColor: threadColor ?? this.threadColor,
+    threadConversionNotes: threadConversionNotes.present
+        ? threadConversionNotes.value
+        : this.threadConversionNotes,
+    threadEvidence: threadEvidence ?? this.threadEvidence,
+    confidence: confidence.present ? confidence.value : this.confidence,
+    needsReview: needsReview ?? this.needsReview,
+    provenanceId: provenanceId.present ? provenanceId.value : this.provenanceId,
+  );
+  PatternBackstitchRow copyWithCompanion(PatternBackstitchesCompanion data) {
+    return PatternBackstitchRow(
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      id: data.id.present ? data.id.value : this.id,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      startRow: data.startRow.present ? data.startRow.value : this.startRow,
+      startColumn: data.startColumn.present
+          ? data.startColumn.value
+          : this.startColumn,
+      endRow: data.endRow.present ? data.endRow.value : this.endRow,
+      endColumn: data.endColumn.present ? data.endColumn.value : this.endColumn,
+      threadId: data.threadId.present ? data.threadId.value : this.threadId,
+      threadBrand: data.threadBrand.present
+          ? data.threadBrand.value
+          : this.threadBrand,
+      threadCatalogNumber: data.threadCatalogNumber.present
+          ? data.threadCatalogNumber.value
+          : this.threadCatalogNumber,
+      threadName: data.threadName.present
+          ? data.threadName.value
+          : this.threadName,
+      threadColor: data.threadColor.present
+          ? data.threadColor.value
+          : this.threadColor,
+      threadConversionNotes: data.threadConversionNotes.present
+          ? data.threadConversionNotes.value
+          : this.threadConversionNotes,
+      threadEvidence: data.threadEvidence.present
+          ? data.threadEvidence.value
+          : this.threadEvidence,
+      confidence: data.confidence.present
+          ? data.confidence.value
+          : this.confidence,
+      needsReview: data.needsReview.present
+          ? data.needsReview.value
+          : this.needsReview,
+      provenanceId: data.provenanceId.present
+          ? data.provenanceId.value
+          : this.provenanceId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PatternBackstitchRow(')
+          ..write('documentId: $documentId, ')
+          ..write('id: $id, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('startRow: $startRow, ')
+          ..write('startColumn: $startColumn, ')
+          ..write('endRow: $endRow, ')
+          ..write('endColumn: $endColumn, ')
+          ..write('threadId: $threadId, ')
+          ..write('threadBrand: $threadBrand, ')
+          ..write('threadCatalogNumber: $threadCatalogNumber, ')
+          ..write('threadName: $threadName, ')
+          ..write('threadColor: $threadColor, ')
+          ..write('threadConversionNotes: $threadConversionNotes, ')
+          ..write('threadEvidence: $threadEvidence, ')
+          ..write('confidence: $confidence, ')
+          ..write('needsReview: $needsReview, ')
+          ..write('provenanceId: $provenanceId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    documentId,
+    id,
+    sortOrder,
+    startRow,
+    startColumn,
+    endRow,
+    endColumn,
+    threadId,
+    threadBrand,
+    threadCatalogNumber,
+    threadName,
+    threadColor,
+    threadConversionNotes,
+    threadEvidence,
+    confidence,
+    needsReview,
+    provenanceId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PatternBackstitchRow &&
+          other.documentId == this.documentId &&
+          other.id == this.id &&
+          other.sortOrder == this.sortOrder &&
+          other.startRow == this.startRow &&
+          other.startColumn == this.startColumn &&
+          other.endRow == this.endRow &&
+          other.endColumn == this.endColumn &&
+          other.threadId == this.threadId &&
+          other.threadBrand == this.threadBrand &&
+          other.threadCatalogNumber == this.threadCatalogNumber &&
+          other.threadName == this.threadName &&
+          other.threadColor == this.threadColor &&
+          other.threadConversionNotes == this.threadConversionNotes &&
+          other.threadEvidence == this.threadEvidence &&
+          other.confidence == this.confidence &&
+          other.needsReview == this.needsReview &&
+          other.provenanceId == this.provenanceId);
+}
+
+class PatternBackstitchesCompanion
+    extends UpdateCompanion<PatternBackstitchRow> {
+  final Value<String> documentId;
+  final Value<String> id;
+  final Value<int> sortOrder;
+  final Value<double> startRow;
+  final Value<double> startColumn;
+  final Value<double> endRow;
+  final Value<double> endColumn;
+  final Value<String> threadId;
+  final Value<String?> threadBrand;
+  final Value<String?> threadCatalogNumber;
+  final Value<String?> threadName;
+  final Value<String> threadColor;
+  final Value<String?> threadConversionNotes;
+  final Value<String> threadEvidence;
+  final Value<double?> confidence;
+  final Value<bool> needsReview;
+  final Value<String?> provenanceId;
+  final Value<int> rowid;
+  const PatternBackstitchesCompanion({
+    this.documentId = const Value.absent(),
+    this.id = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.startRow = const Value.absent(),
+    this.startColumn = const Value.absent(),
+    this.endRow = const Value.absent(),
+    this.endColumn = const Value.absent(),
+    this.threadId = const Value.absent(),
+    this.threadBrand = const Value.absent(),
+    this.threadCatalogNumber = const Value.absent(),
+    this.threadName = const Value.absent(),
+    this.threadColor = const Value.absent(),
+    this.threadConversionNotes = const Value.absent(),
+    this.threadEvidence = const Value.absent(),
+    this.confidence = const Value.absent(),
+    this.needsReview = const Value.absent(),
+    this.provenanceId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PatternBackstitchesCompanion.insert({
+    required String documentId,
+    required String id,
+    required int sortOrder,
+    required double startRow,
+    required double startColumn,
+    required double endRow,
+    required double endColumn,
+    required String threadId,
+    this.threadBrand = const Value.absent(),
+    this.threadCatalogNumber = const Value.absent(),
+    this.threadName = const Value.absent(),
+    required String threadColor,
+    this.threadConversionNotes = const Value.absent(),
+    required String threadEvidence,
+    this.confidence = const Value.absent(),
+    this.needsReview = const Value.absent(),
+    this.provenanceId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : documentId = Value(documentId),
+       id = Value(id),
+       sortOrder = Value(sortOrder),
+       startRow = Value(startRow),
+       startColumn = Value(startColumn),
+       endRow = Value(endRow),
+       endColumn = Value(endColumn),
+       threadId = Value(threadId),
+       threadColor = Value(threadColor),
+       threadEvidence = Value(threadEvidence);
+  static Insertable<PatternBackstitchRow> custom({
+    Expression<String>? documentId,
+    Expression<String>? id,
+    Expression<int>? sortOrder,
+    Expression<double>? startRow,
+    Expression<double>? startColumn,
+    Expression<double>? endRow,
+    Expression<double>? endColumn,
+    Expression<String>? threadId,
+    Expression<String>? threadBrand,
+    Expression<String>? threadCatalogNumber,
+    Expression<String>? threadName,
+    Expression<String>? threadColor,
+    Expression<String>? threadConversionNotes,
+    Expression<String>? threadEvidence,
+    Expression<double>? confidence,
+    Expression<bool>? needsReview,
+    Expression<String>? provenanceId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (documentId != null) 'document_id': documentId,
+      if (id != null) 'id': id,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (startRow != null) 'start_row': startRow,
+      if (startColumn != null) 'start_column': startColumn,
+      if (endRow != null) 'end_row': endRow,
+      if (endColumn != null) 'end_column': endColumn,
+      if (threadId != null) 'thread_id': threadId,
+      if (threadBrand != null) 'thread_brand': threadBrand,
+      if (threadCatalogNumber != null)
+        'thread_catalog_number': threadCatalogNumber,
+      if (threadName != null) 'thread_name': threadName,
+      if (threadColor != null) 'thread_color': threadColor,
+      if (threadConversionNotes != null)
+        'thread_conversion_notes': threadConversionNotes,
+      if (threadEvidence != null) 'thread_evidence': threadEvidence,
+      if (confidence != null) 'confidence': confidence,
+      if (needsReview != null) 'needs_review': needsReview,
+      if (provenanceId != null) 'provenance_id': provenanceId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PatternBackstitchesCompanion copyWith({
+    Value<String>? documentId,
+    Value<String>? id,
+    Value<int>? sortOrder,
+    Value<double>? startRow,
+    Value<double>? startColumn,
+    Value<double>? endRow,
+    Value<double>? endColumn,
+    Value<String>? threadId,
+    Value<String?>? threadBrand,
+    Value<String?>? threadCatalogNumber,
+    Value<String?>? threadName,
+    Value<String>? threadColor,
+    Value<String?>? threadConversionNotes,
+    Value<String>? threadEvidence,
+    Value<double?>? confidence,
+    Value<bool>? needsReview,
+    Value<String?>? provenanceId,
+    Value<int>? rowid,
+  }) {
+    return PatternBackstitchesCompanion(
+      documentId: documentId ?? this.documentId,
+      id: id ?? this.id,
+      sortOrder: sortOrder ?? this.sortOrder,
+      startRow: startRow ?? this.startRow,
+      startColumn: startColumn ?? this.startColumn,
+      endRow: endRow ?? this.endRow,
+      endColumn: endColumn ?? this.endColumn,
+      threadId: threadId ?? this.threadId,
+      threadBrand: threadBrand ?? this.threadBrand,
+      threadCatalogNumber: threadCatalogNumber ?? this.threadCatalogNumber,
+      threadName: threadName ?? this.threadName,
+      threadColor: threadColor ?? this.threadColor,
+      threadConversionNotes:
+          threadConversionNotes ?? this.threadConversionNotes,
+      threadEvidence: threadEvidence ?? this.threadEvidence,
+      confidence: confidence ?? this.confidence,
+      needsReview: needsReview ?? this.needsReview,
+      provenanceId: provenanceId ?? this.provenanceId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (startRow.present) {
+      map['start_row'] = Variable<double>(startRow.value);
+    }
+    if (startColumn.present) {
+      map['start_column'] = Variable<double>(startColumn.value);
+    }
+    if (endRow.present) {
+      map['end_row'] = Variable<double>(endRow.value);
+    }
+    if (endColumn.present) {
+      map['end_column'] = Variable<double>(endColumn.value);
+    }
+    if (threadId.present) {
+      map['thread_id'] = Variable<String>(threadId.value);
+    }
+    if (threadBrand.present) {
+      map['thread_brand'] = Variable<String>(threadBrand.value);
+    }
+    if (threadCatalogNumber.present) {
+      map['thread_catalog_number'] = Variable<String>(
+        threadCatalogNumber.value,
+      );
+    }
+    if (threadName.present) {
+      map['thread_name'] = Variable<String>(threadName.value);
+    }
+    if (threadColor.present) {
+      map['thread_color'] = Variable<String>(threadColor.value);
+    }
+    if (threadConversionNotes.present) {
+      map['thread_conversion_notes'] = Variable<String>(
+        threadConversionNotes.value,
+      );
+    }
+    if (threadEvidence.present) {
+      map['thread_evidence'] = Variable<String>(threadEvidence.value);
+    }
+    if (confidence.present) {
+      map['confidence'] = Variable<double>(confidence.value);
+    }
+    if (needsReview.present) {
+      map['needs_review'] = Variable<bool>(needsReview.value);
+    }
+    if (provenanceId.present) {
+      map['provenance_id'] = Variable<String>(provenanceId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PatternBackstitchesCompanion(')
+          ..write('documentId: $documentId, ')
+          ..write('id: $id, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('startRow: $startRow, ')
+          ..write('startColumn: $startColumn, ')
+          ..write('endRow: $endRow, ')
+          ..write('endColumn: $endColumn, ')
+          ..write('threadId: $threadId, ')
+          ..write('threadBrand: $threadBrand, ')
+          ..write('threadCatalogNumber: $threadCatalogNumber, ')
+          ..write('threadName: $threadName, ')
+          ..write('threadColor: $threadColor, ')
+          ..write('threadConversionNotes: $threadConversionNotes, ')
+          ..write('threadEvidence: $threadEvidence, ')
+          ..write('confidence: $confidence, ')
+          ..write('needsReview: $needsReview, ')
+          ..write('provenanceId: $provenanceId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PatternCellsTable extends PatternCells
     with TableInfo<$PatternCellsTable, PatternCellRow> {
   @override
@@ -6606,6 +7653,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $PatternSymbolsTable patternSymbols = $PatternSymbolsTable(this);
   late final $PatternRegionsTable patternRegions = $PatternRegionsTable(this);
+  late final $PatternBackstitchesTable patternBackstitches =
+      $PatternBackstitchesTable(this);
   late final $PatternCellsTable patternCells = $PatternCellsTable(this);
   late final $ParserDiagnosticsTable parserDiagnostics =
       $ParserDiagnosticsTable(this);
@@ -6635,6 +7684,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'pattern_symbols_document_thread',
     'CREATE INDEX pattern_symbols_document_thread ON pattern_symbols (document_id, thread_id)',
   );
+  late final Index patternBackstitchesDocumentProvenance = Index(
+    'pattern_backstitches_document_provenance',
+    'CREATE INDEX pattern_backstitches_document_provenance ON pattern_backstitches (document_id, provenance_id)',
+  );
   late final Index patternRegionsDocumentPage = Index(
     'pattern_regions_document_page',
     'CREATE INDEX pattern_regions_document_page ON pattern_regions (document_id, source_page)',
@@ -6654,6 +7707,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     libraryMetadata,
     patternSymbols,
     patternRegions,
+    patternBackstitches,
     patternCells,
     parserDiagnostics,
     progressStates,
@@ -6665,6 +7719,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     libraryMetadataLastOpened,
     libraryMetadataLastModified,
     patternSymbolsDocumentThread,
+    patternBackstitchesDocumentProvenance,
     patternRegionsDocumentPage,
     patternCellsDocumentSymbol,
   ];
@@ -8771,6 +9826,483 @@ typedef $$PatternRegionsTableProcessedTableManager =
       PatternRegionRow,
       PrefetchHooks Function()
     >;
+typedef $$PatternBackstitchesTableCreateCompanionBuilder =
+    PatternBackstitchesCompanion Function({
+      required String documentId,
+      required String id,
+      required int sortOrder,
+      required double startRow,
+      required double startColumn,
+      required double endRow,
+      required double endColumn,
+      required String threadId,
+      Value<String?> threadBrand,
+      Value<String?> threadCatalogNumber,
+      Value<String?> threadName,
+      required String threadColor,
+      Value<String?> threadConversionNotes,
+      required String threadEvidence,
+      Value<double?> confidence,
+      Value<bool> needsReview,
+      Value<String?> provenanceId,
+      Value<int> rowid,
+    });
+typedef $$PatternBackstitchesTableUpdateCompanionBuilder =
+    PatternBackstitchesCompanion Function({
+      Value<String> documentId,
+      Value<String> id,
+      Value<int> sortOrder,
+      Value<double> startRow,
+      Value<double> startColumn,
+      Value<double> endRow,
+      Value<double> endColumn,
+      Value<String> threadId,
+      Value<String?> threadBrand,
+      Value<String?> threadCatalogNumber,
+      Value<String?> threadName,
+      Value<String> threadColor,
+      Value<String?> threadConversionNotes,
+      Value<String> threadEvidence,
+      Value<double?> confidence,
+      Value<bool> needsReview,
+      Value<String?> provenanceId,
+      Value<int> rowid,
+    });
+
+class $$PatternBackstitchesTableFilterComposer
+    extends Composer<_$AppDatabase, $PatternBackstitchesTable> {
+  $$PatternBackstitchesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get startRow => $composableBuilder(
+    column: $table.startRow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get startColumn => $composableBuilder(
+    column: $table.startColumn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get endRow => $composableBuilder(
+    column: $table.endRow,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get endColumn => $composableBuilder(
+    column: $table.endColumn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadId => $composableBuilder(
+    column: $table.threadId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadBrand => $composableBuilder(
+    column: $table.threadBrand,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadCatalogNumber => $composableBuilder(
+    column: $table.threadCatalogNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadName => $composableBuilder(
+    column: $table.threadName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadColor => $composableBuilder(
+    column: $table.threadColor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadConversionNotes => $composableBuilder(
+    column: $table.threadConversionNotes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadEvidence => $composableBuilder(
+    column: $table.threadEvidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get needsReview => $composableBuilder(
+    column: $table.needsReview,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provenanceId => $composableBuilder(
+    column: $table.provenanceId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PatternBackstitchesTableOrderingComposer
+    extends Composer<_$AppDatabase, $PatternBackstitchesTable> {
+  $$PatternBackstitchesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get startRow => $composableBuilder(
+    column: $table.startRow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get startColumn => $composableBuilder(
+    column: $table.startColumn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get endRow => $composableBuilder(
+    column: $table.endRow,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get endColumn => $composableBuilder(
+    column: $table.endColumn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadId => $composableBuilder(
+    column: $table.threadId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadBrand => $composableBuilder(
+    column: $table.threadBrand,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadCatalogNumber => $composableBuilder(
+    column: $table.threadCatalogNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadName => $composableBuilder(
+    column: $table.threadName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadColor => $composableBuilder(
+    column: $table.threadColor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadConversionNotes => $composableBuilder(
+    column: $table.threadConversionNotes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadEvidence => $composableBuilder(
+    column: $table.threadEvidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get needsReview => $composableBuilder(
+    column: $table.needsReview,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provenanceId => $composableBuilder(
+    column: $table.provenanceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PatternBackstitchesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PatternBackstitchesTable> {
+  $$PatternBackstitchesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<double> get startRow =>
+      $composableBuilder(column: $table.startRow, builder: (column) => column);
+
+  GeneratedColumn<double> get startColumn => $composableBuilder(
+    column: $table.startColumn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get endRow =>
+      $composableBuilder(column: $table.endRow, builder: (column) => column);
+
+  GeneratedColumn<double> get endColumn =>
+      $composableBuilder(column: $table.endColumn, builder: (column) => column);
+
+  GeneratedColumn<String> get threadId =>
+      $composableBuilder(column: $table.threadId, builder: (column) => column);
+
+  GeneratedColumn<String> get threadBrand => $composableBuilder(
+    column: $table.threadBrand,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadCatalogNumber => $composableBuilder(
+    column: $table.threadCatalogNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadName => $composableBuilder(
+    column: $table.threadName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadColor => $composableBuilder(
+    column: $table.threadColor,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadConversionNotes => $composableBuilder(
+    column: $table.threadConversionNotes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get threadEvidence => $composableBuilder(
+    column: $table.threadEvidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get confidence => $composableBuilder(
+    column: $table.confidence,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get needsReview => $composableBuilder(
+    column: $table.needsReview,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get provenanceId => $composableBuilder(
+    column: $table.provenanceId,
+    builder: (column) => column,
+  );
+}
+
+class $$PatternBackstitchesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PatternBackstitchesTable,
+          PatternBackstitchRow,
+          $$PatternBackstitchesTableFilterComposer,
+          $$PatternBackstitchesTableOrderingComposer,
+          $$PatternBackstitchesTableAnnotationComposer,
+          $$PatternBackstitchesTableCreateCompanionBuilder,
+          $$PatternBackstitchesTableUpdateCompanionBuilder,
+          (
+            PatternBackstitchRow,
+            BaseReferences<
+              _$AppDatabase,
+              $PatternBackstitchesTable,
+              PatternBackstitchRow
+            >,
+          ),
+          PatternBackstitchRow,
+          PrefetchHooks Function()
+        > {
+  $$PatternBackstitchesTableTableManager(
+    _$AppDatabase db,
+    $PatternBackstitchesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PatternBackstitchesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PatternBackstitchesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PatternBackstitchesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> documentId = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<double> startRow = const Value.absent(),
+                Value<double> startColumn = const Value.absent(),
+                Value<double> endRow = const Value.absent(),
+                Value<double> endColumn = const Value.absent(),
+                Value<String> threadId = const Value.absent(),
+                Value<String?> threadBrand = const Value.absent(),
+                Value<String?> threadCatalogNumber = const Value.absent(),
+                Value<String?> threadName = const Value.absent(),
+                Value<String> threadColor = const Value.absent(),
+                Value<String?> threadConversionNotes = const Value.absent(),
+                Value<String> threadEvidence = const Value.absent(),
+                Value<double?> confidence = const Value.absent(),
+                Value<bool> needsReview = const Value.absent(),
+                Value<String?> provenanceId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PatternBackstitchesCompanion(
+                documentId: documentId,
+                id: id,
+                sortOrder: sortOrder,
+                startRow: startRow,
+                startColumn: startColumn,
+                endRow: endRow,
+                endColumn: endColumn,
+                threadId: threadId,
+                threadBrand: threadBrand,
+                threadCatalogNumber: threadCatalogNumber,
+                threadName: threadName,
+                threadColor: threadColor,
+                threadConversionNotes: threadConversionNotes,
+                threadEvidence: threadEvidence,
+                confidence: confidence,
+                needsReview: needsReview,
+                provenanceId: provenanceId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String documentId,
+                required String id,
+                required int sortOrder,
+                required double startRow,
+                required double startColumn,
+                required double endRow,
+                required double endColumn,
+                required String threadId,
+                Value<String?> threadBrand = const Value.absent(),
+                Value<String?> threadCatalogNumber = const Value.absent(),
+                Value<String?> threadName = const Value.absent(),
+                required String threadColor,
+                Value<String?> threadConversionNotes = const Value.absent(),
+                required String threadEvidence,
+                Value<double?> confidence = const Value.absent(),
+                Value<bool> needsReview = const Value.absent(),
+                Value<String?> provenanceId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PatternBackstitchesCompanion.insert(
+                documentId: documentId,
+                id: id,
+                sortOrder: sortOrder,
+                startRow: startRow,
+                startColumn: startColumn,
+                endRow: endRow,
+                endColumn: endColumn,
+                threadId: threadId,
+                threadBrand: threadBrand,
+                threadCatalogNumber: threadCatalogNumber,
+                threadName: threadName,
+                threadColor: threadColor,
+                threadConversionNotes: threadConversionNotes,
+                threadEvidence: threadEvidence,
+                confidence: confidence,
+                needsReview: needsReview,
+                provenanceId: provenanceId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PatternBackstitchesTable, PatternBackstitchRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $PatternBackstitchesTable,
+                    PatternBackstitchRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PatternBackstitchesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PatternBackstitchesTable,
+      PatternBackstitchRow,
+      $$PatternBackstitchesTableFilterComposer,
+      $$PatternBackstitchesTableOrderingComposer,
+      $$PatternBackstitchesTableAnnotationComposer,
+      $$PatternBackstitchesTableCreateCompanionBuilder,
+      $$PatternBackstitchesTableUpdateCompanionBuilder,
+      (
+        PatternBackstitchRow,
+        BaseReferences<
+          _$AppDatabase,
+          $PatternBackstitchesTable,
+          PatternBackstitchRow
+        >,
+      ),
+      PatternBackstitchRow,
+      PrefetchHooks Function()
+    >;
 typedef $$PatternCellsTableCreateCompanionBuilder =
     PatternCellsCompanion Function({
       required String documentId,
@@ -10732,6 +12264,8 @@ class $AppDatabaseManager {
       $$PatternSymbolsTableTableManager(_db, _db.patternSymbols);
   $$PatternRegionsTableTableManager get patternRegions =>
       $$PatternRegionsTableTableManager(_db, _db.patternRegions);
+  $$PatternBackstitchesTableTableManager get patternBackstitches =>
+      $$PatternBackstitchesTableTableManager(_db, _db.patternBackstitches);
   $$PatternCellsTableTableManager get patternCells =>
       $$PatternCellsTableTableManager(_db, _db.patternCells);
   $$ParserDiagnosticsTableTableManager get parserDiagnostics =>

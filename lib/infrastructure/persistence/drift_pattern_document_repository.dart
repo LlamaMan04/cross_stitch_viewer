@@ -29,6 +29,9 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
         database.patternCells,
       )..where((table) => table.documentId.equals(document.id))).go();
       await (database.delete(
+        database.patternBackstitches,
+      )..where((table) => table.documentId.equals(document.id))).go();
+      await (database.delete(
         database.parserDiagnostics,
       )..where((table) => table.documentId.equals(document.id))).go();
       await (database.delete(
@@ -55,6 +58,10 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
           PatternMapper.regions(document),
         );
         batch.insertAll(database.patternCells, PatternMapper.cells(document));
+        batch.insertAll(
+          database.patternBackstitches,
+          PatternMapper.backstitches(document),
+        );
         batch.insertAll(
           database.parserDiagnostics,
           PatternMapper.diagnostics(document),
@@ -107,6 +114,11 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
               ..where((table) => table.documentId.equals(id))
               ..orderBy([(table) => OrderingTerm.asc(table.sortOrder)]))
             .get();
+    final backstitches =
+        await (database.select(database.patternBackstitches)
+              ..where((table) => table.documentId.equals(id))
+              ..orderBy([(table) => OrderingTerm.asc(table.sortOrder)]))
+            .get();
     final diagnostics =
         await (database.select(database.parserDiagnostics)
               ..where((table) => table.documentId.equals(id))
@@ -118,6 +130,7 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
       symbols: symbols,
       regions: regions,
       cells: cells,
+      backstitches: backstitches,
       diagnostics: diagnostics,
     );
   });

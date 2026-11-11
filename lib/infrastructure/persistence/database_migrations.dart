@@ -159,4 +159,7 @@ Future<void> migrateAppDatabase(
       ),
     );
   }
+  if (from < 7 && to >= 7) {
+    await migrator.createTable(database.patternBackstitches);
+  }
 }

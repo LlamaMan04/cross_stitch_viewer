@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
+import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_definitions.dart';
 import '../../domain/pattern_document.dart';
 import '../../domain/pattern_grid.dart';
@@ -88,6 +89,34 @@ abstract final class PatternMapper {
       ),
   ];
 
+  /// Maps ordered linear backstitch segments and their embedded thread data.
+  static List<PatternBackstitchesCompanion> backstitches(PatternDocument value) => [
+    for (var index = 0; index < value.backstitches.length; index++)
+      PatternBackstitchesCompanion.insert(
+        documentId: value.id,
+        id: value.backstitches[index].id,
+        sortOrder: index,
+        startRow: value.backstitches[index].start.row,
+        startColumn: value.backstitches[index].start.column,
+        endRow: value.backstitches[index].end.row,
+        endColumn: value.backstitches[index].end.column,
+        threadId: value.backstitches[index].thread.id,
+        threadBrand: Value(value.backstitches[index].thread.brand),
+        threadCatalogNumber: Value(
+          value.backstitches[index].thread.catalogNumber,
+        ),
+        threadName: Value(value.backstitches[index].thread.name),
+        threadColor: value.backstitches[index].thread.color,
+        threadConversionNotes: Value(
+          value.backstitches[index].thread.conversionNotes,
+        ),
+        threadEvidence: value.backstitches[index].thread.evidence.name,
+        confidence: Value(value.backstitches[index].confidence?.value),
+        needsReview: Value(value.backstitches[index].needsReview),
+        provenanceId: Value(value.backstitches[index].provenanceId),
+      ),
+  ];
+
   /// Maps ordered parser diagnostics.
   static List<ParserDiagnosticsCompanion> diagnostics(PatternDocument value) =>
       [
@@ -116,6 +145,7 @@ abstract final class PatternMapper {
     required List<PatternSymbolRow> symbols,
     required List<PatternRegionRow> regions,
     required List<PatternCellRow> cells,
+    required List<PatternBackstitchRow> backstitches,
     required List<ParserDiagnosticRow> diagnostics,
   }) {
     final value = PatternDocument(
@@ -155,6 +185,34 @@ abstract final class PatternMapper {
               evidence: ColorEvidence.values.byName(row.threadEvidence),
             ),
             legendEvidence: row.legendEvidence,
+          ),
+      ],
+      backstitches: [
+        for (final row in backstitches)
+          BackstitchSegment(
+            id: row.id,
+            start: BackstitchCoordinate(
+              row: row.startRow,
+              column: row.startColumn,
+            ),
+            end: BackstitchCoordinate(
+              row: row.endRow,
+              column: row.endColumn,
+            ),
+            thread: ThreadDefinition(
+              id: row.threadId,
+              color: row.threadColor,
+              brand: row.threadBrand,
+              catalogNumber: row.threadCatalogNumber,
+              name: row.threadName,
+              conversionNotes: row.threadConversionNotes,
+              evidence: ColorEvidence.values.byName(row.threadEvidence),
+            ),
+            confidence: row.confidence == null
+                ? null
+                : Confidence(row.confidence!),
+            needsReview: row.needsReview,
+            provenanceId: row.provenanceId,
           ),
       ],
       regions: [

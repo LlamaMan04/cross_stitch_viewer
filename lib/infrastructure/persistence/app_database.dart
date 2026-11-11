@@ -16,6 +16,7 @@ part 'app_database.g.dart';
     SourceMetadataEntries,
     LibraryMetadata,
     PatternSymbols,
+    PatternBackstitches,
     PatternRegions,
     PatternCells,
     ParserDiagnostics,
@@ -34,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// Includes the domain-aligned pattern and progress table definitions.
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   /// Defines creation, upgrade, and connection configuration for the database.
   @override
