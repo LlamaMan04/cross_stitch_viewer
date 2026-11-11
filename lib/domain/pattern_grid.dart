@@ -198,7 +198,7 @@ class PatternTileSummary {
 /// Sparse populated cells together with the full rectangular grid dimensions.
 class PatternGrid {
   /// Number of rows and columns grouped into one immutable spatial tile.
-  static const int tileSize = 32;
+  static const int tileSize = 16;
 
   /// Available immutable aggregation sizes for overview rendering.
   static const List<int> overviewBlockSizes = <int>[2, 4, 8, 16, 32];

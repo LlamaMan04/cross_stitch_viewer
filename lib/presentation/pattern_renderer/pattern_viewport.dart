@@ -98,6 +98,9 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Summary blocks containing completion at every overview resolution.
   late Map<int, Set<PatternTileCoordinate>> _completedOverviewCoordinates;
 
+  /// Summary blocks containing pending completion selections by resolution.
+  late Map<int, Set<PatternTileCoordinate>> _pendingOverviewCoordinates;
+
   /// Camera notifier created after the viewport receives a layout size.
   PatternViewportController? _cameraController;
 
@@ -141,6 +144,9 @@ class _PatternViewportState extends State<PatternViewport> {
     _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
       widget.completedCells,
     );
+    _pendingOverviewCoordinates = _indexOverviewCoordinates(
+      widget.completionSelection.coordinates,
+    );
   }
 
   /// Releases cached native text layouts with the owning viewport.
@@ -175,14 +181,19 @@ class _PatternViewportState extends State<PatternViewport> {
       _gestureStartCamera = null;
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
       _tilePictureCache.clear();
-    } else if (oldWidget.settings != widget.settings) {
-      // Static fills and glyph contrast can change before the next paint.
+    } else if (_staticTilePictureSettingsChanged(oldWidget.settings)) {
+      // Only static fills and glyph contrast require picture invalidation.
       _tilePictureCache.clear();
     }
     if (oldWidget.document != widget.document ||
         !identical(oldWidget.completedCells, widget.completedCells)) {
       _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
         widget.completedCells,
+      );
+    }
+    if (oldWidget.completionSelection != widget.completionSelection) {
+      _pendingOverviewCoordinates = _indexOverviewCoordinates(
+        widget.completionSelection.coordinates,
       );
     }
   }
@@ -244,6 +255,7 @@ class _PatternViewportState extends State<PatternViewport> {
                   tilePictureCache: _tilePictureCache,
                   renderLod: cameraController.renderLod,
                   completedOverviewCoordinates: _completedOverviewCoordinates,
+                  pendingOverviewCoordinates: _pendingOverviewCoordinates,
                   cameraController: cameraController,
                   viewportSize: viewportSize,
                   onBatchMetrics: _instrumentation?.recordPaint,
@@ -271,6 +283,27 @@ class _PatternViewportState extends State<PatternViewport> {
         ),
       ),
   });
+
+  /// Indexes coordinates into every supported overview resolution.
+  Map<int, Set<PatternTileCoordinate>> _indexOverviewCoordinates(
+    Set<GridCoordinate> coordinates,
+  ) => Map<int, Set<PatternTileCoordinate>>.unmodifiable({
+    for (final blockSize in PatternGrid.overviewBlockSizes)
+      blockSize: Set<PatternTileCoordinate>.unmodifiable(
+        coordinates.map(
+          (coordinate) => PatternTileCoordinate(
+            coordinate.row ~/ blockSize,
+            coordinate.column ~/ blockSize,
+          ),
+        ),
+      ),
+  });
+
+  /// Whether changed settings alter recorded tile picture output.
+  bool _staticTilePictureSettingsChanged(PatternRenderSettings oldSettings) =>
+      oldSettings.showCellColor != widget.settings.showCellColor ||
+      oldSettings.cellColorOpacity != widget.settings.cellColorOpacity ||
+      oldSettings.showSymbols != widget.settings.showSymbols;
 
   /// Converts a tap into a populated cell's symbol selection.
   void _handleTapUp(TapUpDetails details) {

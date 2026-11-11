@@ -32,7 +32,7 @@ overscan.
 
 Implemented today:
 
-1. `PatternGrid` uses an immutable 32-by-32 tile index for visible cell range
+1. `PatternGrid` uses an immutable 16-by-16 tile index for visible cell range
    queries while retaining direct coordinate lookup.
 2. `PatternDocument` uses a tile index for visible source-region queries and
    removes duplicate region results across tiles.
@@ -197,7 +197,7 @@ The domain layer must not import presentation types. Define a domain-neutral
 row/column bounds value object in `domain`, or accept primitive range
 arguments. A tile index is the preferred implementation:
 
-- Use fixed grid tiles (for example, 32 by 32 cells).
+- Use fixed grid tiles (16 by 16 cells in the current implementation).
 - Build `Map<TileCoordinate, List<StitchCell>>` once in the `PatternGrid`
   constructor.
 - Query only tiles intersecting the visible bounds and filter their cells.
@@ -604,24 +604,24 @@ pointer events do not write progress state on every update.
 - [ ] Restrict cache-miss and interaction-bypass work for boundary tiles to the
   visible portion of the tile, or otherwise demonstrate through profiling that
   recording an entire tile is cheaper.
-- [ ] Pre-index pending completion selections by overview block size when the
+- [x] Pre-index pending completion selections by overview block size when the
   selection changes, rather than rebuilding a set for each overview paint
   layer.
-- [ ] Remove hot-path paint and collection allocations where feasible,
+- [x] Remove hot-path paint and collection allocations where feasible,
   especially the per-summary `Paint` created by overview density rendering.
-- [ ] Release tile-picture leases in a `try`/`finally` block so a paint or
+- [x] Release tile-picture leases in a `try`/`finally` block so a paint or
   metrics-callback exception cannot retain native pictures indefinitely.
-- [ ] Correct renderer instrumentation so `visibleCellCount` remains accurate
+- [x] Correct renderer instrumentation so `visibleCellCount` remains accurate
   when static tile pictures are replayed instead of `_visibleCells`.
-- [ ] Remove the duplicate unreachable `coarseWeight >= 1` branch in the
+- [x] Remove the duplicate unreachable `coarseWeight >= 1` branch in the
   overview-level resolver.
-- [ ] Narrow tile-picture invalidation to settings that change static fills or
+- [x] Narrow tile-picture invalidation to settings that change static fills or
   glyphs; do not discard valid pictures for dynamic-only settings such as grid,
   region, completion-overlay, or selection changes.
 - [ ] Add widget-level coverage for controller notification behavior, pan,
   pinch and wheel zoom, cache lifecycle, and viewport resizing; include these
   paths in the performance regression checks.
-- [ ] Reduce the size of the 32x32 cached tiles to 16x16 or 10x10 cells
+- [x] Reduce the size of the 32x32 cached tiles to 16x16 cells
 - [ ] Rework the way the pattern is rendered in overview mode, the current format
   is not faithful to the actual pattern picture.
 
@@ -682,7 +682,7 @@ pointer events do not write progress state on every update.
 
 | Decision | Why it matters | Recommended initial choice |
 | --- | --- | --- |
-| Tile size | Balances index memory against query work. | Start at 32 by 32 and profile. |
+| Tile size | Balances index memory against query work. | Use 16 by 16 and profile. |
 | Very-low-zoom behavior | Individual cells cannot be legible indefinitely. | Support overview LOD with visible tile summaries, major rules, and decluttered rulers. |
 | Render-setting scope | Determines persistence schema and UX. | Persist all viewport render settings per pattern in `ViewportStates`. |
 | Completed-cell style scope | Determines whether a user sees the same completion treatment across patterns. | Persist as part of that pattern's `ViewportState`. |

@@ -57,7 +57,7 @@ class PatternTilePictureKey {
   /// Immutable document instance that owns the tile source data.
   final Object documentIdentity;
 
-  /// Fixed 32-by-32 source tile represented by this key.
+  /// Fixed 16-by-16 source tile represented by this key.
   final PatternTileCoordinate coordinate;
 
   /// Renderer detail level represented by the recorded pictures.

@@ -94,6 +94,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.symbolRenderCache,
     required RenderLod renderLod,
     required this.completedOverviewCoordinates,
+    this.pendingOverviewCoordinates,
     this.onBatchMetrics,
     this.tilePictureCache,
     this.cameraController,
@@ -174,6 +175,9 @@ class ViewportPatternPainter extends CustomPainter {
   /// Completed summary blocks indexed by every supported overview resolution.
   final Map<int, Set<PatternTileCoordinate>> completedOverviewCoordinates;
 
+  /// Optional pre-indexed pending completion blocks by overview resolution.
+  final Map<int, Set<PatternTileCoordinate>>? pendingOverviewCoordinates;
+
   /// Optional profiling hook called after the batched layers are painted.
   final ValueChanged<PatternRenderBatchMetrics>? onBatchMetrics;
 
@@ -203,6 +207,9 @@ class ViewportPatternPainter extends CustomPainter {
   late final Paint _outsideGridPaint = Paint()
     ..color = _gridColor
     ..style = PaintingStyle.stroke;
+
+  /// Reused paint for overview density rectangles.
+  late final Paint _overviewDensityPaint = Paint();
 
   /// Bounds associated with the current cached visible-cell snapshot.
   GridBounds? _cachedCellBounds;
@@ -257,55 +264,61 @@ class ViewportPatternPainter extends CustomPainter {
     final staticTileFrame = tilePictureCache == null
         ? null
         : _prepareStaticTileFrame();
-    final fillMetrics = staticTileFrame == null
-        ? _paintCellFills(canvas)
-        : staticTileFrame.paintFills(canvas, this);
-    drawCallCount += fillMetrics.drawCallCount;
-    final completedCount = settings.showCompletedCellOverlay
-        ? _paintCompletedCells(canvas)
-        : 0;
-    drawCallCount += completedCount;
-    final selectedCount = _paintSelectedSymbol(canvas);
-    drawCallCount += selectedCount * 2;
-    final completionSelectionCount = _paintCompletionSelection(canvas);
-    drawCallCount += completionSelectionCount;
-    final glyphMetrics = staticTileFrame == null
-        ? _LayerBatchMetrics(
-            primitiveCount: _paintGlyphs(canvas),
-            drawCallCount: renderLod == RenderLod.detail && settings.showSymbols
-                ? _cachedVisibleCells?.length ?? 0
-                : 0,
-          )
-        : staticTileFrame.paintGlyphs(canvas, this);
-    drawCallCount += glyphMetrics.drawCallCount;
-    final gridMetrics = settings.showGrid
-        ? _paintGrid(canvas)
-        : const _LayerBatchMetrics();
-    drawCallCount += gridMetrics.drawCallCount;
-    if (settings.showRegions) {
-      drawCallCount += _paintRegions(canvas);
+    try {
+      final fillMetrics = staticTileFrame == null
+          ? _paintCellFills(canvas)
+          : staticTileFrame.paintFills(canvas, this);
+      drawCallCount += fillMetrics.drawCallCount;
+      final completedCount = settings.showCompletedCellOverlay
+          ? _paintCompletedCells(canvas)
+          : 0;
+      drawCallCount += completedCount;
+      final selectedCount = _paintSelectedSymbol(canvas);
+      drawCallCount += selectedCount * 2;
+      final completionSelectionCount = _paintCompletionSelection(canvas);
+      drawCallCount += completionSelectionCount;
+      final glyphMetrics = staticTileFrame == null
+          ? _LayerBatchMetrics(
+              primitiveCount: _paintGlyphs(canvas),
+              drawCallCount:
+                  renderLod == RenderLod.detail && settings.showSymbols
+                  ? _cachedVisibleCells?.length ?? 0
+                  : 0,
+            )
+          : staticTileFrame.paintGlyphs(canvas, this);
+      drawCallCount += glyphMetrics.drawCallCount;
+      final gridMetrics = settings.showGrid
+          ? _paintGrid(canvas)
+          : const _LayerBatchMetrics();
+      drawCallCount += gridMetrics.drawCallCount;
+      if (settings.showRegions) {
+        drawCallCount += _paintRegions(canvas);
+      }
+      canvas.restore();
+      onBatchMetrics?.call(
+        PatternRenderBatchMetrics(
+          cellFillCount: fillMetrics.primitiveCount,
+          cellFillDrawCalls: fillMetrics.drawCallCount,
+          gridRuleCount: gridMetrics.primitiveCount,
+          gridDrawCalls: gridMetrics.drawCallCount,
+          visibleCellCount: renderLod == RenderLod.overview
+              ? 0
+              : staticTileFrame?.visibleCellCount ??
+                  _cachedVisibleCells?.length ??
+                  0,
+          glyphCount: glyphMetrics.primitiveCount,
+          drawCallCount: drawCallCount,
+          tilePictureHits: staticTileFrame?.cacheHitCount ?? 0,
+          tilePictureMisses: staticTileFrame?.cacheMissCount ?? 0,
+          tilePictureCacheEntries: tilePictureCache?.entryCount ?? 0,
+          tilePictureCacheBytes: tilePictureCache?.estimatedBytes ?? 0,
+          tilePictureEvictions: tilePictureCache?.evictionCount ?? 0,
+          tilePictureBypasses: staticTileFrame?.cacheBypassCount ?? 0,
+        ),
+      );
+    } finally {
+      staticTileFrame?.release();
     }
-    canvas.restore();
-    onBatchMetrics?.call(
-      PatternRenderBatchMetrics(
-        cellFillCount: fillMetrics.primitiveCount,
-        cellFillDrawCalls: fillMetrics.drawCallCount,
-        gridRuleCount: gridMetrics.primitiveCount,
-        gridDrawCalls: gridMetrics.drawCallCount,
-        visibleCellCount: renderLod == RenderLod.overview
-            ? 0
-            : (_cachedVisibleCells?.length ?? 0),
-        glyphCount: glyphMetrics.primitiveCount,
-        drawCallCount: drawCallCount,
-        tilePictureHits: staticTileFrame?.cacheHitCount ?? 0,
-        tilePictureMisses: staticTileFrame?.cacheMissCount ?? 0,
-        tilePictureCacheEntries: tilePictureCache?.entryCount ?? 0,
-        tilePictureCacheBytes: tilePictureCache?.estimatedBytes ?? 0,
-        tilePictureEvictions: tilePictureCache?.evictionCount ?? 0,
-        tilePictureBypasses: staticTileFrame?.cacheBypassCount ?? 0,
-      ),
-    );
-    staticTileFrame?.release();
   }
 
   /// Theme-derived color used to overlay exact completion-cell selections.
@@ -743,7 +756,8 @@ class ViewportPatternPainter extends CustomPainter {
               alpha: settings.cellColorOpacity * density * opacity,
             )
           : _gridColor.withValues(alpha: 0.18 * density * opacity);
-      canvas.drawRect(tileRect, Paint()..color = densityColor);
+      _overviewDensityPaint.color = densityColor;
+      canvas.drawRect(tileRect, _overviewDensityPaint);
       drawCallCount++;
     }
     return drawCallCount;
@@ -773,14 +787,16 @@ class ViewportPatternPainter extends CustomPainter {
     final completedCoordinates =
         completedOverviewCoordinates[blockSize] ??
         const <PatternTileCoordinate>{};
-    final pendingCoordinates = completionSelection
-        .map(
-          (coordinate) => PatternTileCoordinate(
-            coordinate.row ~/ blockSize,
-            coordinate.column ~/ blockSize,
-          ),
-        )
-        .toSet();
+    final pendingCoordinates =
+        pendingOverviewCoordinates?[blockSize] ??
+        completionSelection
+            .map(
+              (coordinate) => PatternTileCoordinate(
+                coordinate.row ~/ blockSize,
+                coordinate.column ~/ blockSize,
+              ),
+            )
+            .toSet();
     var drawCallCount = 0;
     for (final summary in summaries) {
       final tileRect = _tileRect(summary);
@@ -1085,6 +1101,19 @@ class _StaticTileFrame {
 
   /// Number of visible tiles intentionally painted directly during zoom.
   final int cacheBypassCount;
+
+  /// Number of populated cells represented by this frame's visible tiles.
+  int get visibleCellCount => contents.fold(
+    0,
+    (count, content) =>
+        count +
+        (content.pictures == null
+            ? content.cells?.length ?? 0
+            : math.max(
+                content.pictures!.cellFillCount,
+                content.pictures!.glyphCount,
+              )),
+  );
 
   /// Paints cached or direct thread-color fills below dynamic overlays.
   _LayerBatchMetrics paintFills(Canvas canvas, ViewportPatternPainter painter) {
