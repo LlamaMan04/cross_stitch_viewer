@@ -457,9 +457,6 @@ class _PatternViewportState extends State<PatternViewport> {
               dimensions: widget.document.grid.dimensions,
               viewportSize: viewportSize,
             );
-      if (layoutCamera.cellSize != currentCamera.cellSize) {
-        _tilePictureCache.clear();
-      }
       cameraController.replaceCameraForLayout(layoutCamera);
     }
     _viewportSize = viewportSize;
@@ -560,13 +557,10 @@ class _PatternViewportState extends State<PatternViewport> {
     _tilePictureCache.suspendReuse();
   }
 
-  /// Clears static pictures before applying any camera with a new cell scale.
+  /// Applies a camera update while retaining scale-keyed static pictures.
   void _updateInteractionCamera(PatternCamera nextCamera) {
     final cameraController = _cameraController;
     if (cameraController == null) return;
-    if (nextCamera.cellSize != cameraController.camera.cellSize) {
-      _tilePictureCache.clear();
-    }
     cameraController.updateCamera(nextCamera);
   }
 

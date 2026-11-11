@@ -598,7 +598,7 @@ pointer events do not write progress state on every update.
 - [ ] Batch or otherwise consolidate overview density and accent rendering so a
   dense, low-zoom viewport does not issue one canvas draw call per populated
   summary block (or per blended overview level).
-- [ ] Preserve useful tile-picture cache entries across scale changes. Avoid
+- [x] Preserve useful tile-picture cache entries across scale changes. Avoid
   clearing every entry on each zoom update; retain bounded, scale-keyed entries
   where their recorded representation remains valid.
 - [ ] Restrict cache-miss and interaction-bypass work for boundary tiles to the

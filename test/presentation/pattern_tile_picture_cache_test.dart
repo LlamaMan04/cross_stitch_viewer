@@ -105,6 +105,28 @@ void main() {
     expect(cache.acquire(_key(Object(), 0)), isNull);
   });
 
+  test('retains scale-keyed entries so returning to a prior zoom can hit', () {
+    final documentIdentity = Object();
+    final cache = PatternTilePictureCache();
+    addTearDown(cache.dispose);
+    final originalKey = _key(documentIdentity, 0);
+    final zoomedKey = PatternTilePictureKey(
+      documentIdentity: documentIdentity,
+      coordinate: originalKey.coordinate,
+      renderLod: originalKey.renderLod,
+      cellSizeBucket: 64,
+      style: originalKey.style,
+    );
+
+    cache.putAndAcquire(originalKey, _pictures(100))!.release();
+    cache.putAndAcquire(zoomedKey, _pictures(100))!.release();
+
+    final restoredLease = cache.acquire(originalKey);
+    expect(restoredLease, isNotNull);
+    restoredLease!.release();
+    expect(cache.entryCount, 2);
+  });
+
   test('clears retained memory when viewport inputs are invalidated', () {
     final cache = PatternTilePictureCache();
     addTearDown(cache.dispose);
