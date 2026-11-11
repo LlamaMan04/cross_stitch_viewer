@@ -1,8 +1,8 @@
-import '../domain/pattern_definitions.dart';
-import '../domain/pattern_document.dart';
-import '../domain/pattern_grid.dart';
-import '../domain/pattern_provenance.dart';
-import '../domain/value_objects.dart';
+import '../../domain/pattern_definitions.dart';
+import '../../domain/pattern_document.dart';
+import '../../domain/pattern_grid.dart';
+import '../../domain/pattern_provenance.dart';
+import '../../domain/value_objects.dart';
 
 /// Supplies a deterministic, densely populated pattern for performance tests.
 abstract final class LargeSamplePatternFixture {
