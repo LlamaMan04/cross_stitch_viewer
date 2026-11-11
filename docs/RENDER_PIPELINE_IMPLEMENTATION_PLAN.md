@@ -615,7 +615,7 @@ pointer events do not write progress state on every update.
 - [x] Narrow tile-picture invalidation to settings that change static fills or
       glyphs; do not discard valid pictures for dynamic-only settings such as grid,
       region, completion-overlay, or selection changes.
-- [ ] Add widget-level coverage for controller notification behavior, pan,
+- [x] Add widget-level coverage for controller notification behavior, pan,
       pinch and wheel zoom, cache lifecycle, and viewport resizing; include these
       paths in the performance regression checks.
 - [x] Reduce the size of the 32x32 cached tiles to 16x16 cells
