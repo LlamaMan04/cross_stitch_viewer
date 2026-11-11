@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../domain/repositories.dart';
 import '../presentation/screens/library_screen.dart';
 import '../presentation/screens/settings_screen.dart';
-import 'extra_large_sample_pattern_fixture.dart';
-import 'large_sample_pattern_fixture.dart';
-import 'sample_pattern_fixture.dart';
+import 'test_patterns/extra_large_sample_pattern_fixture.dart';
+import 'test_patterns/large_sample_pattern_fixture.dart';
+import 'test_patterns/sample_pattern_fixture.dart';
 
 /// Root Material application configuration for StitchScope.
 class StitchScopeApp extends StatelessWidget {

@@ -1,9 +1,9 @@
 import 'dart:math';
 
-import '../domain/pattern_document.dart';
-import '../domain/pattern_grid.dart';
-import '../domain/pattern_provenance.dart';
-import '../domain/value_objects.dart';
+import '../../domain/pattern_document.dart';
+import '../../domain/pattern_grid.dart';
+import '../../domain/pattern_provenance.dart';
+import '../../domain/value_objects.dart';
 import 'large_sample_pattern_fixture.dart';
 
 /// Supplies a deterministic, randomly distributed pattern for large-scale tests.

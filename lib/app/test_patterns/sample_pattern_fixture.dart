@@ -1,8 +1,8 @@
-import '../domain/pattern_definitions.dart';
-import '../domain/pattern_document.dart';
-import '../domain/pattern_grid.dart';
-import '../domain/pattern_provenance.dart';
-import '../domain/value_objects.dart';
+import '../../domain/pattern_definitions.dart';
+import '../../domain/pattern_document.dart';
+import '../../domain/pattern_grid.dart';
+import '../../domain/pattern_provenance.dart';
+import '../../domain/value_objects.dart';
 
 /// Supplies a small normalized document for the first-run library experience.
 abstract final class SamplePatternFixture {
