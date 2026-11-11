@@ -72,13 +72,6 @@ OverviewRenderLevels resolveOverviewRenderLevels({
         coarseWeight: 0,
       );
     }
-    if (coarseWeight >= 1) {
-      return OverviewRenderLevels(
-        fineBlockSize: coarseSize,
-        coarseBlockSize: coarseSize,
-        coarseWeight: 0,
-      );
-    }
     return OverviewRenderLevels(
       fineBlockSize: fineSize,
       coarseBlockSize: coarseSize,

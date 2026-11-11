@@ -32,7 +32,7 @@ overscan.
 
 Implemented today:
 
-1. `PatternGrid` uses an immutable 32-by-32 tile index for visible cell range
+1. `PatternGrid` uses an immutable 16-by-16 tile index for visible cell range
    queries while retaining direct coordinate lookup.
 2. `PatternDocument` uses a tile index for visible source-region queries and
    removes duplicate region results across tiles.
@@ -54,11 +54,14 @@ or overview zoom, it queries only intersecting immutable tile summaries and
 does not enumerate visible cells. Visible-cell queries are shared within grid
 and detail paint passes, and document-scoped render metadata plus a bounded
 glyph-layout cache avoid per-cell color parsing, fill-paint allocation, and
-text layout. Each visible cell and grid rule still issues a separate draw call,
-and each grid rule still creates a paint. There is no batched path generation,
-tile picture cache, or renderer-specific frame instrumentation yet. Camera
-updates also call `setState` for every gesture update, rebuilding the viewport
-subtree before painting.
+text layout. Fill rectangles and grid rules are batched, camera updates repaint
+through a `Listenable` without rebuilding the viewport subtree, and optional
+instrumentation reports layer work plus build and raster timing. A bounded LRU
+picture cache records immutable tile fills and glyphs at quantized cell-size
+buckets. Panning replays retained tiles at the exact camera transform, while
+completion and selection accents remain dynamic. Cache misses paint directly
+during active gestures and populate on a settling repaint; zoom discards
+retained tile pictures so it always paints the current visual settings.
 
 The existing 100-by-200, 95%-populated fixture verifies range-query and gesture
 behavior, but is not sufficient as a production-scale performance target.
@@ -101,20 +104,20 @@ camera position and visual preferences are mutable user state.
 Create the following presentation-layer types, preferably under
 `lib/presentation/pattern_renderer/`:
 
-| Type | Responsibility |
-| --- | --- |
-| `PatternRenderSettings` | Immutable, persistable visual switches, colors, opacity, and ruler configuration. |
-| `GridColorPreset` | Named allowed grid colors; default is black. |
-| `PatternRenderSelection` | Ephemeral selected symbol ID and any selection-specific visual state. |
-| `PatternInteractionMode` | Ephemeral browse or exact-cell completion-edit tap behavior. |
-| `CompletionCellSelection` | Ephemeral set of exact coordinates awaiting a completion action. |
-| `CompletedCellStyle` | Immutable color and opacity used to gray completed cells. |
-| `RenderLod` | Automatic overview, grid, or detail paint policy derived from `cellSizePx`. |
-| `PatternCamera` | Pixels per cell plus the screen-space location of grid coordinate `(0, 0)`. |
-| `VisibleGridBounds` | Inclusive/exclusive row and column range visible in the drawable grid rectangle. |
-| `PatternViewportController` | Owns camera changes, fit/reset, bounds clamping, and optional restoration. |
-| `PatternViewport` | Stateful widget that measures space, handles gestures, and hosts `CustomPaint`. |
-| `ViewportPatternPainter` | Paints only the supplied visible bounds. |
+| Type                        | Responsibility                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| `PatternRenderSettings`     | Immutable, persistable visual switches, colors, opacity, and ruler configuration. |
+| `GridColorPreset`           | Named allowed grid colors; default is black.                                      |
+| `PatternRenderSelection`    | Ephemeral selected symbol ID and any selection-specific visual state.             |
+| `PatternInteractionMode`    | Ephemeral browse or exact-cell completion-edit tap behavior.                      |
+| `CompletionCellSelection`   | Ephemeral set of exact coordinates awaiting a completion action.                  |
+| `CompletedCellStyle`        | Immutable color and opacity used to gray completed cells.                         |
+| `RenderLod`                 | Automatic overview, grid, or detail paint policy derived from `cellSizePx`.       |
+| `PatternCamera`             | Pixels per cell plus the screen-space location of grid coordinate `(0, 0)`.       |
+| `VisibleGridBounds`         | Inclusive/exclusive row and column range visible in the drawable grid rectangle.  |
+| `PatternViewportController` | Owns camera changes, fit/reset, bounds clamping, and optional restoration.        |
+| `PatternViewport`           | Stateful widget that measures space, handles gestures, and hosts `CustomPaint`.   |
+| `ViewportPatternPainter`    | Paints only the supplied visible bounds.                                          |
 
 `PatternRenderSettings` should have these initial fields:
 
@@ -143,7 +146,7 @@ future non-thread color treatment is added, it must be an explicit opt-in and
 must not replace the true-color mode.
 
 `PatternRenderSelection` holds `String? selectedSymbolId` outside of imported
-pattern data. Selecting a palette entry must cause every *visible* cell with
+pattern data. Selecting a palette entry must cause every _visible_ cell with
 that symbol ID to receive the selected-symbol highlight; panning reveals the
 same highlight on additional matching cells. The selected symbol's own palette
 row remains visually selected until it is cleared or another symbol is chosen.
@@ -170,10 +173,12 @@ The visible-only foundations are complete: `PatternCamera`, domain
 `GridBounds`, `PatternViewport`, `ViewportPatternPainter`, the `PatternGrid`
 cell tile index, the `PatternDocument` region tile index, basic render
 settings, and the compact workspace/settings-panel composition. Camera
-restoration and debounced camera persistence, rulers, overview tile summaries,
-and the performance layers below remain planned work. Visible-only completion
-overlays and selected-symbol highlighting are implemented, including persisted
-controls for overlay visibility and whether selection includes completed cells.
+restoration, debounced camera persistence, and rulers remain planned work. LOD,
+overview tile summaries, render metadata, batching, repaint isolation,
+instrumentation, and bounded static-tile picture reuse are implemented.
+Visible-only completion overlays and selected-symbol highlighting are also
+implemented, including persisted controls for overlay visibility and whether
+selection includes completed cells.
 Users can enter a distinct completion-edit mode, select exact populated
 coordinates without changing symbol selection, batch-mark those cells complete
 or incomplete, and undo the last action. Completion changes persist through
@@ -192,7 +197,7 @@ The domain layer must not import presentation types. Define a domain-neutral
 row/column bounds value object in `domain`, or accept primitive range
 arguments. A tile index is the preferred implementation:
 
-- Use fixed grid tiles (for example, 32 by 32 cells).
+- Use fixed grid tiles (16 by 16 cells in the current implementation).
 - Build `Map<TileCoordinate, List<StitchCell>>` once in the `PatternGrid`
   constructor.
 - Query only tiles intersecting the visible bounds and filter their cells.
@@ -291,11 +296,11 @@ setting. It is calculated solely from the on-screen `cellSizePx` and does not
 change the camera, document data, or saved render settings. Every LOD still
 queries only visible cells or visible spatial tiles.
 
-| `RenderLod` | Cell-size range | Render policy |
-| --- | --- | --- |
-| `overview` | Below 3 logical pixels per cell | Omit glyphs and minor rules. Draw document borders and 10-by-10 rules, then render visible tile summaries/density rather than every cell. |
-| `grid` | 3 through less than 12 logical pixels per cell | Draw visible cell fills when enabled plus capped minor, major, and border rules; omit glyphs. |
-| `detail` | 12 or more logical pixels per cell | Draw individual visible fills, symbols, completion overlays, selected-symbol highlights, all visible rules, and rulers. |
+| `RenderLod` | Cell-size range                                | Render policy                                                                                                                             |
+| ----------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `overview`  | Below 3 logical pixels per cell                | Omit glyphs and minor rules. Draw document borders and 10-by-10 rules, then render visible tile summaries/density rather than every cell. |
+| `grid`      | 3 through less than 12 logical pixels per cell | Draw visible cell fills when enabled plus capped minor, major, and border rules; omit glyphs.                                             |
+| `detail`    | 12 or more logical pixels per cell             | Draw individual visible fills, symbols, completion overlays, selected-symbol highlights, all visible rules, and rulers.                   |
 
 Use hysteresis around each threshold so small zoom changes do not make layers
 flicker. For example, promote from `overview` to `grid` at 3.25 pixels and
@@ -316,14 +321,16 @@ workspace chrome or settings panel. Prefer a camera `ValueNotifier` or
 paint surface is invalidated; avoid rebuilding layout and gesture widgets for
 each pointer event.
 
-After LOD and batching are measured, add an optional picture cache for static
-tile content. A cache key should include tile coordinate, LOD, a quantized
-cell-size bucket, and all render settings affecting that tile. Cache only
-immutable document layers; completion and selection accents remain dynamic and
-must be painted or composited for visible tiles. Evict by a bounded memory
-budget and invalidate on document, theme, font, or relevant setting changes.
-Scrolling should reuse tiles that remain visible and paint only newly exposed
-tiles. Zoom should tolerate cache misses without blocking the UI thread.
+The renderer now uses an optional picture cache for static tile content. Its
+key includes document identity, tile coordinate, LOD, a quantized cell-size
+bucket, and settings affecting immutable tile output. Separate fill and glyph
+pictures preserve dynamic completion and selection overlays between those
+layers. The cache uses an engine-reported approximate memory budget, LRU
+eviction, and invalidation on document, theme, font, or setting changes.
+Scrolling reuses retained tiles; active-gesture misses paint directly and are
+recorded only on the settling repaint. Zooming discards retained tile pictures
+and paints directly until the gesture settles, preventing stale static layers
+from flashing through the current LOD or visual settings.
 
 ### Grid Rules
 
@@ -385,7 +392,7 @@ decluttering rule only and does not change the 10-cell major-grid positions.
 6. When either panel is collapsed, the viewport reclaims its width. On narrow
    layouts, preserve the left/right semantic placement using edge drawers or
    sheets opened from the floating menu.
-6. Persist every `PatternRenderSettings` field per pattern as part of its
+7. Persist every `PatternRenderSettings` field per pattern as part of its
    `ViewportState`. Reload those values before constructing the viewport so a
    document reopens with the same visual configuration. Do not place them in
    `PatternDocument` or global application settings.
@@ -405,20 +412,20 @@ only in widget memory. Continue to specify its camera coordinate convention:
 
 Add one `ViewportStates` column for each `PatternRenderSettings` property:
 
-| Domain setting | `viewport_states` column | Storage and default |
-| --- | --- | --- |
-| `showCellColor` | `show_cell_color` | Boolean, default `false`. |
-| `showSymbols` | `show_symbols` | Boolean, default `true`. |
-| `cellColorOpacity` | `cell_color_opacity` | Real, default `0.22`, constrained to `0..1`. |
-| `colorMode` | `color_mode` | Text enum, default `thread_color`; only recognized modes allowed. |
-| `gridColor` | `grid_color` | Canonical `#RRGGBB`, default black. |
-| `showRegions` | `show_regions` | Boolean, default `false`. |
-| `showTopRuler` | `show_top_ruler` | Boolean, default `true`. |
-| `showLeftRuler` | `show_left_ruler` | Boolean, default `true`. |
-| `completedCellColor` | `completed_cell_color` | Canonical `#RRGGBB`, default neutral gray. |
-| `completedCellOpacity` | `completed_cell_opacity` | Real, default `0.55`, constrained to `0..1`. |
-| `showCompletedCellOverlay` | `show_completed_cell_overlay` | Boolean, default `true`. |
-| `includeCompletedCellsInSelection` | `include_completed_cells_in_selection` | Boolean, default `true`. |
+| Domain setting                     | `viewport_states` column               | Storage and default                                               |
+| ---------------------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `showCellColor`                    | `show_cell_color`                      | Boolean, default `false`.                                         |
+| `showSymbols`                      | `show_symbols`                         | Boolean, default `true`.                                          |
+| `cellColorOpacity`                 | `cell_color_opacity`                   | Real, default `0.22`, constrained to `0..1`.                      |
+| `colorMode`                        | `color_mode`                           | Text enum, default `thread_color`; only recognized modes allowed. |
+| `gridColor`                        | `grid_color`                           | Canonical `#RRGGBB`, default black.                               |
+| `showRegions`                      | `show_regions`                         | Boolean, default `false`.                                         |
+| `showTopRuler`                     | `show_top_ruler`                       | Boolean, default `true`.                                          |
+| `showLeftRuler`                    | `show_left_ruler`                      | Boolean, default `true`.                                          |
+| `completedCellColor`               | `completed_cell_color`                 | Canonical `#RRGGBB`, default neutral gray.                        |
+| `completedCellOpacity`             | `completed_cell_opacity`               | Real, default `0.55`, constrained to `0..1`.                      |
+| `showCompletedCellOverlay`         | `show_completed_cell_overlay`          | Boolean, default `true`.                                          |
+| `includeCompletedCellsInSelection` | `include_completed_cells_in_selection` | Boolean, default `true`.                                          |
 
 Use non-null columns with SQL defaults and checks wherever SQLite can enforce
 the contract. The database migration must add the columns with those defaults,
@@ -439,73 +446,75 @@ pointer events do not write progress state on every update.
 ### Phase 1: Establish contracts and tests (partially complete)
 
 1. [x] Add focused unit tests for visible-bounds calculation, including negative
-   origins, edges, fractional cells, and one-cell overscan.
+       origins, edges, fractional cells, and one-cell overscan.
 2. [x] Add `PatternRenderSettings`, preset validation, and default-value tests.
 3. [x] Extend `ViewportState` with persisted render settings and add domain
-   validation/default-value tests.
+       validation/default-value tests.
 4. [x] Extend `ViewportStates`, `ProgressMapper`, the database schema version,
-   and the migration path for all render-settings columns; regenerate Drift
-   code and add migration/round-trip tests.
+       and the migration path for all render-settings columns; regenerate Drift
+       code and add migration/round-trip tests.
 5. [x] Add `PatternGrid` range-query tests for empty, sparse, dense, and
-   tile-boundary cases.
+       tile-boundary cases.
 6. [x] Add `RenderLod`, its hysteresis resolver, and visible-tile summary tests.
 7. [x] Add the renderer package and integrate the viewport path.
 
 ### Phase 2: Build the camera and viewport shell (foundation complete)
 
 1. [x] Implement `PatternCamera` conversion helpers: screen-to-grid,
-   grid-to-screen, visible bounds, and focal-point zoom.
+       grid-to-screen, visible bounds, and focal-point zoom.
 2. [ ] Implement `PatternViewportController` with notifier/listenable behavior.
 3. [x] Build `PatternViewport` with `LayoutBuilder`, a fixed-size `CustomPaint`,
-   and gesture handling.
+       and gesture handling.
 4. [ ] Add reset/fit-to-pattern behavior. Fit should be an explicit camera setup,
-   not a geometry calculation performed on every paint.
+       not a geometry calculation performed on every paint.
 5. [ ] Add widget tests for drag, pinch/scroll zoom, reset, and viewport resizing.
 
 ### Phase 3: Replace and optimize the painter (base path complete)
 
 1. [x] Extract document/theme inputs and replace `PatternGridPainter` with
-   `ViewportPatternPainter`.
+       `ViewportPatternPainter`.
 2. [x] Implement clipping and visible-only cell rendering using the new range
-   query.
+       query.
 3. [x] Implement the three rule classes with capped screen-space widths.
 4. [x] Add symbol-only, color-only, combined, and neither rendering modes.
 5. [x] Implement true thread-color parsing and opacity, preserving the source RGB
-   value for enabled cell fills.
+       value for enabled cell fills.
 6. [x] Add visible-only completed-cell overlays using `ProgressState` and its
-   configurable gray color/opacity.
+       configurable gray color/opacity.
 7. [x] Add visible-only selected-symbol highlights, keyed by selected symbol ID.
 8. [x] Add source-region intersection filtering and default it to hidden.
 9. [x] Apply the three-level LOD policy: visible tile summaries at overview,
-    glyph suppression at grid level, and complete per-cell rendering at detail.
+       glyph suppression at grid level, and complete per-cell rendering at detail.
 
 ### Phase 3A: Make frame cost proportional to visible detail
 
 1. [x] Add a pure LOD resolver with hysteresis at approximately 3 px/cell and
-   12 px/cell; verify overview, grid, and detail transitions independently.
+       12 px/cell; verify overview, grid, and detail transitions independently.
 2. [x] Add immutable per-tile summaries for overview density, dominant color, and
-   selection/completion presence. Overview rendering must not enumerate every
-   cell in a visible tile.
+       selection/completion presence. Overview rendering must not enumerate every
+       cell in a visible tile.
 3. [x] Precompute symbol render metadata, including parsed colors and contrast
-   inputs. Add a bounded glyph-layout cache keyed by glyph, font size,
-   foreground, and style.
+       inputs. Add a bounded glyph-layout cache keyed by glyph, font size,
+       foreground, and style.
 4. [x] Batch fills by color and grid rules by rule class. Reuse `Paint` instances
-   and expose focused primitive/draw-call measurements for profiling and tests.
+       and expose focused primitive/draw-call measurements for profiling and tests.
 5. [x] Add `RepaintBoundary` and notifier-driven camera repainting so pointer
-   updates do not rebuild unrelated workspace widgets.
+       updates do not rebuild unrelated workspace widgets.
 6. [x] Add frame counters and profiling hooks for visible cells, glyphs, grid
-   rules, draw calls, build time, and raster time. Enable the debug-only sink
-   with `--dart-define=PATTERN_RENDER_INSTRUMENTATION=true`; it remains disabled
-   in release builds.
+       rules, draw calls, build time, and raster time. Enable the debug-only sink
+       with `--dart-define=PATTERN_RENDER_INSTRUMENTATION=true`; it remains disabled
+       in release builds.
 
 ### Phase 3B: Reuse static work during scrolling
 
-1. Add a bounded picture cache for immutable tile layers, keyed by tile,
-   LOD, quantized cell-size bucket, and relevant settings.
-2. Reuse still-visible tile pictures while panning and render only newly
-   exposed tiles. Keep completion and selection accents dynamic.
-3. Validate cache memory, invalidation, and eviction behavior on desktop and
-   mobile. Do not block gesture frames waiting for cache generation.
+1. [x] Add a bounded picture cache for immutable tile layers, keyed by tile,
+       LOD, quantized cell-size bucket, and relevant settings.
+2. [x] Reuse still-visible tile pictures while panning and render only newly
+       exposed tiles. Keep completion and selection accents dynamic.
+3. [x] Validate cache memory, invalidation, and eviction behavior with
+       platform-independent renderer tests, cache diagnostics, and successful
+       Windows and Android builds. Suspend recording during camera gestures so
+       misses never block gesture frames; populate them on the settling repaint.
 
 ### Phase 4: Add rulers and settings controls
 
@@ -522,7 +531,7 @@ pointer events do not write progress state on every update.
 ### Phase 5: Integrate progress and remove legacy behavior
 
 1. [x] Add exact-cell completion-edit mode with batch complete/incomplete
-   actions, transient coordinate selection, and undo.
+       actions, transient coordinate selection, and undo.
 2. Load and restore camera state plus every persisted render setting when
    opening a document.
 3. Debounce and save camera state and render-settings changes through
@@ -584,6 +593,35 @@ pointer events do not write progress state on every update.
 - Verify painter inputs contain only the calculated visible bounds; expose
   test-only counters or a query spy instead of relying solely on pixels.
 
+### Renderer Items to Address
+
+- [ ] Batch or otherwise consolidate overview density and accent rendering so a
+      dense, low-zoom viewport does not issue one canvas draw call per populated
+      summary block (or per blended overview level).
+- [x] Preserve useful tile-picture cache entries across scale changes. Avoid
+      clearing every entry on each zoom update; retain bounded, scale-keyed entries
+      where their recorded representation remains valid.
+- [x] Pre-index pending completion selections by overview block size when the
+      selection changes, rather than rebuilding a set for each overview paint
+      layer.
+- [x] Remove hot-path paint and collection allocations where feasible,
+      especially the per-summary `Paint` created by overview density rendering.
+- [x] Release tile-picture leases in a `try`/`finally` block so a paint or
+      metrics-callback exception cannot retain native pictures indefinitely.
+- [x] Correct renderer instrumentation so `visibleCellCount` remains accurate
+      when static tile pictures are replayed instead of `_visibleCells`.
+- [x] Remove the duplicate unreachable `coarseWeight >= 1` branch in the
+      overview-level resolver.
+- [x] Narrow tile-picture invalidation to settings that change static fills or
+      glyphs; do not discard valid pictures for dynamic-only settings such as grid,
+      region, completion-overlay, or selection changes.
+- [x] Add widget-level coverage for controller notification behavior, pan,
+      pinch and wheel zoom, cache lifecycle, and viewport resizing; include these
+      paths in the performance regression checks.
+- [x] Reduce the size of the 32x32 cached tiles to 16x16 cells
+- [ ] Rework the way the pattern is rendered in overview mode, the current format
+      is not faithful to the actual pattern picture.
+
 ### Manual Performance Checks
 
 - Test dense and sparse patterns substantially larger than the 100-by-200
@@ -638,16 +676,16 @@ pointer events do not write progress state on every update.
 
 ## Risks and Decisions to Resolve Before Coding
 
-| Decision | Why it matters | Recommended initial choice |
-| --- | --- | --- |
-| Tile size | Balances index memory against query work. | Start at 32 by 32 and profile. |
-| Very-low-zoom behavior | Individual cells cannot be legible indefinitely. | Support overview LOD with visible tile summaries, major rules, and decluttered rulers. |
-| Render-setting scope | Determines persistence schema and UX. | Persist all viewport render settings per pattern in `ViewportStates`. |
-| Completed-cell style scope | Determines whether a user sees the same completion treatment across patterns. | Persist as part of that pattern's `ViewportState`. |
-| Highlight treatment | Must remain visible over color fills and completion overlays. | Use an accessible high-contrast outline plus optional accent tint. |
-| Coordinate labels | Prevents off-by-one confusion. | Use zero-indexed grid-line labels: `0` is the outer border and `10` is ten cells over. |
-| Region styling | Must not obscure pattern data. | Outline-only, hidden by default. |
-| Text caching | Can improve dense symbol views but adds complexity. | Profile first; cache only if text layout is material. |
+| Decision                   | Why it matters                                                                | Recommended initial choice                                                             |
+| -------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Tile size                  | Balances index memory against query work.                                     | Use 16 by 16 and profile.                                                              |
+| Very-low-zoom behavior     | Individual cells cannot be legible indefinitely.                              | Support overview LOD with visible tile summaries, major rules, and decluttered rulers. |
+| Render-setting scope       | Determines persistence schema and UX.                                         | Persist all viewport render settings per pattern in `ViewportStates`.                  |
+| Completed-cell style scope | Determines whether a user sees the same completion treatment across patterns. | Persist as part of that pattern's `ViewportState`.                                     |
+| Highlight treatment        | Must remain visible over color fills and completion overlays.                 | Use an accessible high-contrast outline plus optional accent tint.                     |
+| Coordinate labels          | Prevents off-by-one confusion.                                                | Use zero-indexed grid-line labels: `0` is the outer border and `10` is ten cells over. |
+| Region styling             | Must not obscure pattern data.                                                | Outline-only, hidden by default.                                                       |
+| Text caching               | Can improve dense symbol views but adds complexity.                           | Profile first; cache only if text layout is material.                                  |
 
 ## Files Expected to Change
 

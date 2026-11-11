@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
+import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
 
@@ -265,4 +267,138 @@ void main() {
 
     expect(selectedCoordinate, const GridCoordinate(0, 0));
   });
+
+  testWidgets('pinch zoom updates the focal camera and settles repainting', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_viewportApp(LargeSamplePatternFixture.create()));
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final before = _painter(tester, canvasFinder).camera;
+    final viewport = find.byKey(const ValueKey('pattern-viewport'));
+    final center = tester.getCenter(viewport);
+    final localCenter = center - tester.getTopLeft(viewport);
+    final firstPointer = await tester.startGesture(
+      center - const Offset(30, 0),
+      pointer: 1,
+    );
+    final secondPointer = await tester.startGesture(
+      center + const Offset(30, 0),
+      pointer: 2,
+    );
+    await firstPointer.moveBy(const Offset(-20, 0));
+    await secondPointer.moveBy(const Offset(20, 0));
+    await tester.pump();
+    await firstPointer.up();
+    await secondPointer.up();
+    await tester.pump(const Duration(milliseconds: 150));
+
+    final after = _painter(tester, canvasFinder).camera;
+    expect(after.cellSize, greaterThan(before.cellSize));
+    expect(
+      after.screenToGrid(localCenter),
+      closeToOffset(before.screenToGrid(localCenter)),
+    );
+  });
+
+  testWidgets('wheel zoom updates the camera around the pointer', (tester) async {
+    await tester.pumpWidget(_viewportApp(LargeSamplePatternFixture.create()));
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final viewport = find.byKey(const ValueKey('pattern-viewport'));
+    final focalPoint = tester.getCenter(viewport);
+    final localFocalPoint = focalPoint - tester.getTopLeft(viewport);
+    final before = _painter(tester, canvasFinder).camera;
+    await tester.sendEventToBinding(
+      PointerScrollEvent(position: focalPoint, scrollDelta: const Offset(0, -120)),
+    );
+    await tester.pump();
+
+    final after = _painter(tester, canvasFinder).camera;
+    expect(after.cellSize, greaterThan(before.cellSize));
+    expect(
+      after.screenToGrid(localFocalPoint),
+      closeToOffset(before.screenToGrid(localFocalPoint)),
+    );
+    await tester.pump(const Duration(milliseconds: 150));
+  });
+
+  testWidgets('retains tile cache entries while panning and settling', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_viewportApp(SamplePatternFixture.create()));
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final painterBefore = _painter(tester, canvasFinder);
+    final entriesBefore = painterBefore.tilePictureCache!.entryCount;
+    expect(entriesBefore, greaterThan(0));
+
+    await tester.drag(
+      find.byKey(const ValueKey('pattern-viewport')),
+      const Offset(-20, 0),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+
+    expect(
+      _painter(tester, canvasFinder).tilePictureCache!.entryCount,
+      greaterThanOrEqualTo(entriesBefore),
+    );
+  });
+
+  testWidgets('resizing keeps the camera inside the new viewport bounds', (
+    tester,
+  ) async {
+    final document = LargeSamplePatternFixture.create();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 320,
+          height: 240,
+          child: PatternRenderView(document: document),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 640,
+          height: 480,
+          child: PatternRenderView(document: document),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final camera = _painter(
+      tester,
+      find.byKey(const ValueKey('pattern-grid-canvas')),
+    ).camera;
+    expect(camera.cellSize, inInclusiveRange(1, PatternCamera.maximumCellSize));
+    expect(camera.origin.dx.isFinite, isTrue);
+    expect(camera.origin.dy.isFinite, isTrue);
+  });
 }
+
+/// Builds a fixed-size application shell around a viewport document.
+Widget _viewportApp(PatternDocument document) => MaterialApp(
+  home: SizedBox(
+    width: 400,
+    height: 300,
+    child: PatternRenderView(document: document),
+  ),
+);
+
+/// Reads the current viewport painter from the test canvas.
+ViewportPatternPainter _painter(WidgetTester tester, Finder canvasFinder) =>
+    tester.widget<CustomPaint>(canvasFinder).painter! as ViewportPatternPainter;
+
+/// Matches two grid points within the precision expected from gesture events.
+Matcher closeToOffset(Offset expected) => predicate<Offset>(
+  (actual) => (actual - expected).distance < 0.01,
+  'an offset close to $expected',
+);

@@ -51,11 +51,16 @@ class PatternGlyphLayoutCache {
     return layout;
   }
 
-  /// Releases every native text layout retained by the cache.
-  void dispose() {
+  /// Releases every native text layout so changed font inputs can rebuild it.
+  void clear() {
     for (final layout in _layouts.values) {
       layout.dispose();
     }
     _layouts.clear();
+  }
+
+  /// Releases every native text layout retained by the cache.
+  void dispose() {
+    clear();
   }
 }

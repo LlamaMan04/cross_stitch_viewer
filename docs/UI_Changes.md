@@ -13,3 +13,4 @@ The entire render engine needs to be reworked to only render the current visible
 - Add a toggleable ruler on the top and left sides (configurable) that displays tick marks for each grid line, as well as numbers displaying the coordinates of the sub-grid (every 10 stitches).
 - Allow source regions to be toggled on and off from being rendered in the grid. By default do not render them.
 - Add a configuration option to select whether or not completed cells are highlighted as part of cells highlighted by selected symbol.
+- Add a presentation mode that renders a full-scale version of the pattern with no symbols, no grid, and full opacity cell colors. Render this separately from the pattern view, it should not be scrollable or zoomable and will not be as concerned about optimization.

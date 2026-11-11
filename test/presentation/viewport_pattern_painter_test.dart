@@ -11,6 +11,7 @@ import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_layout_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_symbol_render_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_picture_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 
@@ -167,6 +168,255 @@ void main() {
     expect(metrics?.glyphCount, 0);
     expect(metrics?.drawCallCount, greaterThanOrEqualTo(4));
   });
+
+  test('reuses static tile pictures while the camera origin changes', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    final tilePictureCache = PatternTilePictureCache();
+    addTearDown(glyphLayoutCache.dispose);
+    addTearDown(tilePictureCache.dispose);
+    PatternRenderBatchMetrics? secondMetrics;
+
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 8, origin: Offset.zero),
+    );
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 8, origin: Offset(-4, -2)),
+      onBatchMetrics: (metrics) => secondMetrics = metrics,
+    );
+
+    expect(fixture.grid.queryCount, 1);
+    expect(tilePictureCache.entryCount, 1);
+    expect(secondMetrics?.tilePictureHits, 1);
+    expect(secondMetrics?.tilePictureMisses, 0);
+  });
+
+  test(
+    'paints cache misses directly during interaction and warms afterward',
+    () {
+      final fixture = _createCountingDocument();
+      final glyphLayoutCache = PatternGlyphLayoutCache();
+      final tilePictureCache = PatternTilePictureCache()..suspendWrites();
+      addTearDown(glyphLayoutCache.dispose);
+      addTearDown(tilePictureCache.dispose);
+
+      _paintCachedFixture(
+        fixture: fixture,
+        glyphLayoutCache: glyphLayoutCache,
+        tilePictureCache: tilePictureCache,
+        camera: const PatternCamera(cellSize: 8, origin: Offset.zero),
+      );
+
+      expect(tilePictureCache.entryCount, 0);
+      expect(fixture.grid.queryCount, 1);
+
+      tilePictureCache.resumeWrites();
+      _paintCachedFixture(
+        fixture: fixture,
+        glyphLayoutCache: glyphLayoutCache,
+        tilePictureCache: tilePictureCache,
+        camera: const PatternCamera(cellSize: 8, origin: Offset.zero),
+      );
+
+      expect(tilePictureCache.entryCount, 1);
+      expect(fixture.grid.queryCount, 2);
+    },
+  );
+
+  test('discards retained tile pictures for every active zoom frame', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    final tilePictureCache = PatternTilePictureCache();
+    addTearDown(glyphLayoutCache.dispose);
+    addTearDown(tilePictureCache.dispose);
+    PatternRenderBatchMetrics? zoomMetrics;
+    PatternRenderBatchMetrics? settledMetrics;
+
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 8, origin: Offset.zero),
+    );
+    tilePictureCache
+      ..suspendWrites()
+      ..suspendReuse()
+      ..clear();
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 8, origin: Offset(-4, -2)),
+      onBatchMetrics: (metrics) => zoomMetrics = metrics,
+    );
+
+    expect(tilePictureCache.entryCount, 0);
+    expect(fixture.grid.queryCount, 2);
+    expect(zoomMetrics?.tilePictureHits, 0);
+    expect(zoomMetrics?.tilePictureMisses, 0);
+    expect(zoomMetrics?.tilePictureBypasses, 1);
+
+    tilePictureCache
+      ..resumeWrites()
+      ..resumeReuse();
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 8, origin: Offset(-4, -2)),
+      onBatchMetrics: (metrics) => settledMetrics = metrics,
+    );
+
+    expect(fixture.grid.queryCount, 3);
+    expect(settledMetrics?.tilePictureHits, 0);
+    expect(settledMetrics?.tilePictureMisses, 1);
+    expect(settledMetrics?.tilePictureBypasses, 0);
+    expect(tilePictureCache.entryCount, 1);
+  });
+
+  for (final interaction in <String, void Function(PatternTilePictureCache)>{
+    'pan cache miss': (cache) => cache.suspendWrites(),
+    'zoom cache bypass': (cache) => cache
+      ..suspendWrites()
+      ..suspendReuse(),
+  }.entries) {
+    test(
+      'keeps cell colors disabled during ${interaction.key}',
+      () {
+        final fixture = _createCountingDocument();
+        final glyphLayoutCache = PatternGlyphLayoutCache();
+        final tilePictureCache = PatternTilePictureCache();
+        addTearDown(glyphLayoutCache.dispose);
+        addTearDown(tilePictureCache.dispose);
+        PatternRenderBatchMetrics? metrics;
+        interaction.value(tilePictureCache);
+
+        _paintCachedFixture(
+          fixture: fixture,
+          glyphLayoutCache: glyphLayoutCache,
+          tilePictureCache: tilePictureCache,
+          camera: const PatternCamera(cellSize: 16, origin: Offset.zero),
+          settings: const PatternRenderSettings(showCellColor: false),
+          renderLod: RenderLod.detail,
+          onBatchMetrics: (value) => metrics = value,
+        );
+
+        expect(metrics?.cellFillCount, 0);
+        expect(metrics?.cellFillDrawCalls, 0);
+      },
+    );
+  }
+
+  for (final interaction in <String, void Function(PatternTilePictureCache)>{
+    'pan cache miss': (cache) => cache.suspendWrites(),
+    'zoom cache bypass': (cache) => cache
+      ..suspendWrites()
+      ..suspendReuse(),
+  }.entries) {
+    test(
+      'keeps symbols disabled during ${interaction.key}',
+      () {
+        final fixture = _createCountingDocument();
+        final glyphLayoutCache = PatternGlyphLayoutCache();
+        final tilePictureCache = PatternTilePictureCache();
+        addTearDown(glyphLayoutCache.dispose);
+        addTearDown(tilePictureCache.dispose);
+        PatternRenderBatchMetrics? metrics;
+        interaction.value(tilePictureCache);
+
+        _paintCachedFixture(
+          fixture: fixture,
+          glyphLayoutCache: glyphLayoutCache,
+          tilePictureCache: tilePictureCache,
+          camera: const PatternCamera(cellSize: 16, origin: Offset.zero),
+          settings: const PatternRenderSettings(
+            showCellColor: true,
+            showSymbols: false,
+          ),
+          renderLod: RenderLod.detail,
+          onBatchMetrics: (value) => metrics = value,
+        );
+
+        expect(metrics?.glyphCount, 0);
+      },
+    );
+  }
+
+  test('keeps completion overlays dynamic over reused static pictures', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    final tilePictureCache = PatternTilePictureCache();
+    addTearDown(glyphLayoutCache.dispose);
+    addTearDown(tilePictureCache.dispose);
+    PatternRenderBatchMetrics? completedMetrics;
+
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 8, origin: Offset.zero),
+    );
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 8, origin: Offset.zero),
+      completedCells: <GridCoordinate>{const GridCoordinate(0, 0)},
+      onBatchMetrics: (metrics) => completedMetrics = metrics,
+    );
+
+    expect(completedMetrics?.tilePictureHits, 1);
+    expect(completedMetrics?.tilePictureMisses, 0);
+    expect(fixture.grid.queryCount, 2);
+    expect(completedMetrics?.drawCallCount, greaterThan(4));
+  });
+}
+
+/// Paints one grid-LOD frame through the shared tile picture cache.
+void _paintCachedFixture({
+  required ({PatternDocument document, _CountingPatternGrid grid}) fixture,
+  required PatternGlyphLayoutCache glyphLayoutCache,
+  required PatternTilePictureCache tilePictureCache,
+  required PatternCamera camera,
+  PatternRenderSettings settings = const PatternRenderSettings(
+    showCellColor: true,
+  ),
+  RenderLod renderLod = RenderLod.grid,
+  Set<GridCoordinate> completedCells = const <GridCoordinate>{},
+  ValueChanged<PatternRenderBatchMetrics>? onBatchMetrics,
+}) {
+  final painter = ViewportPatternPainter(
+    document: fixture.document,
+    camera: camera,
+    visibleBounds: const GridBounds(
+      startRow: 0,
+      endRow: 4,
+      startColumn: 0,
+      endColumn: 5,
+    ),
+    settings: settings,
+    selection: const PatternRenderSelection(),
+    completedCells: completedCells,
+    completionSelection: const <GridCoordinate>{},
+    surfaceColor: Colors.white,
+    regionColor: Colors.blue,
+    completionSelectionColor: Colors.teal,
+    glyphLayoutCache: glyphLayoutCache,
+    symbolRenderCache: PatternSymbolRenderCache(fixture.document),
+    tilePictureCache: tilePictureCache,
+    renderLod: renderLod,
+    completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{},
+    onBatchMetrics: onBatchMetrics,
+  );
+  final recorder = PictureRecorder();
+  painter.paint(Canvas(recorder), const Size(400, 300));
+  recorder.endRecording().dispose();
 }
 
 /// Creates a representative document backed by an observable spatial grid.

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -14,6 +15,7 @@ import 'pattern_interaction.dart';
 import 'pattern_render_instrumentation.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
+import 'pattern_tile_picture_cache.dart';
 import 'pattern_viewport_controller.dart';
 import 'viewport_pattern_painter.dart';
 
@@ -78,14 +80,26 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Glyph layouts shared by every painter created for this viewport.
   final PatternGlyphLayoutCache _glyphLayoutCache = PatternGlyphLayoutCache();
 
+  /// Static tile display lists shared by every painter for this viewport.
+  final PatternTilePictureCache _tilePictureCache = PatternTilePictureCache();
+
   /// Parsed symbol colors and fill paints shared across viewport painters.
   late PatternSymbolRenderCache _symbolRenderCache;
 
   /// Optional debug-only sink for renderer counters and frame timings.
   PatternRenderInstrumentation? _instrumentation;
 
+  /// Debounces wheel zoom before allowing a settling cache-population frame.
+  Timer? _wheelInteractionTimer;
+
+  /// Whether dependency-driven cache invalidation passed its initial call.
+  bool _dependenciesInitialized = false;
+
   /// Summary blocks containing completion at every overview resolution.
   late Map<int, Set<PatternTileCoordinate>> _completedOverviewCoordinates;
+
+  /// Summary blocks containing pending completion selections by resolution.
+  late Map<int, Set<PatternTileCoordinate>> _pendingOverviewCoordinates;
 
   /// Camera notifier created after the viewport receives a layout size.
   PatternViewportController? _cameraController;
@@ -130,15 +144,31 @@ class _PatternViewportState extends State<PatternViewport> {
     _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
       widget.completedCells,
     );
+    _pendingOverviewCoordinates = _indexOverviewCoordinates(
+      widget.completionSelection.coordinates,
+    );
   }
 
   /// Releases cached native text layouts with the owning viewport.
   @override
   void dispose() {
+    _wheelInteractionTimer?.cancel();
     _instrumentation?.dispose();
     _cameraController?.dispose();
+    _tilePictureCache.dispose();
     _glyphLayoutCache.dispose();
     super.dispose();
+  }
+
+  /// Invalidates native pictures when inherited theme or font inputs change.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_dependenciesInitialized) {
+      _tilePictureCache.clear();
+      _glyphLayoutCache.clear();
+    }
+    _dependenciesInitialized = true;
   }
 
   /// Resets the camera when a different document is placed in this viewport.
@@ -150,11 +180,20 @@ class _PatternViewportState extends State<PatternViewport> {
       _cameraController = null;
       _gestureStartCamera = null;
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+      _tilePictureCache.clear();
+    } else if (_staticTilePictureSettingsChanged(oldWidget.settings)) {
+      // Only static fills and glyph contrast require picture invalidation.
+      _tilePictureCache.clear();
     }
     if (oldWidget.document != widget.document ||
         !identical(oldWidget.completedCells, widget.completedCells)) {
       _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
         widget.completedCells,
+      );
+    }
+    if (oldWidget.completionSelection != widget.completionSelection) {
+      _pendingOverviewCoordinates = _indexOverviewCoordinates(
+        widget.completionSelection.coordinates,
       );
     }
   }
@@ -190,6 +229,7 @@ class _PatternViewportState extends State<PatternViewport> {
             behavior: HitTestBehavior.opaque,
             onScaleStart: _handleScaleStart,
             onScaleUpdate: _handleScaleUpdate,
+            onScaleEnd: _handleScaleEnd,
             onTapUp:
                 widget.onSymbolSelected == null &&
                     widget.onCompletionCellSelected == null
@@ -212,8 +252,10 @@ class _PatternViewportState extends State<PatternViewport> {
                   completionSelectionColor: colors.primary,
                   glyphLayoutCache: _glyphLayoutCache,
                   symbolRenderCache: _symbolRenderCache,
+                  tilePictureCache: _tilePictureCache,
                   renderLod: cameraController.renderLod,
                   completedOverviewCoordinates: _completedOverviewCoordinates,
+                  pendingOverviewCoordinates: _pendingOverviewCoordinates,
                   cameraController: cameraController,
                   viewportSize: viewportSize,
                   onBatchMetrics: _instrumentation?.recordPaint,
@@ -241,6 +283,27 @@ class _PatternViewportState extends State<PatternViewport> {
         ),
       ),
   });
+
+  /// Indexes coordinates into every supported overview resolution.
+  Map<int, Set<PatternTileCoordinate>> _indexOverviewCoordinates(
+    Set<GridCoordinate> coordinates,
+  ) => Map<int, Set<PatternTileCoordinate>>.unmodifiable({
+    for (final blockSize in PatternGrid.overviewBlockSizes)
+      blockSize: Set<PatternTileCoordinate>.unmodifiable(
+        coordinates.map(
+          (coordinate) => PatternTileCoordinate(
+            coordinate.row ~/ blockSize,
+            coordinate.column ~/ blockSize,
+          ),
+        ),
+      ),
+  });
+
+  /// Whether changed settings alter recorded tile picture output.
+  bool _staticTilePictureSettingsChanged(PatternRenderSettings oldSettings) =>
+      oldSettings.showCellColor != widget.settings.showCellColor ||
+      oldSettings.cellColorOpacity != widget.settings.cellColorOpacity ||
+      oldSettings.showSymbols != widget.settings.showSymbols;
 
   /// Converts a tap into a populated cell's symbol selection.
   void _handleTapUp(TapUpDetails details) {
@@ -440,13 +503,23 @@ class _PatternViewportState extends State<PatternViewport> {
       _gestureStartCamera = null;
       return;
     }
+    _beginCameraInteraction();
     _gestureStartCamera = _cameraController?.camera;
     _gestureStartFocalPoint = details.localFocalPoint;
+  }
+
+  /// Finishes one touch or pointer gesture and populates missed cache tiles.
+  void _handleScaleEnd(ScaleEndDetails details) {
+    _gestureStartCamera = null;
+    _finishCameraInteraction();
   }
 
   /// Applies combined drag and pinch input from the gesture's initial camera.
   void _handleScaleUpdate(ScaleUpdateDetails details) {
     if (_selectionDragPointer != null) return;
+    if ((details.scale - 1).abs() > 0.0001) {
+      _bypassTilePicturesForZoom();
+    }
     // Gesture updates always derive from the same start snapshot.
     final startCamera = _gestureStartCamera;
     final viewportSize = _viewportSize;
@@ -472,7 +545,7 @@ class _PatternViewportState extends State<PatternViewport> {
       details.localFocalPoint.dx - gridPoint.dx * nextCellSize,
       details.localFocalPoint.dy - gridPoint.dy * nextCellSize,
     );
-    _cameraController?.updateCamera(
+    _updateInteractionCamera(
       PatternCamera(cellSize: nextCellSize, origin: nextOrigin).clampTo(
         dimensions: widget.document.grid.dimensions,
         viewportSize: viewportSize,
@@ -487,9 +560,10 @@ class _PatternViewportState extends State<PatternViewport> {
     widget.onInteraction?.call();
     final viewportSize = _viewportSize;
     if (viewportSize == null) return;
+    _beginCameraInteraction(bypassTilePictures: true);
     // Exponential scaling makes equal wheel deltas feel symmetric.
     final scale = math.exp(-event.scrollDelta.dy * 0.0015);
-    cameraController.updateCamera(
+    _updateInteractionCamera(
       cameraController.camera.zoomAround(
         focalPoint: event.localPosition,
         scale: scale,
@@ -497,5 +571,38 @@ class _PatternViewportState extends State<PatternViewport> {
         viewportSize: viewportSize,
       ),
     );
+    _wheelInteractionTimer = Timer(
+      const Duration(milliseconds: 120),
+      _finishCameraInteraction,
+    );
+  }
+
+  /// Suspends cache recording and optionally picture replay for camera updates.
+  void _beginCameraInteraction({bool bypassTilePictures = false}) {
+    _wheelInteractionTimer?.cancel();
+    _tilePictureCache.suspendWrites();
+    if (bypassTilePictures) _bypassTilePicturesForZoom();
+  }
+
+  /// Stops picture replay as soon as an interaction becomes a zoom.
+  void _bypassTilePicturesForZoom() {
+    if (!_tilePictureCache.reuseEnabled) return;
+    _tilePictureCache.suspendReuse();
+  }
+
+  /// Applies a camera update while retaining scale-keyed static pictures.
+  void _updateInteractionCamera(PatternCamera nextCamera) {
+    final cameraController = _cameraController;
+    if (cameraController == null) return;
+    cameraController.updateCamera(nextCamera);
+  }
+
+  /// Restores cache reuse and recording, then requests one settling repaint.
+  void _finishCameraInteraction() {
+    _wheelInteractionTimer?.cancel();
+    _wheelInteractionTimer = null;
+    _tilePictureCache.resumeWrites();
+    _tilePictureCache.resumeReuse();
+    _cameraController?.requestRepaint();
   }
 }

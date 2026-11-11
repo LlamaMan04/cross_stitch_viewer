@@ -42,4 +42,9 @@ class PatternViewportController extends ChangeNotifier {
       previous: _renderLod,
     );
   }
+
+  /// Requests a paint without changing camera geometry or rebuilding widgets.
+  void requestRepaint() {
+    notifyListeners();
+  }
 }
