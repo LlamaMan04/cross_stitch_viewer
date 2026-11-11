@@ -18,6 +18,7 @@ import 'pattern_symbol_render_cache.dart';
 import 'pattern_tile_picture_cache.dart';
 import 'pattern_viewport_controller.dart';
 import 'viewport_pattern_painter.dart';
+import 'viewport_ruler_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
 class PatternViewport extends StatefulWidget {
@@ -206,9 +207,23 @@ class _PatternViewportState extends State<PatternViewport> {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Layout can briefly report zero; retain finite camera geometry.
-        final viewportSize = Size(
+        final fullViewportSize = Size(
           math.max(1, constraints.maxWidth),
           math.max(1, constraints.maxHeight),
+        );
+        final showLeftRuler =
+            widget.settings.showLeftRuler && widget.settings.showGrid;
+        final showTopRuler =
+            widget.settings.showTopRuler && widget.settings.showGrid;
+        final leftRulerExtent = showLeftRuler
+            ? ViewportRulerPainter.leftExtent
+            : 0.0;
+        final topRulerExtent = showTopRuler
+            ? ViewportRulerPainter.topExtent
+            : 0.0;
+        final viewportSize = Size(
+          math.max(1, fullViewportSize.width - leftRulerExtent),
+          math.max(1, fullViewportSize.height - topRulerExtent),
         );
         _updateCameraForLayout(viewportSize);
         // Camera and bounds are immutable inputs for this paint pass.
@@ -218,52 +233,81 @@ class _PatternViewportState extends State<PatternViewport> {
           viewportSize: viewportSize,
           dimensions: widget.document.grid.dimensions,
         );
-        return Listener(
-          key: const ValueKey('pattern-viewport'),
-          onPointerDown: _handlePointerDown,
-          onPointerMove: _handlePointerMove,
-          onPointerUp: _handlePointerUp,
-          onPointerCancel: _handlePointerCancel,
-          onPointerSignal: _handlePointerSignal,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onScaleStart: _handleScaleStart,
-            onScaleUpdate: _handleScaleUpdate,
-            onScaleEnd: _handleScaleEnd,
-            onTapUp:
-                widget.onSymbolSelected == null &&
-                    widget.onCompletionCellSelected == null
-                ? null
-                : _handleTapUp,
-            child: RepaintBoundary(
-              key: const ValueKey('pattern-render-boundary'),
-              child: CustomPaint(
-                key: const ValueKey('pattern-grid-canvas'),
-                painter: ViewportPatternPainter(
-                  document: widget.document,
-                  camera: camera,
-                  visibleBounds: visibleBounds,
-                  settings: widget.settings,
-                  selection: widget.selection,
-                  completedCells: widget.completedCells,
-                  completionSelection: widget.completionSelection.coordinates,
-                  surfaceColor: colors.surfaceContainerLowest,
-                  regionColor: colors.primary,
-                  completionSelectionColor: colors.primary,
-                  glyphLayoutCache: _glyphLayoutCache,
-                  symbolRenderCache: _symbolRenderCache,
-                  tilePictureCache: _tilePictureCache,
-                  renderLod: cameraController.renderLod,
-                  completedOverviewCoordinates: _completedOverviewCoordinates,
-                  pendingOverviewCoordinates: _pendingOverviewCoordinates,
-                  cameraController: cameraController,
-                  viewportSize: viewportSize,
-                  onBatchMetrics: _instrumentation?.recordPaint,
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            if (showTopRuler || showLeftRuler)
+              IgnorePointer(
+                child: CustomPaint(
+                  key: const ValueKey('pattern-viewport-rulers'),
+                  painter: ViewportRulerPainter(
+                    cameraController: cameraController,
+                    dimensions: widget.document.grid.dimensions,
+                    drawableSize: viewportSize,
+                    showTopRuler: showTopRuler,
+                    showLeftRuler: showLeftRuler,
+                    rulerColor: ViewportRulerPainter.backgroundColor,
+                    tickColor: _gridColor(widget.settings.gridColor.colorHex),
+                    labelColor: colors.onSurfaceVariant,
+                  ),
                 ),
-                child: const SizedBox.expand(),
+              ),
+            Positioned(
+              left: leftRulerExtent,
+              top: topRulerExtent,
+              width: viewportSize.width,
+              height: viewportSize.height,
+              child: Listener(
+                key: const ValueKey('pattern-viewport'),
+                onPointerDown: _handlePointerDown,
+                onPointerMove: _handlePointerMove,
+                onPointerUp: _handlePointerUp,
+                onPointerCancel: _handlePointerCancel,
+                onPointerSignal: _handlePointerSignal,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onScaleStart: _handleScaleStart,
+                  onScaleUpdate: _handleScaleUpdate,
+                  onScaleEnd: _handleScaleEnd,
+                  onTapUp:
+                      widget.onSymbolSelected == null &&
+                          widget.onCompletionCellSelected == null
+                      ? null
+                      : _handleTapUp,
+                  child: RepaintBoundary(
+                    key: const ValueKey('pattern-render-boundary'),
+                    child: CustomPaint(
+                      key: const ValueKey('pattern-grid-canvas'),
+                      painter: ViewportPatternPainter(
+                        document: widget.document,
+                        camera: camera,
+                        visibleBounds: visibleBounds,
+                        settings: widget.settings,
+                        selection: widget.selection,
+                        completedCells: widget.completedCells,
+                        completionSelection:
+                            widget.completionSelection.coordinates,
+                        surfaceColor: colors.surfaceContainerLowest,
+                        regionColor: colors.primary,
+                        completionSelectionColor: colors.primary,
+                        glyphLayoutCache: _glyphLayoutCache,
+                        symbolRenderCache: _symbolRenderCache,
+                        tilePictureCache: _tilePictureCache,
+                        renderLod: cameraController.renderLod,
+                        completedOverviewCoordinates:
+                            _completedOverviewCoordinates,
+                        pendingOverviewCoordinates: _pendingOverviewCoordinates,
+                        cameraController: cameraController,
+                        viewportSize: viewportSize,
+                        onBatchMetrics: _instrumentation?.recordPaint,
+                      ),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         );
       },
     );
@@ -304,6 +348,10 @@ class _PatternViewportState extends State<PatternViewport> {
       oldSettings.showCellColor != widget.settings.showCellColor ||
       oldSettings.cellColorOpacity != widget.settings.cellColorOpacity ||
       oldSettings.showSymbols != widget.settings.showSymbols;
+
+  /// Converts a persisted `#RRGGBB` grid preset into an opaque Flutter color.
+  Color _gridColor(String colorHex) =>
+      Color(int.parse('FF${colorHex.substring(1)}', radix: 16));
 
   /// Converts a tap into a populated cell's symbol selection.
   void _handleTapUp(TapUpDetails details) {

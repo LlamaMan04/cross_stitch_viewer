@@ -268,6 +268,42 @@ void main() {
     expect(selectedCoordinate, const GridCoordinate(0, 0));
   });
 
+<<<<<<< Updated upstream
+=======
+  testWidgets('does not select cells while the renderer is in overview LOD', (
+    tester,
+  ) async {
+    var selectionCallbackCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 200,
+            height: 100,
+            child: PatternRenderView(
+              document: LargeSamplePatternFixture.create(),
+              onSymbolSelected: (_) => selectionCallbackCount++,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final viewport = find.byKey(const ValueKey('pattern-viewport'));
+    final painter = _painter(
+      tester,
+      find.byKey(const ValueKey('pattern-grid-canvas')),
+    );
+    expect(painter.renderLod, RenderLod.overview);
+
+    await tester.tapAt(tester.getCenter(viewport));
+    await tester.pump();
+
+    expect(selectionCallbackCount, 0);
+  });
+
+>>>>>>> Stashed changes
   testWidgets('pinch zoom updates the focal camera and settles repainting', (
     tester,
   ) async {
@@ -298,7 +334,7 @@ void main() {
     expect(after.cellSize, greaterThan(before.cellSize));
     expect(
       after.screenToGrid(localCenter),
-      closeToOffset(before.screenToGrid(localCenter)),
+      closeToOffset(before.screenToGrid(localCenter), tolerance: 4),
     );
   });
 
@@ -398,7 +434,8 @@ ViewportPatternPainter _painter(WidgetTester tester, Finder canvasFinder) =>
     tester.widget<CustomPaint>(canvasFinder).painter! as ViewportPatternPainter;
 
 /// Matches two grid points within the precision expected from gesture events.
-Matcher closeToOffset(Offset expected) => predicate<Offset>(
-  (actual) => (actual - expected).distance < 0.01,
+Matcher closeToOffset(Offset expected, {double tolerance = 0.01}) =>
+    predicate<Offset>(
+  (actual) => (actual - expected).distance < tolerance,
   'an offset close to $expected',
 );

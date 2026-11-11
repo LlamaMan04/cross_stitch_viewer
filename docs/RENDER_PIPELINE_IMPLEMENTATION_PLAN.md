@@ -366,8 +366,9 @@ the line ten cells to its right/below is `10`. Draw text only for visible
 coordinates divisible by ten. Use this same zero-indexed, grid-line convention
 in ruler accessibility labels and any future coordinate-entry UI.
 
-At overview zoom, keep tick positions aligned to grid lines but suppress ruler
-text that would overlap. Select a larger zero-indexed label interval such as
+At overview zoom, draw only ticks aligned to ten-cell sub-grid lines and the
+document edge, and suppress ruler text that would overlap. Select a larger
+zero-indexed label interval such as
 100 or 1,000 grid lines based on available screen spacing; this is a label
 decluttering rule only and does not change the 10-cell major-grid positions.
 
@@ -467,7 +468,7 @@ pointer events do not write progress state on every update.
        and gesture handling.
 4. [ ] Add reset/fit-to-pattern behavior. Fit should be an explicit camera setup,
        not a geometry calculation performed on every paint.
-5. [ ] Add widget tests for drag, pinch/scroll zoom, reset, and viewport resizing.
+5. [x] Add widget tests for drag, pinch/scroll zoom, reset, and viewport resizing.
 
 ### Phase 3: Replace and optimize the painter (base path complete)
 
@@ -518,8 +519,8 @@ pointer events do not write progress state on every update.
 
 ### Phase 4: Add rulers and settings controls
 
-1. Calculate the drawable rect after optional ruler strips.
-2. Paint fixed rulers with every-line ticks and zero-indexed labels on each
+1. [x] Calculate the drawable rect after optional ruler strips.
+2. [x] Paint fixed rulers with every-line ticks and zero-indexed labels on each
    ten-cell grid line, including the `0` document border.
 3. Add the left-side collapsible settings panel and the right-side collapsible
    symbol palette/thread-information panel.

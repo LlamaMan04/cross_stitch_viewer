@@ -55,6 +55,8 @@ void main() {
     expect(defaults.showGrid, isTrue);
     expect(defaults.showCellColor, isFalse);
     expect(defaults.showRegions, isFalse);
+    expect(defaults.showTopRuler, isTrue);
+    expect(defaults.showLeftRuler, isTrue);
     expect(defaults.showCompletedCellOverlay, isTrue);
     expect(defaults.includeCompletedCellsInSelection, isTrue);
     expect(defaults.gridColor, GridColorPreset.black);

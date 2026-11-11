@@ -96,6 +96,8 @@ class PatternRenderSettings {
     this.completedCellOpacity = 0.55,
     this.includeCompletedCellsInSelection = true,
     this.showRegions = false,
+    this.showTopRuler = true,
+    this.showLeftRuler = true,
   });
 
   /// Whether populated cells use their imported thread colors.
@@ -131,6 +133,12 @@ class PatternRenderSettings {
   /// Whether visible source-region outlines are displayed.
   final bool showRegions;
 
+  /// Whether a fixed ruler is displayed above the drawable pattern grid.
+  final bool showTopRuler;
+
+  /// Whether a fixed ruler is displayed beside the drawable pattern grid.
+  final bool showLeftRuler;
+
   /// Returns settings with only explicitly supplied fields replaced.
   PatternRenderSettings copyWith({
     bool? showCellColor,
@@ -144,6 +152,8 @@ class PatternRenderSettings {
     double? completedCellOpacity,
     bool? includeCompletedCellsInSelection,
     bool? showRegions,
+    bool? showTopRuler,
+    bool? showLeftRuler,
   }) => PatternRenderSettings(
     showCellColor: showCellColor ?? this.showCellColor,
     showSymbols: showSymbols ?? this.showSymbols,
@@ -160,6 +170,8 @@ class PatternRenderSettings {
         includeCompletedCellsInSelection ??
         this.includeCompletedCellsInSelection,
     showRegions: showRegions ?? this.showRegions,
+    showTopRuler: showTopRuler ?? this.showTopRuler,
+    showLeftRuler: showLeftRuler ?? this.showLeftRuler,
   );
 
   /// Rejects non-finite or out-of-range opacity values.
@@ -191,7 +203,9 @@ class PatternRenderSettings {
       completedCellOpacity == other.completedCellOpacity &&
       includeCompletedCellsInSelection ==
           other.includeCompletedCellsInSelection &&
-      showRegions == other.showRegions;
+      showRegions == other.showRegions &&
+      showTopRuler == other.showTopRuler &&
+      showLeftRuler == other.showLeftRuler;
 
   /// Hash code consistent with [operator ==].
   @override
@@ -207,6 +221,8 @@ class PatternRenderSettings {
     completedCellOpacity,
     includeCompletedCellsInSelection,
     showRegions,
+    showTopRuler,
+    showLeftRuler,
   );
 }
 
