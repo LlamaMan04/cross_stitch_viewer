@@ -1,4 +1,5 @@
 import 'domain_error.dart';
+import 'pattern_backstitch.dart';
 import 'pattern_definitions.dart';
 import 'pattern_grid.dart';
 import 'pattern_provenance.dart';
@@ -12,17 +13,22 @@ class PatternDocument {
     required this.schemaVersion,
     required this.grid,
     required Iterable<SymbolDefinition> symbols,
+    Iterable<BackstitchSegment> backstitches = const [],
     Iterable<PatternRegion> regions = const [],
     Map<String, Object?> sourceMetadata = const {},
     this.sourceChecksum,
     Iterable<ParserDiagnostic> diagnostics = const [],
   }) {
     this.symbols = List.unmodifiable(symbols);
+    this.backstitches = List.unmodifiable(backstitches);
     this.regions = List.unmodifiable(regions);
     this.sourceMetadata = Map.unmodifiable(sourceMetadata);
     this.diagnostics = List.unmodifiable(diagnostics);
     _symbolsById = Map.unmodifiable({
       for (final symbol in this.symbols) symbol.id: symbol,
+    });
+    _backstitchesById = Map.unmodifiable({
+      for (final backstitch in this.backstitches) backstitch.id: backstitch,
     });
     _regionsById = Map.unmodifiable({
       for (final region in this.regions) region.id: region,
@@ -72,6 +78,12 @@ class PatternDocument {
   /// Direct symbol lookup by stable ID.
   late final Map<String, SymbolDefinition> _symbolsById;
 
+  /// Linear stitches rendered independently from sparse grid cells.
+  late final List<BackstitchSegment> backstitches;
+
+  /// Direct backstitch lookup by stable segment ID.
+  late final Map<String, BackstitchSegment> _backstitchesById;
+
   /// Source page or panel mappings into global grid coordinates.
   late final List<PatternRegion> regions;
 
@@ -92,6 +104,9 @@ class PatternDocument {
 
   /// Returns the symbol with [id], if the document defines one.
   SymbolDefinition? symbolById(String id) => _symbolsById[id];
+
+  /// Returns the backstitch segment with [id], if the document defines one.
+  BackstitchSegment? backstitchById(String id) => _backstitchesById[id];
 
   /// Returns the provenance region with [id], if the document defines one.
   PatternRegion? regionById(String id) => _regionsById[id];
@@ -141,9 +156,10 @@ class PatternDocument {
     }
     grid.validate();
     if (_symbolsById.length != symbols.length ||
+        _backstitchesById.length != backstitches.length ||
         _regionsById.length != regions.length) {
       throw const DocumentValidationException(
-        'Definition and region IDs must be unique.',
+        'Definition, backstitch, and region IDs must be unique.',
       );
     }
     for (final region in regions) {
@@ -185,6 +201,33 @@ class PatternDocument {
           );
         }
       }
+    }
+    for (final backstitch in backstitches) {
+      backstitch.validate();
+      _validateBackstitchCoordinate(backstitch.start, backstitch.id);
+      _validateBackstitchCoordinate(backstitch.end, backstitch.id);
+      final provenanceId = backstitch.provenanceId;
+      if (provenanceId != null && !_regionsById.containsKey(provenanceId)) {
+        throw DocumentValidationException(
+          'Backstitch ${backstitch.id} references missing region '
+          '$provenanceId.',
+        );
+      }
+    }
+  }
+
+  /// Validates an endpoint against the document's inclusive grid-corner bounds.
+  void _validateBackstitchCoordinate(
+    BackstitchCoordinate coordinate,
+    String segmentId,
+  ) {
+    if (coordinate.row < 0 ||
+        coordinate.row > grid.dimensions.rows ||
+        coordinate.column < 0 ||
+        coordinate.column > grid.dimensions.columns) {
+      throw DocumentValidationException(
+        'Backstitch $segmentId has an endpoint outside the grid.',
+      );
     }
   }
 }

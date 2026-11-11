@@ -87,9 +87,6 @@ enum StitchType {
   /// Three-quarter stitch combining a half and a quarter stitch.
   threeQuarter,
 
-  /// Linear stitch used for outlines or details.
-  backstitch,
-
   /// Small knotted stitch used for decorative details.
   frenchKnot,
 
