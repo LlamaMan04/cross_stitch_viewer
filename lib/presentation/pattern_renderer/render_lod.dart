@@ -81,18 +81,18 @@ OverviewRenderLevels resolveOverviewRenderLevels({
   throw StateError('Overview block resolution could not be resolved.');
 }
 
-/// Resolves renderer detail with hysteresis around three and twelve pixels.
+/// Resolves renderer detail with hysteresis around 3.5 and twelve pixels.
 RenderLod resolveRenderLod({required double cellSize, RenderLod? previous}) {
   assert(cellSize.isFinite && cellSize > 0);
   if (previous == null) {
-    if (cellSize < 3) return RenderLod.overview;
+    if (cellSize < 4.5) return RenderLod.overview;
     if (cellSize < 12) return RenderLod.grid;
     return RenderLod.detail;
   }
-  if (cellSize < 2.75) return RenderLod.overview;
+  if (cellSize < 4.25) return RenderLod.overview;
   if (cellSize >= 12.25) return RenderLod.detail;
   return switch (previous) {
-    RenderLod.overview when cellSize < 3.25 => RenderLod.overview,
+    RenderLod.overview when cellSize < 4.75 => RenderLod.overview,
     RenderLod.detail when cellSize >= 11.75 => RenderLod.detail,
     RenderLod.overview || RenderLod.grid || RenderLod.detail => RenderLod.grid,
   };

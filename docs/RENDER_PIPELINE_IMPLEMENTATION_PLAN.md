@@ -297,15 +297,15 @@ setting. It is calculated solely from the on-screen `cellSizePx` and does not
 change the camera, document data, or saved render settings. Every LOD still
 queries only visible cells or visible spatial tiles.
 
-| `RenderLod` | Cell-size range                                | Render policy                                                                                                                             |
-| ----------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `overview`  | Below 3 logical pixels per cell                | Omit glyphs and minor rules. Draw document borders and 10-by-10 rules, then render visible tile summaries/density rather than every cell. |
-| `grid`      | 3 through less than 12 logical pixels per cell | Draw visible cell fills when enabled plus capped minor, major, and border rules; omit glyphs.                                             |
-| `detail`    | 12 or more logical pixels per cell             | Draw individual visible fills, symbols, completion overlays, selected-symbol highlights, all visible rules, and rulers.                   |
+| `RenderLod` | Cell-size range                                  | Render policy                                                                                                                             |
+| ----------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `overview`  | Below 4.5 logical pixels per cell                | Omit glyphs and minor rules. Draw document borders and 10-by-10 rules, then render visible tile summaries/density rather than every cell. |
+| `grid`      | 4.5 through less than 12 logical pixels per cell | Draw visible cell fills when enabled plus capped minor, major, and border rules; omit glyphs.                                             |
+| `detail`    | 12 or more logical pixels per cell               | Draw individual visible fills, symbols, completion overlays, selected-symbol highlights, all visible rules, and rulers.                   |
 
 Use hysteresis around each threshold so small zoom changes do not make layers
-flicker. For example, promote from `overview` to `grid` at 3.25 pixels and
-demote only below 2.75 pixels; promote from `grid` to `detail` at 12.25 pixels
+flicker. Promote from `overview` to `grid` at 4.75 pixels and demote only
+below 4.25 pixels; promote from `grid` to `detail` at 12.25 pixels
 and demote only below 11.75 pixels. Keep this threshold policy in a pure,
 unit-tested `RenderLod resolveRenderLod(...)` function.
 
@@ -491,7 +491,7 @@ pointer events do not write progress state on every update.
 
 ### Phase 3A: Make frame cost proportional to visible detail
 
-1. [x] Add a pure LOD resolver with hysteresis at approximately 3 px/cell and
+1. [x] Add a pure LOD resolver with hysteresis at approximately 4.5 px/cell and
        12 px/cell; verify overview, grid, and detail transitions independently.
 2. [x] Add immutable per-tile summaries for overview density, dominant color, and
        selection/completion presence. Overview rendering must not enumerate every
