@@ -36,6 +36,8 @@ class PatternViewport extends StatefulWidget {
     this.onCompletionCellAdded,
     this.onCompletionEditUnavailable,
     this.onInteraction,
+    this.initialViewport,
+    this.onViewportSettled,
     super.key,
   });
 
@@ -71,6 +73,12 @@ class PatternViewport extends StatefulWidget {
 
   /// Reports navigation or tap interaction so transient feedback can clear.
   final VoidCallback? onInteraction;
+
+  /// Persisted camera snapshot restored after this viewport receives its size.
+  final ViewportState? initialViewport;
+
+  /// Reports a stable camera snapshot after pan or zoom input settles.
+  final ValueChanged<ViewportState>? onViewportSettled;
 
   /// Creates the mutable camera state for this viewport.
   @override
@@ -509,10 +517,7 @@ class _PatternViewportState extends State<PatternViewport> {
     final cameraController = _cameraController;
     if (cameraController == null) {
       _cameraController = PatternViewportController(
-        camera: PatternCamera.fit(
-          dimensions: widget.document.grid.dimensions,
-          viewportSize: viewportSize,
-        ),
+        camera: _restoreCamera(viewportSize),
       );
     } else if (_viewportSize != viewportSize) {
       final currentCamera = cameraController.camera;
@@ -543,6 +548,57 @@ class _PatternViewportState extends State<PatternViewport> {
       cameraController.replaceCameraForLayout(layoutCamera);
     }
     _viewportSize = viewportSize;
+  }
+
+  /// Restores a saved grid-space camera or creates the documented fitted view.
+  PatternCamera _restoreCamera(Size viewportSize) {
+    final savedViewport = widget.initialViewport;
+    final dimensions = widget.document.grid.dimensions;
+    if (savedViewport == null) {
+      return PatternCamera.fit(
+        dimensions: dimensions,
+        viewportSize: viewportSize,
+      );
+    }
+    final minimumCellSize = PatternCamera.minimumCellSizeFor(
+      dimensions: dimensions,
+      viewportSize: viewportSize,
+    );
+    final cellSize = savedViewport.zoom
+        .clamp(
+          minimumCellSize,
+          PatternCamera.maximumCellSizeFor(
+            dimensions: dimensions,
+            viewportSize: viewportSize,
+          ),
+        )
+        .toDouble();
+    final anchor = GridCoordinate(
+      savedViewport.anchor.row.clamp(0, dimensions.rows - 1).toInt(),
+      savedViewport.anchor.column.clamp(0, dimensions.columns - 1).toInt(),
+    );
+    final centeredOrigin = Offset(
+      viewportSize.width / 2 - (anchor.column.toDouble() + 0.5) * cellSize,
+      viewportSize.height / 2 - (anchor.row.toDouble() + 0.5) * cellSize,
+    );
+    final storedOrigin = Offset(
+      savedViewport.panX * cellSize,
+      savedViewport.panY * cellSize,
+    );
+    final storedAnchor = PatternCamera(
+      cellSize: cellSize,
+      origin: storedOrigin,
+    ).screenToGrid(viewportSize.center(Offset.zero));
+    // Preserve the exact saved pan only when it retains the saved center cell.
+    final origin =
+        storedAnchor.dx.floor() == anchor.column &&
+            storedAnchor.dy.floor() == anchor.row
+        ? storedOrigin
+        : centeredOrigin;
+    return PatternCamera(
+      cellSize: cellSize,
+      origin: origin,
+    ).clampTo(dimensions: dimensions, viewportSize: viewportSize);
   }
 
   /// Captures stable camera inputs for the duration of one scale gesture.
@@ -654,5 +710,35 @@ class _PatternViewportState extends State<PatternViewport> {
     _tilePictureCache.resumeWrites();
     _tilePictureCache.resumeReuse();
     _cameraController?.requestRepaint();
+    _reportSettledViewport();
+  }
+
+  /// Converts the current drawable camera into a durable grid-space snapshot.
+  void _reportSettledViewport() {
+    final camera = _cameraController?.camera;
+    final viewportSize = _viewportSize;
+    if (camera == null || viewportSize == null) return;
+    final dimensions = widget.document.grid.dimensions;
+    final center = camera.screenToGrid(viewportSize.center(Offset.zero));
+    final anchor = GridCoordinate(
+      center.dy.floor().clamp(0, dimensions.rows - 1).toInt(),
+      center.dx.floor().clamp(0, dimensions.columns - 1).toInt(),
+    );
+    final visibleBounds = camera.visibleBounds(
+      viewportSize: viewportSize,
+      dimensions: dimensions,
+      overscan: 0,
+    );
+    widget.onViewportSettled?.call(
+      ViewportState(
+        zoom: camera.cellSize,
+        panX: camera.origin.dx / camera.cellSize,
+        panY: camera.origin.dy / camera.cellSize,
+        anchor: anchor,
+        visibleRows: visibleBounds.endRow - visibleBounds.startRow,
+        visibleColumns: visibleBounds.endColumn - visibleBounds.startColumn,
+        renderSettings: widget.settings,
+      ),
+    );
   }
 }

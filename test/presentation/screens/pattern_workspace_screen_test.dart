@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
@@ -177,6 +178,66 @@ void main() {
         painter().settings.selectionHighlightColor,
         SelectionHighlightColorPreset.teal,
       );
+    },
+  );
+
+  testWidgets(
+    'restores the settled camera with renderer settings after reopening',
+    (tester) async {
+      final documents = InMemoryPatternDocumentRepository();
+      final progress = InMemoryProgressRepository();
+      await tester.pumpWidget(
+        buildLibraryApp(
+          documents,
+          progress: progress,
+          seedDocument: LargeSamplePatternFixture.create(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Large Test Pattern'));
+      await tester.pumpAndSettle();
+
+      final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+      ViewportPatternPainter painter() =>
+          tester.widget<CustomPaint>(canvasFinder).painter!
+              as ViewportPatternPainter;
+
+      await selectWorkspaceMenuOption(
+        tester,
+        const ValueKey('floating-menu-renderer-settings'),
+      );
+      await tester.tap(find.byKey(const ValueKey('show-cell-color-setting')));
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+        find.byKey(const ValueKey('pattern-viewport')),
+        const Offset(-80, -40),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      final movedCamera = painter().camera;
+      final saved = await progress.getForDocument('sample-large-test-pattern');
+
+      expect(saved?.viewport, isNotNull);
+      expect(saved?.viewport?.zoom, movedCamera.cellSize);
+      expect(saved?.viewport?.panX, closeTo(
+        movedCamera.origin.dx / movedCamera.cellSize,
+        0.000001,
+      ));
+      expect(saved?.viewport?.renderSettings.showCellColor, isTrue);
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Large Test Pattern'));
+      await tester.pumpAndSettle();
+
+      final restoredCamera = painter().camera;
+      expect(restoredCamera.cellSize, movedCamera.cellSize);
+      expect(painter().settings.showCellColor, isTrue);
+      final restoredCenter = restoredCamera.screenToGrid(
+        tester.getSize(canvasFinder).center(Offset.zero),
+      );
+      expect(restoredCenter.dx.floor(), saved?.viewport?.anchor.column);
+      expect(restoredCenter.dy.floor(), saved?.viewport?.anchor.row);
     },
   );
 

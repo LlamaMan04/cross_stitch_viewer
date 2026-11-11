@@ -521,13 +521,13 @@ pointer events do not write progress state on every update.
 
 1. [x] Calculate the drawable rect after optional ruler strips.
 2. [x] Paint fixed rulers with every-line ticks and zero-indexed labels on each
-   ten-cell grid line, including the `0` document border.
-3. Add the left-side collapsible settings panel and the right-side collapsible
-   symbol palette/thread-information panel.
-4. Wire renderer controls to `PatternRenderSettings` and palette selection to
-   `PatternRenderSelection`; neither may reset the camera position.
-5. Verify the panels collapse independently and return their occupied width to
-   the viewport.
+       ten-cell grid line, including the `0` document border.
+3. [x] Add the left-side collapsible settings panel and the right-side collapsible
+       symbol palette/thread-information panel.
+4. [x] Wire renderer controls to `PatternRenderSettings` and palette selection to
+       `PatternRenderSelection`; neither may reset the camera position.
+5. [x] Verify the panels collapse independently and return their occupied width to
+       the viewport.
 
 ### Phase 5: Integrate progress and remove legacy behavior
 

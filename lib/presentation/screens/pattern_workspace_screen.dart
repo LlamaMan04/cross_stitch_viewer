@@ -95,6 +95,12 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   /// Timer that makes the completion Undo notice eligible for dismissal.
   Timer? _completionUndoTimer;
 
+  /// Coalesces camera writes after successive settled viewport interactions.
+  Timer? _viewportSaveTimer;
+
+  /// Latest camera snapshot awaiting its debounced progress write.
+  ViewportState? _pendingViewport;
+
   /// Whether the visible completion Undo notice has completed its minimum time.
   bool _completionUndoCanDismiss = false;
 
@@ -112,6 +118,8 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   @override
   void dispose() {
     _completionUndoTimer?.cancel();
+    _flushPendingViewportSave();
+    _viewportSaveTimer?.cancel();
     super.dispose();
   }
 
@@ -213,6 +221,8 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   onCompletionCellAdded: _addCompletionCell,
                   onCompletionEditUnavailable: _showCompletionZoomGuidance,
                   onInteraction: _dismissCompletionUndo,
+                  initialViewport: _progress?.viewport,
+                  onViewportSettled: _scheduleViewportSave,
                 ),
               ),
               if (_showSettings)
@@ -449,6 +459,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
 
   /// Persists completed coordinates while preserving markers and viewport data.
   void _persistCompletedCells(Set<GridCoordinate> completedCells) {
+    _flushPendingViewportSave();
     final current = _progress;
     final updated = ProgressState(
       documentId: widget.documentId,
@@ -512,6 +523,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
 
   /// Replaces only render settings while preserving progress and camera fields.
   void _persistSettings(PatternRenderSettings settings) {
+    _flushPendingViewportSave();
     final current = _progress;
     final viewport =
         current?.viewport?.copyWith(renderSettings: settings) ??
@@ -528,6 +540,35 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       completedCells: current?.completedCells ?? const [],
       markers: current?.markers ?? const [],
       viewport: viewport,
+      lastInteractionAt: DateTime.now().toUtc(),
+    );
+    _queueProgressSave(updated);
+  }
+
+  /// Schedules one progress write for the latest stable camera snapshot.
+  void _scheduleViewportSave(ViewportState viewport) {
+    _pendingViewport = viewport;
+    _viewportSaveTimer?.cancel();
+    _viewportSaveTimer = Timer(
+      const Duration(milliseconds: 250),
+      _flushPendingViewportSave,
+    );
+  }
+
+  /// Saves the pending camera while retaining every current renderer setting.
+  void _flushPendingViewportSave() {
+    _viewportSaveTimer?.cancel();
+    _viewportSaveTimer = null;
+    final viewport = _pendingViewport;
+    _pendingViewport = null;
+    if (viewport == null) return;
+    final current = _progress;
+    final updated = ProgressState(
+      documentId: widget.documentId,
+      schemaVersion: current?.schemaVersion ?? 1,
+      completedCells: current?.completedCells ?? const [],
+      markers: current?.markers ?? const [],
+      viewport: viewport.copyWith(renderSettings: _settings),
       lastInteractionAt: DateTime.now().toUtc(),
     );
     _queueProgressSave(updated);
@@ -1287,6 +1328,8 @@ class PatternRenderView extends StatelessWidget {
     this.onCompletionCellAdded,
     this.onCompletionEditUnavailable,
     this.onInteraction,
+    this.initialViewport,
+    this.onViewportSettled,
     super.key,
   }) : completionSelection =
            completionSelection ?? const CompletionCellSelection.empty();
@@ -1324,6 +1367,12 @@ class PatternRenderView extends StatelessWidget {
   /// Reports viewport interaction so transient completion feedback can clear.
   final VoidCallback? onInteraction;
 
+  /// Persisted camera snapshot restored by the viewport after it is laid out.
+  final ViewportState? initialViewport;
+
+  /// Reports a stable camera snapshot for debounced progress persistence.
+  final ValueChanged<ViewportState>? onViewportSettled;
+
   /// Builds a bounded surface whose camera maps grid coordinates to pixels.
   @override
   Widget build(BuildContext context) {
@@ -1346,6 +1395,8 @@ class PatternRenderView extends StatelessWidget {
         onCompletionCellAdded: onCompletionCellAdded,
         onCompletionEditUnavailable: onCompletionEditUnavailable,
         onInteraction: onInteraction,
+        initialViewport: initialViewport,
+        onViewportSettled: onViewportSettled,
       ),
     );
   }
