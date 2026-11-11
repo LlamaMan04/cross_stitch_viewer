@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
+import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
@@ -357,6 +358,51 @@ void main() {
       closeToOffset(before.screenToGrid(localFocalPoint)),
     );
     await tester.pump(const Duration(milliseconds: 150));
+  });
+
+  testWidgets('suppresses symbol selection when zooming out to overview', (
+    tester,
+  ) async {
+    final selectionEvents = <String?>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SizedBox(
+          width: 400,
+          height: 300,
+          child: PatternRenderView(
+            document: LargeSamplePatternFixture.create(),
+            selection: const PatternRenderSelection(
+              selectedSymbolId: 'large-red',
+            ),
+            initialViewport: const ViewportState(
+              zoom: 16,
+              panX: 0,
+              panY: 0,
+              anchor: GridCoordinate(50, 100),
+            ),
+            onSymbolSelected: selectionEvents.add,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final viewport = find.byKey(const ValueKey('pattern-viewport'));
+    expect(_painter(tester, canvasFinder).renderLod, RenderLod.detail);
+
+    await tester.sendEventToBinding(
+      PointerScrollEvent(
+        position: tester.getCenter(viewport),
+        scrollDelta: const Offset(0, 2000),
+      ),
+    );
+    await tester.pump();
+
+    final painter = _painter(tester, canvasFinder);
+    expect(painter.renderLod, RenderLod.overview);
+    expect(selectionEvents, isEmpty);
+    expect(painter.selectedVisibleCells, isEmpty);
   });
 
   testWidgets('retains tile cache entries while panning and settling', (

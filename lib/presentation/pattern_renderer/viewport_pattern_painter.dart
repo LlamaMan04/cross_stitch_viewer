@@ -238,6 +238,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Matching visible cells used by selection painting and focused tests.
   Iterable<StitchCell> get selectedVisibleCells sync* {
+    if (renderLod == RenderLod.overview) return;
     final selectedSymbolId = selection.selectedSymbolId;
     if (selectedSymbolId == null) return;
     for (final cell in _visibleCells) {
@@ -791,7 +792,7 @@ class ViewportPatternPainter extends CustomPainter {
       ..add(color);
   }
 
-  /// Paints dynamic completion and selection accents at one summary level.
+  /// Paints dynamic completion and pending-selection accents at one summary level.
   int _paintOverviewAccents(
     Canvas canvas,
     Iterable<PatternTileSummary> summaries,
@@ -799,13 +800,6 @@ class ViewportPatternPainter extends CustomPainter {
     double opacity,
   ) {
     if (opacity <= 0) return 0;
-    final selectedSymbolId = selection.selectedSymbolId;
-    final selectedColor = _parseColor(settings.selectionHighlightColor.colorHex)
-        .withValues(alpha: opacity);
-    final selectedPaint = Paint()
-      ..color = selectedColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.min(2, camera.cellSize * 2);
     final pendingPaint = Paint()
       ..color = completionSelectionColor.withValues(alpha: 0.4 * opacity);
     final completedPaint = Paint()
@@ -826,10 +820,8 @@ class ViewportPatternPainter extends CustomPainter {
             )
             .toSet();
     final completedPath = Path();
-    final selectedPath = Path();
     final pendingPath = Path();
     var hasCompletedTiles = false;
-    var hasSelectedTiles = false;
     var hasPendingTiles = false;
     for (final summary in summaries) {
       final tileRect = _tileRect(summary);
@@ -837,11 +829,6 @@ class ViewportPatternPainter extends CustomPainter {
           completedCoordinates.contains(summary.coordinate)) {
         completedPath.addRect(tileRect);
         hasCompletedTiles = true;
-      }
-      if (selectedSymbolId != null &&
-          summary.symbolCounts.containsKey(selectedSymbolId)) {
-        selectedPath.addRect(tileRect.deflate(selectedPaint.strokeWidth / 2));
-        hasSelectedTiles = true;
       }
       if (pendingCoordinates.contains(summary.coordinate)) {
         pendingPath.addRect(tileRect);
@@ -851,10 +838,6 @@ class ViewportPatternPainter extends CustomPainter {
     var drawCallCount = 0;
     if (hasCompletedTiles) {
       canvas.drawPath(completedPath, completedPaint);
-      drawCallCount++;
-    }
-    if (hasSelectedTiles) {
-      canvas.drawPath(selectedPath, selectedPaint);
       drawCallCount++;
     }
     if (hasPendingTiles) {

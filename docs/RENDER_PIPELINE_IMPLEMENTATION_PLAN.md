@@ -309,10 +309,11 @@ demote only below 2.75 pixels; promote from `grid` to `detail` at 12.25 pixels
 and demote only below 11.75 pixels. Keep this threshold policy in a pure,
 unit-tested `RenderLod resolveRenderLod(...)` function.
 
-At overview level, selection and completion must remain discoverable without
-per-cell painting: add a tile-level accent when a visible tile contains the
-selected symbol or completed cells. At grid level, use normal overlays for
-visible individual cells. At detail level, use the complete cell treatment.
+At overview level, completion and pending completion selection must remain
+discoverable without per-cell painting through tile-level accents. Preserve a
+selected symbol but suppress its rendering until the camera returns to a
+legible LOD. At grid level, use normal overlays for visible individual cells.
+At detail level, use the complete cell treatment.
 
 ### Frame and tile caching
 
@@ -469,7 +470,7 @@ pointer events do not write progress state on every update.
        and gesture handling.
 4. [ ] Add an explicit reset-to-fit command. Initial layout and resize already
        use an explicit fitted camera rather than calculating geometry in paint.
-5. [x] Add widget tests for drag, pinch/scroll zoom, reset, and viewport resizing.
+5. [x] Add widget tests for drag, pinch/scroll zoom, and viewport resizing.
 
 ### Phase 3: Replace and optimize the painter (base path complete)
 
