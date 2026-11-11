@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
@@ -124,6 +125,61 @@ void main() {
 
     expect(fixture.grid.queryCount, 0);
     expect(fixture.grid.tileSummaryQueryCount, 2);
+  });
+
+  test('batches dense overview density and accent layers', () {
+    final document = LargeSamplePatternFixture.create();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    addTearDown(glyphLayoutCache.dispose);
+    PatternRenderBatchMetrics? metrics;
+    final painter = ViewportPatternPainter(
+      document: document,
+      camera: const PatternCamera(cellSize: 0.5, origin: Offset.zero),
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: LargeSamplePatternFixture.rows,
+        startColumn: 0,
+        endColumn: LargeSamplePatternFixture.columns,
+      ),
+      settings: const PatternRenderSettings(
+        showCellColor: true,
+        showGrid: false,
+      ),
+      selection: const PatternRenderSelection(selectedSymbolId: 'large-red'),
+      completedCells: const <GridCoordinate>{GridCoordinate(0, 1)},
+      completionSelection: const <GridCoordinate>{GridCoordinate(0, 2)},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(document),
+      renderLod: RenderLod.overview,
+      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{
+        32: <PatternTileCoordinate>{PatternTileCoordinate(0, 0)},
+      },
+      pendingOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{
+        32: <PatternTileCoordinate>{PatternTileCoordinate(0, 0)},
+      },
+      onBatchMetrics: (value) => metrics = value,
+    );
+    final recorder = PictureRecorder();
+
+    painter.paint(Canvas(recorder), const Size(100, 50));
+    recorder.endRecording().dispose();
+
+    final summaryCount = document.grid
+        .overviewSummariesIntersecting(
+          const GridBounds(
+            startRow: 0,
+            endRow: LargeSamplePatternFixture.rows,
+            startColumn: 0,
+            endColumn: LargeSamplePatternFixture.columns,
+          ),
+          32,
+        )
+        .length;
+    expect(summaryCount, greaterThan(10));
+    expect(metrics?.drawCallCount, lessThan(summaryCount));
   });
 
   test('batches cell fills by color and grid rules by class', () {

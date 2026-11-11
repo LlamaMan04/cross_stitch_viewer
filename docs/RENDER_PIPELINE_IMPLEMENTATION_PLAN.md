@@ -173,9 +173,10 @@ The visible-only foundations are complete: `PatternCamera`, domain
 `GridBounds`, `PatternViewport`, `ViewportPatternPainter`, the `PatternGrid`
 cell tile index, the `PatternDocument` region tile index, basic render
 settings, and the compact workspace/settings-panel composition. Camera
-restoration, debounced camera persistence, and rulers remain planned work. LOD,
-overview tile summaries, render metadata, batching, repaint isolation,
-instrumentation, and bounded static-tile picture reuse are implemented.
+restoration, debounced camera persistence, and rulers are implemented. LOD,
+overview tile summaries, render metadata, batched overview density and accent
+layers, repaint isolation, instrumentation, and bounded static-tile picture
+reuse are implemented.
 Visible-only completion overlays and selected-symbol highlighting are also
 implemented, including persisted controls for overlay visibility and whether
 selection includes completed cells.
@@ -463,11 +464,11 @@ pointer events do not write progress state on every update.
 
 1. [x] Implement `PatternCamera` conversion helpers: screen-to-grid,
        grid-to-screen, visible bounds, and focal-point zoom.
-2. [ ] Implement `PatternViewportController` with notifier/listenable behavior.
+2. [x] Implement `PatternViewportController` with notifier/listenable behavior.
 3. [x] Build `PatternViewport` with `LayoutBuilder`, a fixed-size `CustomPaint`,
        and gesture handling.
-4. [ ] Add reset/fit-to-pattern behavior. Fit should be an explicit camera setup,
-       not a geometry calculation performed on every paint.
+4. [ ] Add an explicit reset-to-fit command. Initial layout and resize already
+       use an explicit fitted camera rather than calculating geometry in paint.
 5. [x] Add widget tests for drag, pinch/scroll zoom, reset, and viewport resizing.
 
 ### Phase 3: Replace and optimize the painter (base path complete)
@@ -533,14 +534,14 @@ pointer events do not write progress state on every update.
 
 1. [x] Add exact-cell completion-edit mode with batch complete/incomplete
        actions, transient coordinate selection, and undo.
-2. Load and restore camera state plus every persisted render setting when
-   opening a document.
-3. Debounce and save camera state and render-settings changes through
-   `ProgressRepository`.
-4. Remove the old `InteractiveViewer`, its padded full-grid child, and the
-   all-pattern label implementation.
-5. Update widget tests that assert the old widget tree or legacy scale values.
-6. Document the coordinate and persistence conventions in code comments.
+2. [x] Load and restore camera state plus every persisted render setting when
+       opening a document.
+3. [x] Debounce and save camera state and render-settings changes through
+       `ProgressRepository`.
+4. [x] Remove the old `InteractiveViewer`, its padded full-grid child, and the
+       all-pattern label implementation.
+5. [x] Update widget tests that assert the old widget tree or legacy scale values.
+6. [x] Document the coordinate and persistence conventions in code comments.
 
 ## Test and Verification Plan
 
@@ -596,7 +597,7 @@ pointer events do not write progress state on every update.
 
 ### Renderer Items to Address
 
-- [ ] Batch or otherwise consolidate overview density and accent rendering so a
+- [x] Batch and consolidate overview density and accent rendering so a
       dense, low-zoom viewport does not issue one canvas draw call per populated
       summary block (or per blended overview level).
 - [x] Preserve useful tile-picture cache entries across scale changes. Avoid
@@ -620,8 +621,12 @@ pointer events do not write progress state on every update.
       pinch and wheel zoom, cache lifecycle, and viewport resizing; include these
       paths in the performance regression checks.
 - [x] Reduce the size of the 32x32 cached tiles to 16x16 cells
-- [ ] Rework the way the pattern is rendered in overview mode, the current format
-      is not faithful to the actual pattern picture.
+
+### Remaining Implementation Work
+
+- [ ] Add an explicit user-facing reset-to-fit command for the viewport camera.
+- [ ] Run the manual performance checks below on representative desktop and
+      mobile targets.
 
 ### Manual Performance Checks
 

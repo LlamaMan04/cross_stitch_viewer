@@ -208,8 +208,8 @@ class ViewportPatternPainter extends CustomPainter {
     ..color = _gridColor
     ..style = PaintingStyle.stroke;
 
-  /// Reused paint for overview density rectangles.
-  late final Paint _overviewDensityPaint = Paint();
+  /// Opaque paint used with per-vertex colors for overview density batches.
+  late final Paint _overviewDensityPaint = Paint()..color = Colors.white;
 
   /// Bounds associated with the current cached visible-cell snapshot.
   GridBounds? _cachedCellBounds;
@@ -734,7 +734,8 @@ class ViewportPatternPainter extends CustomPainter {
     double opacity,
   ) {
     if (opacity <= 0) return 0;
-    var drawCallCount = 0;
+    final positions = <Offset>[];
+    final colors = <Color>[];
     for (final summary in summaries) {
       final tileRect = _tileRect(summary);
       final tileRows = math.min(
@@ -756,11 +757,38 @@ class ViewportPatternPainter extends CustomPainter {
               alpha: settings.cellColorOpacity * density * opacity,
             )
           : _gridColor.withValues(alpha: 0.18 * density * opacity);
-      _overviewDensityPaint.color = densityColor;
-      canvas.drawRect(tileRect, _overviewDensityPaint);
-      drawCallCount++;
+      _addOverviewRectVertices(positions, colors, tileRect, densityColor);
     }
-    return drawCallCount;
+    if (positions.isEmpty) return 0;
+    canvas.drawVertices(
+      ui.Vertices(ui.VertexMode.triangles, positions, colors: colors),
+      ui.BlendMode.srcOver,
+      _overviewDensityPaint,
+    );
+    return 1;
+  }
+
+  /// Appends two colored triangles that cover one overview summary rectangle.
+  void _addOverviewRectVertices(
+    List<Offset> positions,
+    List<Color> colors,
+    Rect rect,
+    Color color,
+  ) {
+    positions
+      ..add(rect.topLeft)
+      ..add(rect.topRight)
+      ..add(rect.bottomRight)
+      ..add(rect.topLeft)
+      ..add(rect.bottomRight)
+      ..add(rect.bottomLeft);
+    colors
+      ..add(color)
+      ..add(color)
+      ..add(color)
+      ..add(color)
+      ..add(color)
+      ..add(color);
   }
 
   /// Paints dynamic completion and selection accents at one summary level.
@@ -797,26 +825,41 @@ class ViewportPatternPainter extends CustomPainter {
               ),
             )
             .toSet();
-    var drawCallCount = 0;
+    final completedPath = Path();
+    final selectedPath = Path();
+    final pendingPath = Path();
+    var hasCompletedTiles = false;
+    var hasSelectedTiles = false;
+    var hasPendingTiles = false;
     for (final summary in summaries) {
       final tileRect = _tileRect(summary);
       if (settings.showCompletedCellOverlay &&
           completedCoordinates.contains(summary.coordinate)) {
-        canvas.drawRect(tileRect, completedPaint);
-        drawCallCount++;
+        completedPath.addRect(tileRect);
+        hasCompletedTiles = true;
       }
       if (selectedSymbolId != null &&
           summary.symbolCounts.containsKey(selectedSymbolId)) {
-        canvas.drawRect(
-          tileRect.deflate(selectedPaint.strokeWidth / 2),
-          selectedPaint,
-        );
-        drawCallCount++;
+        selectedPath.addRect(tileRect.deflate(selectedPaint.strokeWidth / 2));
+        hasSelectedTiles = true;
       }
       if (pendingCoordinates.contains(summary.coordinate)) {
-        canvas.drawRect(tileRect, pendingPaint);
-        drawCallCount++;
+        pendingPath.addRect(tileRect);
+        hasPendingTiles = true;
       }
+    }
+    var drawCallCount = 0;
+    if (hasCompletedTiles) {
+      canvas.drawPath(completedPath, completedPaint);
+      drawCallCount++;
+    }
+    if (hasSelectedTiles) {
+      canvas.drawPath(selectedPath, selectedPaint);
+      drawCallCount++;
+    }
+    if (hasPendingTiles) {
+      canvas.drawPath(pendingPath, pendingPaint);
+      drawCallCount++;
     }
     return drawCallCount;
   }
