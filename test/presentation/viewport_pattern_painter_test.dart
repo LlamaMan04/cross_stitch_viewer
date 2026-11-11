@@ -146,19 +146,19 @@ void main() {
         showGrid: false,
       ),
       selection: const PatternRenderSelection(selectedSymbolId: 'large-red'),
-      completedCells: const <GridCoordinate>{GridCoordinate(0, 1)},
-      completionSelection: const <GridCoordinate>{GridCoordinate(0, 2)},
+      completedCells: <GridCoordinate>{const GridCoordinate(0, 1)},
+      completionSelection: <GridCoordinate>{const GridCoordinate(0, 2)},
       surfaceColor: Colors.white,
       regionColor: Colors.blue,
       completionSelectionColor: Colors.teal,
       glyphLayoutCache: glyphLayoutCache,
       symbolRenderCache: PatternSymbolRenderCache(document),
       renderLod: RenderLod.overview,
-      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{
-        32: <PatternTileCoordinate>{PatternTileCoordinate(0, 0)},
+      completedOverviewCoordinates: <int, Set<PatternTileCoordinate>>{
+        32: <PatternTileCoordinate>{const PatternTileCoordinate(0, 0)},
       },
-      pendingOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{
-        32: <PatternTileCoordinate>{PatternTileCoordinate(0, 0)},
+      pendingOverviewCoordinates: <int, Set<PatternTileCoordinate>>{
+        32: <PatternTileCoordinate>{const PatternTileCoordinate(0, 0)},
       },
       onBatchMetrics: (value) => metrics = value,
     );
