@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../domain/repositories.dart';
 import '../presentation/screens/library_screen.dart';
 import '../presentation/screens/settings_screen.dart';
+import 'extra_large_sample_pattern_fixture.dart';
 import 'large_sample_pattern_fixture.dart';
 import 'sample_pattern_fixture.dart';
 
@@ -95,6 +96,7 @@ class _AppShellState extends State<_AppShell> {
         seedDocuments: [
           SamplePatternFixture.create(),
           LargeSamplePatternFixture.create(),
+          ExtraLargeSamplePatternFixture.create(),
         ],
       ),
       const SettingsScreen(),

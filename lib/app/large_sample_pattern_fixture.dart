@@ -30,7 +30,7 @@ abstract final class LargeSamplePatternFixture {
       dimensions: const PatternDimensions(rows, columns),
       cells: _buildCells(),
     ),
-    symbols: _symbols,
+    symbols: symbols,
     regions: const [
       PatternRegion(
         id: 'large-top-left',
@@ -87,7 +87,7 @@ abstract final class LargeSamplePatternFixture {
         if (linearIndex % 20 == 0) continue;
         yield StitchCell(
           coordinate: GridCoordinate(row, column),
-          symbolId: _symbols[populated % _symbols.length].id,
+          symbolId: symbols[populated % symbols.length].id,
           provenanceId: _regionIdFor(row, column),
         );
         populated++;
@@ -105,8 +105,8 @@ abstract final class LargeSamplePatternFixture {
     return 'large-top-left';
   }
 
-  /// Thread and glyph definitions used by the generated cells.
-  static const List<SymbolDefinition> _symbols = [
+  /// Thread and glyph definitions shared by the built-in performance fixtures.
+  static const List<SymbolDefinition> symbols = [
     SymbolDefinition(
       id: 'large-red',
       sourceSymbol: 'A',
