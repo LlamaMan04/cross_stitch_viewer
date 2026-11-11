@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
-import 'package:stitch_scope/app/sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/large_sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
@@ -150,7 +150,10 @@ void main() {
         painter().settings.selectionHighlightColor,
         SelectionHighlightColorPreset.teal,
       );
-      expect(painter().camera.cellSize, greaterThanOrEqualTo(cameraBeforeChange.cellSize));
+      expect(
+        painter().camera.cellSize,
+        greaterThanOrEqualTo(cameraBeforeChange.cellSize),
+      );
       expect(painter().camera.origin.dx.isFinite, isTrue);
       expect(painter().camera.origin.dy.isFinite, isTrue);
       final saved = await progress.getForDocument('sample-garden-sampler');
@@ -219,10 +222,10 @@ void main() {
 
       expect(saved?.viewport, isNotNull);
       expect(saved?.viewport?.zoom, movedCamera.cellSize);
-      expect(saved?.viewport?.panX, closeTo(
-        movedCamera.origin.dx / movedCamera.cellSize,
-        0.000001,
-      ));
+      expect(
+        saved?.viewport?.panX,
+        closeTo(movedCamera.origin.dx / movedCamera.cellSize, 0.000001),
+      );
       expect(saved?.viewport?.renderSettings.showCellColor, isTrue);
 
       await tester.pageBack();

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/app/sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_symbol_render_cache.dart';
 
 /// Verifies parsed symbol metadata and opacity-specific paint reuse.

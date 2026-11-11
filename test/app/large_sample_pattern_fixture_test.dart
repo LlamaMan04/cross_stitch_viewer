@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 
 /// Verifies the dimensions, density, and palette of the large test fixture.

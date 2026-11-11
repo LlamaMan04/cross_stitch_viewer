@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
-import 'package:stitch_scope/app/sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/large_sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
 import 'package:stitch_scope/domain/progress_models.dart';
@@ -342,31 +342,28 @@ void main() {
       ..suspendWrites()
       ..suspendReuse(),
   }.entries) {
-    test(
-      'keeps cell colors disabled during ${interaction.key}',
-      () {
-        final fixture = _createCountingDocument();
-        final glyphLayoutCache = PatternGlyphLayoutCache();
-        final tilePictureCache = PatternTilePictureCache();
-        addTearDown(glyphLayoutCache.dispose);
-        addTearDown(tilePictureCache.dispose);
-        PatternRenderBatchMetrics? metrics;
-        interaction.value(tilePictureCache);
+    test('keeps cell colors disabled during ${interaction.key}', () {
+      final fixture = _createCountingDocument();
+      final glyphLayoutCache = PatternGlyphLayoutCache();
+      final tilePictureCache = PatternTilePictureCache();
+      addTearDown(glyphLayoutCache.dispose);
+      addTearDown(tilePictureCache.dispose);
+      PatternRenderBatchMetrics? metrics;
+      interaction.value(tilePictureCache);
 
-        _paintCachedFixture(
-          fixture: fixture,
-          glyphLayoutCache: glyphLayoutCache,
-          tilePictureCache: tilePictureCache,
-          camera: const PatternCamera(cellSize: 16, origin: Offset.zero),
-          settings: const PatternRenderSettings(showCellColor: false),
-          renderLod: RenderLod.detail,
-          onBatchMetrics: (value) => metrics = value,
-        );
+      _paintCachedFixture(
+        fixture: fixture,
+        glyphLayoutCache: glyphLayoutCache,
+        tilePictureCache: tilePictureCache,
+        camera: const PatternCamera(cellSize: 16, origin: Offset.zero),
+        settings: const PatternRenderSettings(showCellColor: false),
+        renderLod: RenderLod.detail,
+        onBatchMetrics: (value) => metrics = value,
+      );
 
-        expect(metrics?.cellFillCount, 0);
-        expect(metrics?.cellFillDrawCalls, 0);
-      },
-    );
+      expect(metrics?.cellFillCount, 0);
+      expect(metrics?.cellFillDrawCalls, 0);
+    });
   }
 
   for (final interaction in <String, void Function(PatternTilePictureCache)>{
@@ -375,33 +372,30 @@ void main() {
       ..suspendWrites()
       ..suspendReuse(),
   }.entries) {
-    test(
-      'keeps symbols disabled during ${interaction.key}',
-      () {
-        final fixture = _createCountingDocument();
-        final glyphLayoutCache = PatternGlyphLayoutCache();
-        final tilePictureCache = PatternTilePictureCache();
-        addTearDown(glyphLayoutCache.dispose);
-        addTearDown(tilePictureCache.dispose);
-        PatternRenderBatchMetrics? metrics;
-        interaction.value(tilePictureCache);
+    test('keeps symbols disabled during ${interaction.key}', () {
+      final fixture = _createCountingDocument();
+      final glyphLayoutCache = PatternGlyphLayoutCache();
+      final tilePictureCache = PatternTilePictureCache();
+      addTearDown(glyphLayoutCache.dispose);
+      addTearDown(tilePictureCache.dispose);
+      PatternRenderBatchMetrics? metrics;
+      interaction.value(tilePictureCache);
 
-        _paintCachedFixture(
-          fixture: fixture,
-          glyphLayoutCache: glyphLayoutCache,
-          tilePictureCache: tilePictureCache,
-          camera: const PatternCamera(cellSize: 16, origin: Offset.zero),
-          settings: const PatternRenderSettings(
-            showCellColor: true,
-            showSymbols: false,
-          ),
-          renderLod: RenderLod.detail,
-          onBatchMetrics: (value) => metrics = value,
-        );
+      _paintCachedFixture(
+        fixture: fixture,
+        glyphLayoutCache: glyphLayoutCache,
+        tilePictureCache: tilePictureCache,
+        camera: const PatternCamera(cellSize: 16, origin: Offset.zero),
+        settings: const PatternRenderSettings(
+          showCellColor: true,
+          showSymbols: false,
+        ),
+        renderLod: RenderLod.detail,
+        onBatchMetrics: (value) => metrics = value,
+      );
 
-        expect(metrics?.glyphCount, 0);
-      },
-    );
+      expect(metrics?.glyphCount, 0);
+    });
   }
 
   test('keeps completion overlays dynamic over reused static pictures', () {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/app/large_sample_pattern_fixture.dart';
-import 'package:stitch_scope/app/sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/large_sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 
 import '../../domain/in_memory_repositories.dart';

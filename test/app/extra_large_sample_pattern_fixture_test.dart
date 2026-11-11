@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/app/extra_large_sample_pattern_fixture.dart';
+import 'package:stitch_scope/app/test_patterns/extra_large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 
 /// Verifies the dimensions, palette, and deterministic randomness of the fixture.
