@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_viewport_controller.dart';
