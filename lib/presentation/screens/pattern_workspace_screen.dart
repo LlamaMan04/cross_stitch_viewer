@@ -1173,7 +1173,7 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
   /// Closes the palette without reopening the floating menu.
   final VoidCallback onClose;
 
-  /// Builds selected details followed by every selectable document symbol.
+  /// Builds a fixed selected-details header above every selectable document symbol.
   @override
   Widget build(BuildContext context) {
     final selectedSymbol = selection.selectedSymbolId == null
@@ -1220,27 +1220,18 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
               ],
             ),
           ),
+          if (selectedThread != null) ...[
+            _SelectedThreadDetails(
+              thread: selectedThread,
+              symbol: selectedSymbol,
+              backstitchDefinition: selectedBackstitchDefinition,
+            ),
+            const Divider(height: 1),
+          ],
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(bottom: 8),
               children: [
-                if (selectedThread != null)
-                  _SelectedThreadDetails(
-                    thread: selectedThread,
-                    symbol: selectedSymbol,
-                    backstitchDefinition: selectedBackstitchDefinition,
-                    matchingBackstitchCount:
-                        selectedBackstitchDefinition == null
-                        ? 0
-                        : document.backstitches
-                              .where(
-                                (segment) =>
-                                    segment.definitionId ==
-                                    selectedBackstitchDefinition.id,
-                              )
-                              .length,
-                  ),
-                const Divider(),
                 for (final symbol in document.symbols)
                   Builder(
                     builder: (context) {
@@ -1303,14 +1294,13 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
   }
 }
 
-/// Detailed metadata for the selected stitch definition and shared thread.
+/// Concise metadata for the currently selected stitch and thread.
 class _SelectedThreadDetails extends StatelessWidget {
   /// Creates an inspector for one selected symbol or backstitch definition.
   const _SelectedThreadDetails({
     required this.thread,
     required this.symbol,
     required this.backstitchDefinition,
-    required this.matchingBackstitchCount,
   });
 
   /// Complete reusable thread record displayed by the inspector.
@@ -1322,10 +1312,7 @@ class _SelectedThreadDetails extends StatelessWidget {
   /// Definition that originated selection, when linework was selected.
   final BackstitchDefinition? backstitchDefinition;
 
-  /// Number of line segments using [backstitchDefinition].
-  final int matchingBackstitchCount;
-
-  /// Builds stitch metadata followed by every thread-information field.
+  /// Builds the selected stitch's type, optional strands, and thread catalog ID.
   @override
   Widget build(BuildContext context) {
     final selectedSymbol = symbol;
@@ -1333,8 +1320,7 @@ class _SelectedThreadDetails extends StatelessWidget {
     return Semantics(
       label: selectedBackstitch == null
           ? 'Selected symbol thread ${thread.id}'
-          : 'Selected backstitch thread ${thread.id}, '
-                '$matchingBackstitchCount matching segments',
+          : 'Selected backstitch thread ${thread.id}',
       child: Padding(
         key: ValueKey(
           selectedBackstitch == null
@@ -1346,6 +1332,7 @@ class _SelectedThreadDetails extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (selectedSymbol != null)
                   _SymbolSwatch(
@@ -1357,39 +1344,33 @@ class _SelectedThreadDetails extends StatelessWidget {
                   _BackstitchSwatch(thread: thread, size: 48),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    thread.name ?? thread.id,
-                    style: Theme.of(context).textTheme.titleSmall,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (selectedSymbol != null) ...[
+                        Text(
+                          'Stitch type: '
+                          '${_stitchTypeLabel(selectedSymbol.stitchType)}',
+                        ),
+                        if (selectedSymbol.threadCount != null)
+                          Text(
+                            'Number of strands: ${selectedSymbol.threadCount}',
+                          ),
+                      ],
+                      if (selectedBackstitch != null) ...[
+                        const Text('Stitch type: Backstitch'),
+                        if (selectedBackstitch.threadCount != null)
+                          Text(
+                            'Number of strands: '
+                            '${selectedBackstitch.threadCount}',
+                          ),
+                      ],
+                      Text(_threadSummary(thread)),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            if (selectedSymbol != null) ...[
-              Text(
-                'Stitch type: ${_stitchTypeLabel(selectedSymbol.stitchType)}',
-              ),
-              Text('Source symbol: ${selectedSymbol.sourceSymbol}'),
-              Text('Display glyph: ${selectedSymbol.displayGlyph}'),
-              Text(
-                'Number of strands: ${_optionalValue(selectedSymbol.threadCount)}',
-              ),
-            ],
-            if (selectedBackstitch != null) ...[
-              const Text('Stitch type: Backstitch'),
-              Text(
-                'Number of strands: '
-                '${_optionalValue(selectedBackstitch.threadCount)}',
-              ),
-              Text('Matching segments: $matchingBackstitchCount'),
-            ],
-            Text('Thread ID: ${thread.id}'),
-            Text('Brand: ${_optionalValue(thread.brand)}'),
-            Text('Catalog number: ${_optionalValue(thread.catalogNumber)}'),
-            Text('Color name: ${_optionalValue(thread.name)}'),
-            Text('Color: ${thread.color}'),
-            Text('Color evidence: ${thread.evidence.name}'),
-            Text('Conversion notes: ${_optionalValue(thread.conversionNotes)}'),
           ],
         ),
       ),
@@ -1482,9 +1463,6 @@ String _threadSummary(ThreadDefinition thread) {
   ];
   return parts.isEmpty ? thread.color : parts.join(' ');
 }
-
-/// Formats nullable thread metadata without hiding absent fields.
-String _optionalValue(Object? value) => value?.toString() ?? 'Not specified';
 
 /// Produces a user-facing label for an optional [type].
 String _stitchTypeLabel(StitchType? type) {

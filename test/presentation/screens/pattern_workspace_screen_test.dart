@@ -443,13 +443,6 @@ void main() {
       expect(find.text('DMC 321'), findsWidgets);
       expect(find.text('Stitch type: Full stitch'), findsOneWidget);
       expect(find.text('Number of strands: 2'), findsOneWidget);
-      expect(find.text('Thread ID: dmc-321'), findsOneWidget);
-      expect(find.text('Brand: DMC'), findsOneWidget);
-      expect(find.text('Catalog number: 321'), findsOneWidget);
-      expect(find.text('Color name: Red'), findsOneWidget);
-      expect(find.text('Color: #C72C41'), findsOneWidget);
-      expect(find.text('Color evidence: explicit'), findsOneWidget);
-      expect(find.text('Conversion notes: Not specified'), findsOneWidget);
       expect(
         tester
             .widget<ListTile>(
@@ -473,8 +466,13 @@ void main() {
         of: find.byKey(const ValueKey('symbol-palette-panel')),
         matching: find.byType(ListView),
       );
+      final selectedDetails = find.byKey(
+        const ValueKey('selected-symbol-details'),
+      );
+      final detailsTopBeforeScroll = tester.getTopLeft(selectedDetails);
       await tester.drag(paletteList, const Offset(0, -520));
       await tester.pumpAndSettle();
+      expect(tester.getTopLeft(selectedDetails), detailsTopBeforeScroll);
       await tester.tap(leaf);
       await tester.pumpAndSettle();
       expect(painter().selection.selectedSymbolId, 'leaf');
@@ -538,5 +536,13 @@ void main() {
     expect(painter.selection.selectedSymbolId, isNull);
     expect(painter.selectedVisibleCells, isEmpty);
     expect(find.textContaining('Endpoints:'), findsNothing);
+
+    final backstitchWithoutStrandCount = find.byKey(
+      const ValueKey('backstitch-palette-leaf-vein'),
+    );
+    await tester.scrollUntilVisible(backstitchWithoutStrandCount, 160);
+    await tester.tap(backstitchWithoutStrandCount);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Number of strands:'), findsNothing);
   });
 }
