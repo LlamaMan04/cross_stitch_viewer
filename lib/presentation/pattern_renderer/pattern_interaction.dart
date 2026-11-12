@@ -37,10 +37,9 @@ class CompletionCellSelection {
 
   /// Returns a selection containing [coordinate] without removing prior cells.
   CompletionCellSelection add(GridCoordinate coordinate) =>
-      CompletionCellSelection(coordinates: <GridCoordinate>{
-        ...coordinates,
-        coordinate,
-      });
+      CompletionCellSelection(
+        coordinates: <GridCoordinate>{...coordinates, coordinate},
+      );
 
   /// Returns an empty selection.
   CompletionCellSelection clear() => CompletionCellSelection.empty();

@@ -90,7 +90,9 @@ abstract final class PatternMapper {
   ];
 
   /// Maps ordered linear backstitch segments and their embedded thread data.
-  static List<PatternBackstitchesCompanion> backstitches(PatternDocument value) => [
+  static List<PatternBackstitchesCompanion> backstitches(
+    PatternDocument value,
+  ) => [
     for (var index = 0; index < value.backstitches.length; index++)
       PatternBackstitchesCompanion.insert(
         documentId: value.id,
@@ -195,10 +197,7 @@ abstract final class PatternMapper {
               row: row.startRow,
               column: row.startColumn,
             ),
-            end: BackstitchCoordinate(
-              row: row.endRow,
-              column: row.endColumn,
-            ),
+            end: BackstitchCoordinate(row: row.endRow, column: row.endColumn),
             thread: ThreadDefinition(
               id: row.threadId,
               color: row.threadColor,

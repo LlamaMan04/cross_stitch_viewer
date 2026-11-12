@@ -41,7 +41,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Sample patterns loaded.')));
+        ..showSnackBar(
+          const SnackBar(content: Text('Sample patterns loaded.')),
+        );
     } finally {
       if (mounted) setState(() => _isLoadingSamples = false);
     }
@@ -62,7 +64,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.auto_awesome),
             title: const Text('Sample patterns'),
-            subtitle: const Text('Add the built-in sample patterns to your library.'),
+            subtitle: const Text(
+              'Add the built-in sample patterns to your library.',
+            ),
             trailing: FilledButton(
               key: const ValueKey('load-sample-patterns'),
               onPressed: _isLoadingSamples ? null : _loadSamplePatterns,

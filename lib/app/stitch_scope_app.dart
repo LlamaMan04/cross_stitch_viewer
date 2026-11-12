@@ -97,8 +97,7 @@ class _AppShellState extends State<_AppShell> {
       ),
       SettingsScreen(
         patternDocuments: widget.patternDocuments,
-        onSamplePatternsLoaded: () =>
-            setState(() => _libraryRevision++),
+        onSamplePatternsLoaded: () => setState(() => _libraryRevision++),
       ),
     ];
 
