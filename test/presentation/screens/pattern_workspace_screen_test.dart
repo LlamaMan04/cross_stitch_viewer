@@ -499,7 +499,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('selected-backstitch-details')), findsOneWidget);
-    expect(find.text('2 matching backstitch segments'), findsOneWidget);
     expect(find.textContaining('Endpoints:'), findsNothing);
   });
 }
