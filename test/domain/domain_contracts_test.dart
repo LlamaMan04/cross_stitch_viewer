@@ -44,6 +44,7 @@ void main() {
         dimensions: const PatternDimensions(1, 1),
         cells: [_cell(), _cell()],
       ),
+      threads: const [ThreadDefinition(id: 'red', color: '#C0392B')],
       symbols: [_symbol()],
     );
     expect(document.validate, throwsA(isA<DocumentValidationException>()));
@@ -89,6 +90,7 @@ void main() {
           dimensions: const PatternDimensions(80, 80),
           cells: const [],
         ),
+        threads: const [],
         symbols: const [],
         regions: const [
           PatternRegion(
@@ -142,6 +144,10 @@ PatternDocument _sampleDocument() => PatternDocument(
       ),
     ],
   ),
+  threads: const [
+    ThreadDefinition(id: 'red', color: '#C0392B'),
+    ThreadDefinition(id: 'green', color: '#27864A'),
+  ],
   symbols: [
     _symbol(),
     const SymbolDefinition(
@@ -149,7 +155,7 @@ PatternDocument _sampleDocument() => PatternDocument(
       sourceSymbol: 'O',
       normalizedKey: 'o',
       displayGlyph: '○',
-      thread: ThreadDefinition(id: 'green', color: '#27864A'),
+      threadId: 'green',
     ),
   ],
   regions: const [
@@ -190,7 +196,7 @@ SymbolDefinition _symbol() => const SymbolDefinition(
   sourceSymbol: 'X',
   normalizedKey: 'x',
   displayGlyph: '×',
-  thread: ThreadDefinition(id: 'red', color: '#C0392B'),
+  threadId: 'red',
 );
 
 /// Creates mutable progress that refers to the representative source pattern.

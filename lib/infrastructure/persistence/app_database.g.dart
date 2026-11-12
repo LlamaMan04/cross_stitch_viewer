@@ -1395,6 +1395,596 @@ class LibraryMetadataCompanion extends UpdateCompanion<LibraryMetadataRow> {
   }
 }
 
+class $PatternThreadsTable extends PatternThreads
+    with TableInfo<$PatternThreadsTable, PatternThreadRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PatternThreadsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _brandMeta = const VerificationMeta('brand');
+  @override
+  late final GeneratedColumn<String> brand = GeneratedColumn<String>(
+    'brand',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _catalogNumberMeta = const VerificationMeta(
+    'catalogNumber',
+  );
+  @override
+  late final GeneratedColumn<String> catalogNumber = GeneratedColumn<String>(
+    'catalog_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _conversionNotesMeta = const VerificationMeta(
+    'conversionNotes',
+  );
+  @override
+  late final GeneratedColumn<String> conversionNotes = GeneratedColumn<String>(
+    'conversion_notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _evidenceMeta = const VerificationMeta(
+    'evidence',
+  );
+  @override
+  late final GeneratedColumn<String> evidence = GeneratedColumn<String>(
+    'evidence',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    documentId,
+    id,
+    sortOrder,
+    brand,
+    catalogNumber,
+    name,
+    color,
+    conversionNotes,
+    evidence,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pattern_threads';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PatternThreadRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    if (data.containsKey('brand')) {
+      context.handle(
+        _brandMeta,
+        brand.isAcceptableOrUnknown(data['brand']!, _brandMeta),
+      );
+    }
+    if (data.containsKey('catalog_number')) {
+      context.handle(
+        _catalogNumberMeta,
+        catalogNumber.isAcceptableOrUnknown(
+          data['catalog_number']!,
+          _catalogNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('conversion_notes')) {
+      context.handle(
+        _conversionNotesMeta,
+        conversionNotes.isAcceptableOrUnknown(
+          data['conversion_notes']!,
+          _conversionNotesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('evidence')) {
+      context.handle(
+        _evidenceMeta,
+        evidence.isAcceptableOrUnknown(data['evidence']!, _evidenceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_evidenceMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {documentId, id};
+  @override
+  PatternThreadRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PatternThreadRow(
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      brand: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}brand'],
+      ),
+      catalogNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}catalog_number'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
+      conversionNotes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}conversion_notes'],
+      ),
+      evidence: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}evidence'],
+      )!,
+    );
+  }
+
+  @override
+  $PatternThreadsTable createAlias(String alias) {
+    return $PatternThreadsTable(attachedDatabase, alias);
+  }
+}
+
+class PatternThreadRow extends DataClass
+    implements Insertable<PatternThreadRow> {
+  /// Defines the parent pattern document.
+  final String documentId;
+
+  /// Defines the stable thread identifier within the document.
+  final String id;
+
+  /// Preserves the thread's order in the portable document.
+  final int sortOrder;
+
+  /// Defines the optional thread manufacturer.
+  final String? brand;
+
+  /// Defines the optional manufacturer catalog number.
+  final String? catalogNumber;
+
+  /// Defines the optional human-readable thread color name.
+  final String? name;
+
+  /// Defines the canonical thread color in `#RRGGBB` notation.
+  final String color;
+
+  /// Defines optional substitution or conversion notes.
+  final String? conversionNotes;
+
+  /// Defines whether the thread color was explicit or inferred.
+  final String evidence;
+  const PatternThreadRow({
+    required this.documentId,
+    required this.id,
+    required this.sortOrder,
+    this.brand,
+    this.catalogNumber,
+    this.name,
+    required this.color,
+    this.conversionNotes,
+    required this.evidence,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['document_id'] = Variable<String>(documentId);
+    map['id'] = Variable<String>(id);
+    map['sort_order'] = Variable<int>(sortOrder);
+    if (!nullToAbsent || brand != null) {
+      map['brand'] = Variable<String>(brand);
+    }
+    if (!nullToAbsent || catalogNumber != null) {
+      map['catalog_number'] = Variable<String>(catalogNumber);
+    }
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    map['color'] = Variable<String>(color);
+    if (!nullToAbsent || conversionNotes != null) {
+      map['conversion_notes'] = Variable<String>(conversionNotes);
+    }
+    map['evidence'] = Variable<String>(evidence);
+    return map;
+  }
+
+  PatternThreadsCompanion toCompanion(bool nullToAbsent) {
+    return PatternThreadsCompanion(
+      documentId: Value(documentId),
+      id: Value(id),
+      sortOrder: Value(sortOrder),
+      brand: brand == null && nullToAbsent
+          ? const Value.absent()
+          : Value(brand),
+      catalogNumber: catalogNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(catalogNumber),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      color: Value(color),
+      conversionNotes: conversionNotes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(conversionNotes),
+      evidence: Value(evidence),
+    );
+  }
+
+  factory PatternThreadRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PatternThreadRow(
+      documentId: serializer.fromJson<String>(json['documentId']),
+      id: serializer.fromJson<String>(json['id']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      brand: serializer.fromJson<String?>(json['brand']),
+      catalogNumber: serializer.fromJson<String?>(json['catalogNumber']),
+      name: serializer.fromJson<String?>(json['name']),
+      color: serializer.fromJson<String>(json['color']),
+      conversionNotes: serializer.fromJson<String?>(json['conversionNotes']),
+      evidence: serializer.fromJson<String>(json['evidence']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'documentId': serializer.toJson<String>(documentId),
+      'id': serializer.toJson<String>(id),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'brand': serializer.toJson<String?>(brand),
+      'catalogNumber': serializer.toJson<String?>(catalogNumber),
+      'name': serializer.toJson<String?>(name),
+      'color': serializer.toJson<String>(color),
+      'conversionNotes': serializer.toJson<String?>(conversionNotes),
+      'evidence': serializer.toJson<String>(evidence),
+    };
+  }
+
+  PatternThreadRow copyWith({
+    String? documentId,
+    String? id,
+    int? sortOrder,
+    Value<String?> brand = const Value.absent(),
+    Value<String?> catalogNumber = const Value.absent(),
+    Value<String?> name = const Value.absent(),
+    String? color,
+    Value<String?> conversionNotes = const Value.absent(),
+    String? evidence,
+  }) => PatternThreadRow(
+    documentId: documentId ?? this.documentId,
+    id: id ?? this.id,
+    sortOrder: sortOrder ?? this.sortOrder,
+    brand: brand.present ? brand.value : this.brand,
+    catalogNumber: catalogNumber.present
+        ? catalogNumber.value
+        : this.catalogNumber,
+    name: name.present ? name.value : this.name,
+    color: color ?? this.color,
+    conversionNotes: conversionNotes.present
+        ? conversionNotes.value
+        : this.conversionNotes,
+    evidence: evidence ?? this.evidence,
+  );
+  PatternThreadRow copyWithCompanion(PatternThreadsCompanion data) {
+    return PatternThreadRow(
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      id: data.id.present ? data.id.value : this.id,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      brand: data.brand.present ? data.brand.value : this.brand,
+      catalogNumber: data.catalogNumber.present
+          ? data.catalogNumber.value
+          : this.catalogNumber,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      conversionNotes: data.conversionNotes.present
+          ? data.conversionNotes.value
+          : this.conversionNotes,
+      evidence: data.evidence.present ? data.evidence.value : this.evidence,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PatternThreadRow(')
+          ..write('documentId: $documentId, ')
+          ..write('id: $id, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('brand: $brand, ')
+          ..write('catalogNumber: $catalogNumber, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('conversionNotes: $conversionNotes, ')
+          ..write('evidence: $evidence')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    documentId,
+    id,
+    sortOrder,
+    brand,
+    catalogNumber,
+    name,
+    color,
+    conversionNotes,
+    evidence,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PatternThreadRow &&
+          other.documentId == this.documentId &&
+          other.id == this.id &&
+          other.sortOrder == this.sortOrder &&
+          other.brand == this.brand &&
+          other.catalogNumber == this.catalogNumber &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.conversionNotes == this.conversionNotes &&
+          other.evidence == this.evidence);
+}
+
+class PatternThreadsCompanion extends UpdateCompanion<PatternThreadRow> {
+  final Value<String> documentId;
+  final Value<String> id;
+  final Value<int> sortOrder;
+  final Value<String?> brand;
+  final Value<String?> catalogNumber;
+  final Value<String?> name;
+  final Value<String> color;
+  final Value<String?> conversionNotes;
+  final Value<String> evidence;
+  final Value<int> rowid;
+  const PatternThreadsCompanion({
+    this.documentId = const Value.absent(),
+    this.id = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.brand = const Value.absent(),
+    this.catalogNumber = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.conversionNotes = const Value.absent(),
+    this.evidence = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PatternThreadsCompanion.insert({
+    required String documentId,
+    required String id,
+    required int sortOrder,
+    this.brand = const Value.absent(),
+    this.catalogNumber = const Value.absent(),
+    this.name = const Value.absent(),
+    required String color,
+    this.conversionNotes = const Value.absent(),
+    required String evidence,
+    this.rowid = const Value.absent(),
+  }) : documentId = Value(documentId),
+       id = Value(id),
+       sortOrder = Value(sortOrder),
+       color = Value(color),
+       evidence = Value(evidence);
+  static Insertable<PatternThreadRow> custom({
+    Expression<String>? documentId,
+    Expression<String>? id,
+    Expression<int>? sortOrder,
+    Expression<String>? brand,
+    Expression<String>? catalogNumber,
+    Expression<String>? name,
+    Expression<String>? color,
+    Expression<String>? conversionNotes,
+    Expression<String>? evidence,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (documentId != null) 'document_id': documentId,
+      if (id != null) 'id': id,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (brand != null) 'brand': brand,
+      if (catalogNumber != null) 'catalog_number': catalogNumber,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (conversionNotes != null) 'conversion_notes': conversionNotes,
+      if (evidence != null) 'evidence': evidence,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PatternThreadsCompanion copyWith({
+    Value<String>? documentId,
+    Value<String>? id,
+    Value<int>? sortOrder,
+    Value<String?>? brand,
+    Value<String?>? catalogNumber,
+    Value<String?>? name,
+    Value<String>? color,
+    Value<String?>? conversionNotes,
+    Value<String>? evidence,
+    Value<int>? rowid,
+  }) {
+    return PatternThreadsCompanion(
+      documentId: documentId ?? this.documentId,
+      id: id ?? this.id,
+      sortOrder: sortOrder ?? this.sortOrder,
+      brand: brand ?? this.brand,
+      catalogNumber: catalogNumber ?? this.catalogNumber,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      conversionNotes: conversionNotes ?? this.conversionNotes,
+      evidence: evidence ?? this.evidence,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (brand.present) {
+      map['brand'] = Variable<String>(brand.value);
+    }
+    if (catalogNumber.present) {
+      map['catalog_number'] = Variable<String>(catalogNumber.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (conversionNotes.present) {
+      map['conversion_notes'] = Variable<String>(conversionNotes.value);
+    }
+    if (evidence.present) {
+      map['evidence'] = Variable<String>(evidence.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PatternThreadsCompanion(')
+          ..write('documentId: $documentId, ')
+          ..write('id: $id, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('brand: $brand, ')
+          ..write('catalogNumber: $catalogNumber, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('conversionNotes: $conversionNotes, ')
+          ..write('evidence: $evidence, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PatternSymbolsTable extends PatternSymbols
     with TableInfo<$PatternSymbolsTable, PatternSymbolRow> {
   @override
@@ -1476,71 +2066,27 @@ class $PatternSymbolsTable extends PatternSymbols
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _threadBrandMeta = const VerificationMeta(
-    'threadBrand',
+  static const VerificationMeta _stitchTypeMeta = const VerificationMeta(
+    'stitchType',
   );
   @override
-  late final GeneratedColumn<String> threadBrand = GeneratedColumn<String>(
-    'thread_brand',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _threadCatalogNumberMeta =
-      const VerificationMeta('threadCatalogNumber');
-  @override
-  late final GeneratedColumn<String> threadCatalogNumber =
-      GeneratedColumn<String>(
-        'thread_catalog_number',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _threadNameMeta = const VerificationMeta(
-    'threadName',
-  );
-  @override
-  late final GeneratedColumn<String> threadName = GeneratedColumn<String>(
-    'thread_name',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _threadColorMeta = const VerificationMeta(
-    'threadColor',
-  );
-  @override
-  late final GeneratedColumn<String> threadColor = GeneratedColumn<String>(
-    'thread_color',
+  late final GeneratedColumn<String> stitchType = GeneratedColumn<String>(
+    'stitch_type',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _threadConversionNotesMeta =
-      const VerificationMeta('threadConversionNotes');
-  @override
-  late final GeneratedColumn<String> threadConversionNotes =
-      GeneratedColumn<String>(
-        'thread_conversion_notes',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _threadEvidenceMeta = const VerificationMeta(
-    'threadEvidence',
+  static const VerificationMeta _threadCountMeta = const VerificationMeta(
+    'threadCount',
   );
   @override
-  late final GeneratedColumn<String> threadEvidence = GeneratedColumn<String>(
-    'thread_evidence',
+  late final GeneratedColumn<int> threadCount = GeneratedColumn<int>(
+    'thread_count',
     aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _legendEvidenceMeta = const VerificationMeta(
     'legendEvidence',
@@ -1562,12 +2108,8 @@ class $PatternSymbolsTable extends PatternSymbols
     normalizedKey,
     displayGlyph,
     threadId,
-    threadBrand,
-    threadCatalogNumber,
-    threadName,
-    threadColor,
-    threadConversionNotes,
-    threadEvidence,
+    stitchType,
+    threadCount,
     legendEvidence,
   ];
   @override
@@ -1644,60 +2186,22 @@ class $PatternSymbolsTable extends PatternSymbols
     } else if (isInserting) {
       context.missing(_threadIdMeta);
     }
-    if (data.containsKey('thread_brand')) {
+    if (data.containsKey('stitch_type')) {
       context.handle(
-        _threadBrandMeta,
-        threadBrand.isAcceptableOrUnknown(
-          data['thread_brand']!,
-          _threadBrandMeta,
-        ),
-      );
-    }
-    if (data.containsKey('thread_catalog_number')) {
-      context.handle(
-        _threadCatalogNumberMeta,
-        threadCatalogNumber.isAcceptableOrUnknown(
-          data['thread_catalog_number']!,
-          _threadCatalogNumberMeta,
-        ),
-      );
-    }
-    if (data.containsKey('thread_name')) {
-      context.handle(
-        _threadNameMeta,
-        threadName.isAcceptableOrUnknown(data['thread_name']!, _threadNameMeta),
-      );
-    }
-    if (data.containsKey('thread_color')) {
-      context.handle(
-        _threadColorMeta,
-        threadColor.isAcceptableOrUnknown(
-          data['thread_color']!,
-          _threadColorMeta,
-        ),
+        _stitchTypeMeta,
+        stitchType.isAcceptableOrUnknown(data['stitch_type']!, _stitchTypeMeta),
       );
     } else if (isInserting) {
-      context.missing(_threadColorMeta);
+      context.missing(_stitchTypeMeta);
     }
-    if (data.containsKey('thread_conversion_notes')) {
+    if (data.containsKey('thread_count')) {
       context.handle(
-        _threadConversionNotesMeta,
-        threadConversionNotes.isAcceptableOrUnknown(
-          data['thread_conversion_notes']!,
-          _threadConversionNotesMeta,
+        _threadCountMeta,
+        threadCount.isAcceptableOrUnknown(
+          data['thread_count']!,
+          _threadCountMeta,
         ),
       );
-    }
-    if (data.containsKey('thread_evidence')) {
-      context.handle(
-        _threadEvidenceMeta,
-        threadEvidence.isAcceptableOrUnknown(
-          data['thread_evidence']!,
-          _threadEvidenceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_threadEvidenceMeta);
     }
     if (data.containsKey('legend_evidence')) {
       context.handle(
@@ -1745,30 +2249,14 @@ class $PatternSymbolsTable extends PatternSymbols
         DriftSqlType.string,
         data['${effectivePrefix}thread_id'],
       )!,
-      threadBrand: attachedDatabase.typeMapping.read(
+      stitchType: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}thread_brand'],
-      ),
-      threadCatalogNumber: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_catalog_number'],
-      ),
-      threadName: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_name'],
-      ),
-      threadColor: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_color'],
+        data['${effectivePrefix}stitch_type'],
       )!,
-      threadConversionNotes: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_conversion_notes'],
+      threadCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}thread_count'],
       ),
-      threadEvidence: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_evidence'],
-      )!,
       legendEvidence: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}legend_evidence'],
@@ -1805,23 +2293,11 @@ class PatternSymbolRow extends DataClass
   /// Defines the exact thread identifier used by the symbol.
   final String threadId;
 
-  /// Defines the optional thread manufacturer.
-  final String? threadBrand;
+  /// Defines the stitch technique shared by cells using this symbol.
+  final String stitchType;
 
-  /// Defines the optional manufacturer catalog number.
-  final String? threadCatalogNumber;
-
-  /// Defines the optional human-readable thread color name.
-  final String? threadName;
-
-  /// Defines the canonical thread color in `#RRGGBB` notation.
-  final String threadColor;
-
-  /// Defines optional substitution or conversion notes.
-  final String? threadConversionNotes;
-
-  /// Defines whether the thread color was explicit or inferred.
-  final String threadEvidence;
+  /// Defines the optional strand count shared by cells using this symbol.
+  final int? threadCount;
 
   /// Defines optional source legend evidence for the mapping.
   final String? legendEvidence;
@@ -1833,12 +2309,8 @@ class PatternSymbolRow extends DataClass
     required this.normalizedKey,
     required this.displayGlyph,
     required this.threadId,
-    this.threadBrand,
-    this.threadCatalogNumber,
-    this.threadName,
-    required this.threadColor,
-    this.threadConversionNotes,
-    required this.threadEvidence,
+    required this.stitchType,
+    this.threadCount,
     this.legendEvidence,
   });
   @override
@@ -1851,20 +2323,10 @@ class PatternSymbolRow extends DataClass
     map['normalized_key'] = Variable<String>(normalizedKey);
     map['display_glyph'] = Variable<String>(displayGlyph);
     map['thread_id'] = Variable<String>(threadId);
-    if (!nullToAbsent || threadBrand != null) {
-      map['thread_brand'] = Variable<String>(threadBrand);
+    map['stitch_type'] = Variable<String>(stitchType);
+    if (!nullToAbsent || threadCount != null) {
+      map['thread_count'] = Variable<int>(threadCount);
     }
-    if (!nullToAbsent || threadCatalogNumber != null) {
-      map['thread_catalog_number'] = Variable<String>(threadCatalogNumber);
-    }
-    if (!nullToAbsent || threadName != null) {
-      map['thread_name'] = Variable<String>(threadName);
-    }
-    map['thread_color'] = Variable<String>(threadColor);
-    if (!nullToAbsent || threadConversionNotes != null) {
-      map['thread_conversion_notes'] = Variable<String>(threadConversionNotes);
-    }
-    map['thread_evidence'] = Variable<String>(threadEvidence);
     if (!nullToAbsent || legendEvidence != null) {
       map['legend_evidence'] = Variable<String>(legendEvidence);
     }
@@ -1880,20 +2342,10 @@ class PatternSymbolRow extends DataClass
       normalizedKey: Value(normalizedKey),
       displayGlyph: Value(displayGlyph),
       threadId: Value(threadId),
-      threadBrand: threadBrand == null && nullToAbsent
+      stitchType: Value(stitchType),
+      threadCount: threadCount == null && nullToAbsent
           ? const Value.absent()
-          : Value(threadBrand),
-      threadCatalogNumber: threadCatalogNumber == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadCatalogNumber),
-      threadName: threadName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadName),
-      threadColor: Value(threadColor),
-      threadConversionNotes: threadConversionNotes == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadConversionNotes),
-      threadEvidence: Value(threadEvidence),
+          : Value(threadCount),
       legendEvidence: legendEvidence == null && nullToAbsent
           ? const Value.absent()
           : Value(legendEvidence),
@@ -1913,16 +2365,8 @@ class PatternSymbolRow extends DataClass
       normalizedKey: serializer.fromJson<String>(json['normalizedKey']),
       displayGlyph: serializer.fromJson<String>(json['displayGlyph']),
       threadId: serializer.fromJson<String>(json['threadId']),
-      threadBrand: serializer.fromJson<String?>(json['threadBrand']),
-      threadCatalogNumber: serializer.fromJson<String?>(
-        json['threadCatalogNumber'],
-      ),
-      threadName: serializer.fromJson<String?>(json['threadName']),
-      threadColor: serializer.fromJson<String>(json['threadColor']),
-      threadConversionNotes: serializer.fromJson<String?>(
-        json['threadConversionNotes'],
-      ),
-      threadEvidence: serializer.fromJson<String>(json['threadEvidence']),
+      stitchType: serializer.fromJson<String>(json['stitchType']),
+      threadCount: serializer.fromJson<int?>(json['threadCount']),
       legendEvidence: serializer.fromJson<String?>(json['legendEvidence']),
     );
   }
@@ -1937,14 +2381,8 @@ class PatternSymbolRow extends DataClass
       'normalizedKey': serializer.toJson<String>(normalizedKey),
       'displayGlyph': serializer.toJson<String>(displayGlyph),
       'threadId': serializer.toJson<String>(threadId),
-      'threadBrand': serializer.toJson<String?>(threadBrand),
-      'threadCatalogNumber': serializer.toJson<String?>(threadCatalogNumber),
-      'threadName': serializer.toJson<String?>(threadName),
-      'threadColor': serializer.toJson<String>(threadColor),
-      'threadConversionNotes': serializer.toJson<String?>(
-        threadConversionNotes,
-      ),
-      'threadEvidence': serializer.toJson<String>(threadEvidence),
+      'stitchType': serializer.toJson<String>(stitchType),
+      'threadCount': serializer.toJson<int?>(threadCount),
       'legendEvidence': serializer.toJson<String?>(legendEvidence),
     };
   }
@@ -1957,12 +2395,8 @@ class PatternSymbolRow extends DataClass
     String? normalizedKey,
     String? displayGlyph,
     String? threadId,
-    Value<String?> threadBrand = const Value.absent(),
-    Value<String?> threadCatalogNumber = const Value.absent(),
-    Value<String?> threadName = const Value.absent(),
-    String? threadColor,
-    Value<String?> threadConversionNotes = const Value.absent(),
-    String? threadEvidence,
+    String? stitchType,
+    Value<int?> threadCount = const Value.absent(),
     Value<String?> legendEvidence = const Value.absent(),
   }) => PatternSymbolRow(
     documentId: documentId ?? this.documentId,
@@ -1972,16 +2406,8 @@ class PatternSymbolRow extends DataClass
     normalizedKey: normalizedKey ?? this.normalizedKey,
     displayGlyph: displayGlyph ?? this.displayGlyph,
     threadId: threadId ?? this.threadId,
-    threadBrand: threadBrand.present ? threadBrand.value : this.threadBrand,
-    threadCatalogNumber: threadCatalogNumber.present
-        ? threadCatalogNumber.value
-        : this.threadCatalogNumber,
-    threadName: threadName.present ? threadName.value : this.threadName,
-    threadColor: threadColor ?? this.threadColor,
-    threadConversionNotes: threadConversionNotes.present
-        ? threadConversionNotes.value
-        : this.threadConversionNotes,
-    threadEvidence: threadEvidence ?? this.threadEvidence,
+    stitchType: stitchType ?? this.stitchType,
+    threadCount: threadCount.present ? threadCount.value : this.threadCount,
     legendEvidence: legendEvidence.present
         ? legendEvidence.value
         : this.legendEvidence,
@@ -2003,24 +2429,12 @@ class PatternSymbolRow extends DataClass
           ? data.displayGlyph.value
           : this.displayGlyph,
       threadId: data.threadId.present ? data.threadId.value : this.threadId,
-      threadBrand: data.threadBrand.present
-          ? data.threadBrand.value
-          : this.threadBrand,
-      threadCatalogNumber: data.threadCatalogNumber.present
-          ? data.threadCatalogNumber.value
-          : this.threadCatalogNumber,
-      threadName: data.threadName.present
-          ? data.threadName.value
-          : this.threadName,
-      threadColor: data.threadColor.present
-          ? data.threadColor.value
-          : this.threadColor,
-      threadConversionNotes: data.threadConversionNotes.present
-          ? data.threadConversionNotes.value
-          : this.threadConversionNotes,
-      threadEvidence: data.threadEvidence.present
-          ? data.threadEvidence.value
-          : this.threadEvidence,
+      stitchType: data.stitchType.present
+          ? data.stitchType.value
+          : this.stitchType,
+      threadCount: data.threadCount.present
+          ? data.threadCount.value
+          : this.threadCount,
       legendEvidence: data.legendEvidence.present
           ? data.legendEvidence.value
           : this.legendEvidence,
@@ -2037,12 +2451,8 @@ class PatternSymbolRow extends DataClass
           ..write('normalizedKey: $normalizedKey, ')
           ..write('displayGlyph: $displayGlyph, ')
           ..write('threadId: $threadId, ')
-          ..write('threadBrand: $threadBrand, ')
-          ..write('threadCatalogNumber: $threadCatalogNumber, ')
-          ..write('threadName: $threadName, ')
-          ..write('threadColor: $threadColor, ')
-          ..write('threadConversionNotes: $threadConversionNotes, ')
-          ..write('threadEvidence: $threadEvidence, ')
+          ..write('stitchType: $stitchType, ')
+          ..write('threadCount: $threadCount, ')
           ..write('legendEvidence: $legendEvidence')
           ..write(')'))
         .toString();
@@ -2057,12 +2467,8 @@ class PatternSymbolRow extends DataClass
     normalizedKey,
     displayGlyph,
     threadId,
-    threadBrand,
-    threadCatalogNumber,
-    threadName,
-    threadColor,
-    threadConversionNotes,
-    threadEvidence,
+    stitchType,
+    threadCount,
     legendEvidence,
   );
   @override
@@ -2076,12 +2482,8 @@ class PatternSymbolRow extends DataClass
           other.normalizedKey == this.normalizedKey &&
           other.displayGlyph == this.displayGlyph &&
           other.threadId == this.threadId &&
-          other.threadBrand == this.threadBrand &&
-          other.threadCatalogNumber == this.threadCatalogNumber &&
-          other.threadName == this.threadName &&
-          other.threadColor == this.threadColor &&
-          other.threadConversionNotes == this.threadConversionNotes &&
-          other.threadEvidence == this.threadEvidence &&
+          other.stitchType == this.stitchType &&
+          other.threadCount == this.threadCount &&
           other.legendEvidence == this.legendEvidence);
 }
 
@@ -2093,12 +2495,8 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
   final Value<String> normalizedKey;
   final Value<String> displayGlyph;
   final Value<String> threadId;
-  final Value<String?> threadBrand;
-  final Value<String?> threadCatalogNumber;
-  final Value<String?> threadName;
-  final Value<String> threadColor;
-  final Value<String?> threadConversionNotes;
-  final Value<String> threadEvidence;
+  final Value<String> stitchType;
+  final Value<int?> threadCount;
   final Value<String?> legendEvidence;
   final Value<int> rowid;
   const PatternSymbolsCompanion({
@@ -2109,12 +2507,8 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     this.normalizedKey = const Value.absent(),
     this.displayGlyph = const Value.absent(),
     this.threadId = const Value.absent(),
-    this.threadBrand = const Value.absent(),
-    this.threadCatalogNumber = const Value.absent(),
-    this.threadName = const Value.absent(),
-    this.threadColor = const Value.absent(),
-    this.threadConversionNotes = const Value.absent(),
-    this.threadEvidence = const Value.absent(),
+    this.stitchType = const Value.absent(),
+    this.threadCount = const Value.absent(),
     this.legendEvidence = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -2126,12 +2520,8 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     required String normalizedKey,
     required String displayGlyph,
     required String threadId,
-    this.threadBrand = const Value.absent(),
-    this.threadCatalogNumber = const Value.absent(),
-    this.threadName = const Value.absent(),
-    required String threadColor,
-    this.threadConversionNotes = const Value.absent(),
-    required String threadEvidence,
+    required String stitchType,
+    this.threadCount = const Value.absent(),
     this.legendEvidence = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : documentId = Value(documentId),
@@ -2141,8 +2531,7 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
        normalizedKey = Value(normalizedKey),
        displayGlyph = Value(displayGlyph),
        threadId = Value(threadId),
-       threadColor = Value(threadColor),
-       threadEvidence = Value(threadEvidence);
+       stitchType = Value(stitchType);
   static Insertable<PatternSymbolRow> custom({
     Expression<String>? documentId,
     Expression<String>? id,
@@ -2151,12 +2540,8 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     Expression<String>? normalizedKey,
     Expression<String>? displayGlyph,
     Expression<String>? threadId,
-    Expression<String>? threadBrand,
-    Expression<String>? threadCatalogNumber,
-    Expression<String>? threadName,
-    Expression<String>? threadColor,
-    Expression<String>? threadConversionNotes,
-    Expression<String>? threadEvidence,
+    Expression<String>? stitchType,
+    Expression<int>? threadCount,
     Expression<String>? legendEvidence,
     Expression<int>? rowid,
   }) {
@@ -2168,14 +2553,8 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
       if (normalizedKey != null) 'normalized_key': normalizedKey,
       if (displayGlyph != null) 'display_glyph': displayGlyph,
       if (threadId != null) 'thread_id': threadId,
-      if (threadBrand != null) 'thread_brand': threadBrand,
-      if (threadCatalogNumber != null)
-        'thread_catalog_number': threadCatalogNumber,
-      if (threadName != null) 'thread_name': threadName,
-      if (threadColor != null) 'thread_color': threadColor,
-      if (threadConversionNotes != null)
-        'thread_conversion_notes': threadConversionNotes,
-      if (threadEvidence != null) 'thread_evidence': threadEvidence,
+      if (stitchType != null) 'stitch_type': stitchType,
+      if (threadCount != null) 'thread_count': threadCount,
       if (legendEvidence != null) 'legend_evidence': legendEvidence,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2189,12 +2568,8 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     Value<String>? normalizedKey,
     Value<String>? displayGlyph,
     Value<String>? threadId,
-    Value<String?>? threadBrand,
-    Value<String?>? threadCatalogNumber,
-    Value<String?>? threadName,
-    Value<String>? threadColor,
-    Value<String?>? threadConversionNotes,
-    Value<String>? threadEvidence,
+    Value<String>? stitchType,
+    Value<int?>? threadCount,
     Value<String?>? legendEvidence,
     Value<int>? rowid,
   }) {
@@ -2206,13 +2581,8 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
       normalizedKey: normalizedKey ?? this.normalizedKey,
       displayGlyph: displayGlyph ?? this.displayGlyph,
       threadId: threadId ?? this.threadId,
-      threadBrand: threadBrand ?? this.threadBrand,
-      threadCatalogNumber: threadCatalogNumber ?? this.threadCatalogNumber,
-      threadName: threadName ?? this.threadName,
-      threadColor: threadColor ?? this.threadColor,
-      threadConversionNotes:
-          threadConversionNotes ?? this.threadConversionNotes,
-      threadEvidence: threadEvidence ?? this.threadEvidence,
+      stitchType: stitchType ?? this.stitchType,
+      threadCount: threadCount ?? this.threadCount,
       legendEvidence: legendEvidence ?? this.legendEvidence,
       rowid: rowid ?? this.rowid,
     );
@@ -2242,27 +2612,11 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
     if (threadId.present) {
       map['thread_id'] = Variable<String>(threadId.value);
     }
-    if (threadBrand.present) {
-      map['thread_brand'] = Variable<String>(threadBrand.value);
+    if (stitchType.present) {
+      map['stitch_type'] = Variable<String>(stitchType.value);
     }
-    if (threadCatalogNumber.present) {
-      map['thread_catalog_number'] = Variable<String>(
-        threadCatalogNumber.value,
-      );
-    }
-    if (threadName.present) {
-      map['thread_name'] = Variable<String>(threadName.value);
-    }
-    if (threadColor.present) {
-      map['thread_color'] = Variable<String>(threadColor.value);
-    }
-    if (threadConversionNotes.present) {
-      map['thread_conversion_notes'] = Variable<String>(
-        threadConversionNotes.value,
-      );
-    }
-    if (threadEvidence.present) {
-      map['thread_evidence'] = Variable<String>(threadEvidence.value);
+    if (threadCount.present) {
+      map['thread_count'] = Variable<int>(threadCount.value);
     }
     if (legendEvidence.present) {
       map['legend_evidence'] = Variable<String>(legendEvidence.value);
@@ -2283,13 +2637,400 @@ class PatternSymbolsCompanion extends UpdateCompanion<PatternSymbolRow> {
           ..write('normalizedKey: $normalizedKey, ')
           ..write('displayGlyph: $displayGlyph, ')
           ..write('threadId: $threadId, ')
-          ..write('threadBrand: $threadBrand, ')
-          ..write('threadCatalogNumber: $threadCatalogNumber, ')
-          ..write('threadName: $threadName, ')
-          ..write('threadColor: $threadColor, ')
-          ..write('threadConversionNotes: $threadConversionNotes, ')
-          ..write('threadEvidence: $threadEvidence, ')
+          ..write('stitchType: $stitchType, ')
+          ..write('threadCount: $threadCount, ')
           ..write('legendEvidence: $legendEvidence, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PatternBackstitchDefinitionsTable extends PatternBackstitchDefinitions
+    with
+        TableInfo<
+          $PatternBackstitchDefinitionsTable,
+          PatternBackstitchDefinitionRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PatternBackstitchDefinitionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _threadIdMeta = const VerificationMeta(
+    'threadId',
+  );
+  @override
+  late final GeneratedColumn<String> threadId = GeneratedColumn<String>(
+    'thread_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _threadCountMeta = const VerificationMeta(
+    'threadCount',
+  );
+  @override
+  late final GeneratedColumn<int> threadCount = GeneratedColumn<int>(
+    'thread_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    documentId,
+    id,
+    sortOrder,
+    threadId,
+    threadCount,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pattern_backstitch_definitions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PatternBackstitchDefinitionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortOrderMeta);
+    }
+    if (data.containsKey('thread_id')) {
+      context.handle(
+        _threadIdMeta,
+        threadId.isAcceptableOrUnknown(data['thread_id']!, _threadIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_threadIdMeta);
+    }
+    if (data.containsKey('thread_count')) {
+      context.handle(
+        _threadCountMeta,
+        threadCount.isAcceptableOrUnknown(
+          data['thread_count']!,
+          _threadCountMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {documentId, id};
+  @override
+  PatternBackstitchDefinitionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PatternBackstitchDefinitionRow(
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
+      threadId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}thread_id'],
+      )!,
+      threadCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}thread_count'],
+      ),
+    );
+  }
+
+  @override
+  $PatternBackstitchDefinitionsTable createAlias(String alias) {
+    return $PatternBackstitchDefinitionsTable(attachedDatabase, alias);
+  }
+}
+
+class PatternBackstitchDefinitionRow extends DataClass
+    implements Insertable<PatternBackstitchDefinitionRow> {
+  /// Defines the parent pattern document.
+  final String documentId;
+
+  /// Defines the stable backstitch definition identifier.
+  final String id;
+
+  /// Preserves definition order in the portable document.
+  final int sortOrder;
+
+  /// Defines the separately stored thread used by this definition.
+  final String threadId;
+
+  /// Defines the optional number of thread strands.
+  final int? threadCount;
+  const PatternBackstitchDefinitionRow({
+    required this.documentId,
+    required this.id,
+    required this.sortOrder,
+    required this.threadId,
+    this.threadCount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['document_id'] = Variable<String>(documentId);
+    map['id'] = Variable<String>(id);
+    map['sort_order'] = Variable<int>(sortOrder);
+    map['thread_id'] = Variable<String>(threadId);
+    if (!nullToAbsent || threadCount != null) {
+      map['thread_count'] = Variable<int>(threadCount);
+    }
+    return map;
+  }
+
+  PatternBackstitchDefinitionsCompanion toCompanion(bool nullToAbsent) {
+    return PatternBackstitchDefinitionsCompanion(
+      documentId: Value(documentId),
+      id: Value(id),
+      sortOrder: Value(sortOrder),
+      threadId: Value(threadId),
+      threadCount: threadCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadCount),
+    );
+  }
+
+  factory PatternBackstitchDefinitionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PatternBackstitchDefinitionRow(
+      documentId: serializer.fromJson<String>(json['documentId']),
+      id: serializer.fromJson<String>(json['id']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
+      threadId: serializer.fromJson<String>(json['threadId']),
+      threadCount: serializer.fromJson<int?>(json['threadCount']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'documentId': serializer.toJson<String>(documentId),
+      'id': serializer.toJson<String>(id),
+      'sortOrder': serializer.toJson<int>(sortOrder),
+      'threadId': serializer.toJson<String>(threadId),
+      'threadCount': serializer.toJson<int?>(threadCount),
+    };
+  }
+
+  PatternBackstitchDefinitionRow copyWith({
+    String? documentId,
+    String? id,
+    int? sortOrder,
+    String? threadId,
+    Value<int?> threadCount = const Value.absent(),
+  }) => PatternBackstitchDefinitionRow(
+    documentId: documentId ?? this.documentId,
+    id: id ?? this.id,
+    sortOrder: sortOrder ?? this.sortOrder,
+    threadId: threadId ?? this.threadId,
+    threadCount: threadCount.present ? threadCount.value : this.threadCount,
+  );
+  PatternBackstitchDefinitionRow copyWithCompanion(
+    PatternBackstitchDefinitionsCompanion data,
+  ) {
+    return PatternBackstitchDefinitionRow(
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      id: data.id.present ? data.id.value : this.id,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
+      threadId: data.threadId.present ? data.threadId.value : this.threadId,
+      threadCount: data.threadCount.present
+          ? data.threadCount.value
+          : this.threadCount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PatternBackstitchDefinitionRow(')
+          ..write('documentId: $documentId, ')
+          ..write('id: $id, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('threadId: $threadId, ')
+          ..write('threadCount: $threadCount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(documentId, id, sortOrder, threadId, threadCount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PatternBackstitchDefinitionRow &&
+          other.documentId == this.documentId &&
+          other.id == this.id &&
+          other.sortOrder == this.sortOrder &&
+          other.threadId == this.threadId &&
+          other.threadCount == this.threadCount);
+}
+
+class PatternBackstitchDefinitionsCompanion
+    extends UpdateCompanion<PatternBackstitchDefinitionRow> {
+  final Value<String> documentId;
+  final Value<String> id;
+  final Value<int> sortOrder;
+  final Value<String> threadId;
+  final Value<int?> threadCount;
+  final Value<int> rowid;
+  const PatternBackstitchDefinitionsCompanion({
+    this.documentId = const Value.absent(),
+    this.id = const Value.absent(),
+    this.sortOrder = const Value.absent(),
+    this.threadId = const Value.absent(),
+    this.threadCount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PatternBackstitchDefinitionsCompanion.insert({
+    required String documentId,
+    required String id,
+    required int sortOrder,
+    required String threadId,
+    this.threadCount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : documentId = Value(documentId),
+       id = Value(id),
+       sortOrder = Value(sortOrder),
+       threadId = Value(threadId);
+  static Insertable<PatternBackstitchDefinitionRow> custom({
+    Expression<String>? documentId,
+    Expression<String>? id,
+    Expression<int>? sortOrder,
+    Expression<String>? threadId,
+    Expression<int>? threadCount,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (documentId != null) 'document_id': documentId,
+      if (id != null) 'id': id,
+      if (sortOrder != null) 'sort_order': sortOrder,
+      if (threadId != null) 'thread_id': threadId,
+      if (threadCount != null) 'thread_count': threadCount,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PatternBackstitchDefinitionsCompanion copyWith({
+    Value<String>? documentId,
+    Value<String>? id,
+    Value<int>? sortOrder,
+    Value<String>? threadId,
+    Value<int?>? threadCount,
+    Value<int>? rowid,
+  }) {
+    return PatternBackstitchDefinitionsCompanion(
+      documentId: documentId ?? this.documentId,
+      id: id ?? this.id,
+      sortOrder: sortOrder ?? this.sortOrder,
+      threadId: threadId ?? this.threadId,
+      threadCount: threadCount ?? this.threadCount,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
+    if (threadId.present) {
+      map['thread_id'] = Variable<String>(threadId.value);
+    }
+    if (threadCount.present) {
+      map['thread_count'] = Variable<int>(threadCount.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PatternBackstitchDefinitionsCompanion(')
+          ..write('documentId: $documentId, ')
+          ..write('id: $id, ')
+          ..write('sortOrder: $sortOrder, ')
+          ..write('threadId: $threadId, ')
+          ..write('threadCount: $threadCount, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2966,93 +3707,16 @@ class $PatternBackstitchesTable extends PatternBackstitches
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _threadIdMeta = const VerificationMeta(
-    'threadId',
+  static const VerificationMeta _definitionIdMeta = const VerificationMeta(
+    'definitionId',
   );
   @override
-  late final GeneratedColumn<String> threadId = GeneratedColumn<String>(
-    'thread_id',
+  late final GeneratedColumn<String> definitionId = GeneratedColumn<String>(
+    'definition_id',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-  );
-  static const VerificationMeta _threadBrandMeta = const VerificationMeta(
-    'threadBrand',
-  );
-  @override
-  late final GeneratedColumn<String> threadBrand = GeneratedColumn<String>(
-    'thread_brand',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _threadCatalogNumberMeta =
-      const VerificationMeta('threadCatalogNumber');
-  @override
-  late final GeneratedColumn<String> threadCatalogNumber =
-      GeneratedColumn<String>(
-        'thread_catalog_number',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _threadNameMeta = const VerificationMeta(
-    'threadName',
-  );
-  @override
-  late final GeneratedColumn<String> threadName = GeneratedColumn<String>(
-    'thread_name',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _threadColorMeta = const VerificationMeta(
-    'threadColor',
-  );
-  @override
-  late final GeneratedColumn<String> threadColor = GeneratedColumn<String>(
-    'thread_color',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _threadConversionNotesMeta =
-      const VerificationMeta('threadConversionNotes');
-  @override
-  late final GeneratedColumn<String> threadConversionNotes =
-      GeneratedColumn<String>(
-        'thread_conversion_notes',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _threadEvidenceMeta = const VerificationMeta(
-    'threadEvidence',
-  );
-  @override
-  late final GeneratedColumn<String> threadEvidence = GeneratedColumn<String>(
-    'thread_evidence',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _threadCountMeta = const VerificationMeta(
-    'threadCount',
-  );
-  @override
-  late final GeneratedColumn<int> threadCount = GeneratedColumn<int>(
-    'thread_count',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
   );
   static const VerificationMeta _confidenceMeta = const VerificationMeta(
     'confidence',
@@ -3100,14 +3764,7 @@ class $PatternBackstitchesTable extends PatternBackstitches
     startColumn,
     endRow,
     endColumn,
-    threadId,
-    threadBrand,
-    threadCatalogNumber,
-    threadName,
-    threadColor,
-    threadConversionNotes,
-    threadEvidence,
-    threadCount,
+    definitionId,
     confidence,
     needsReview,
     provenanceId,
@@ -3180,77 +3837,16 @@ class $PatternBackstitchesTable extends PatternBackstitches
     } else if (isInserting) {
       context.missing(_endColumnMeta);
     }
-    if (data.containsKey('thread_id')) {
+    if (data.containsKey('definition_id')) {
       context.handle(
-        _threadIdMeta,
-        threadId.isAcceptableOrUnknown(data['thread_id']!, _threadIdMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_threadIdMeta);
-    }
-    if (data.containsKey('thread_brand')) {
-      context.handle(
-        _threadBrandMeta,
-        threadBrand.isAcceptableOrUnknown(
-          data['thread_brand']!,
-          _threadBrandMeta,
-        ),
-      );
-    }
-    if (data.containsKey('thread_catalog_number')) {
-      context.handle(
-        _threadCatalogNumberMeta,
-        threadCatalogNumber.isAcceptableOrUnknown(
-          data['thread_catalog_number']!,
-          _threadCatalogNumberMeta,
-        ),
-      );
-    }
-    if (data.containsKey('thread_name')) {
-      context.handle(
-        _threadNameMeta,
-        threadName.isAcceptableOrUnknown(data['thread_name']!, _threadNameMeta),
-      );
-    }
-    if (data.containsKey('thread_color')) {
-      context.handle(
-        _threadColorMeta,
-        threadColor.isAcceptableOrUnknown(
-          data['thread_color']!,
-          _threadColorMeta,
+        _definitionIdMeta,
+        definitionId.isAcceptableOrUnknown(
+          data['definition_id']!,
+          _definitionIdMeta,
         ),
       );
     } else if (isInserting) {
-      context.missing(_threadColorMeta);
-    }
-    if (data.containsKey('thread_conversion_notes')) {
-      context.handle(
-        _threadConversionNotesMeta,
-        threadConversionNotes.isAcceptableOrUnknown(
-          data['thread_conversion_notes']!,
-          _threadConversionNotesMeta,
-        ),
-      );
-    }
-    if (data.containsKey('thread_evidence')) {
-      context.handle(
-        _threadEvidenceMeta,
-        threadEvidence.isAcceptableOrUnknown(
-          data['thread_evidence']!,
-          _threadEvidenceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_threadEvidenceMeta);
-    }
-    if (data.containsKey('thread_count')) {
-      context.handle(
-        _threadCountMeta,
-        threadCount.isAcceptableOrUnknown(
-          data['thread_count']!,
-          _threadCountMeta,
-        ),
-      );
+      context.missing(_definitionIdMeta);
     }
     if (data.containsKey('confidence')) {
       context.handle(
@@ -3313,38 +3909,10 @@ class $PatternBackstitchesTable extends PatternBackstitches
         DriftSqlType.double,
         data['${effectivePrefix}end_column'],
       )!,
-      threadId: attachedDatabase.typeMapping.read(
+      definitionId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}thread_id'],
+        data['${effectivePrefix}definition_id'],
       )!,
-      threadBrand: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_brand'],
-      ),
-      threadCatalogNumber: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_catalog_number'],
-      ),
-      threadName: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_name'],
-      ),
-      threadColor: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_color'],
-      )!,
-      threadConversionNotes: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_conversion_notes'],
-      ),
-      threadEvidence: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}thread_evidence'],
-      )!,
-      threadCount: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}thread_count'],
-      ),
       confidence: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}confidence'],
@@ -3389,29 +3957,8 @@ class PatternBackstitchRow extends DataClass
   /// Defines the segment's ending column on the grid line lattice.
   final double endColumn;
 
-  /// Defines the exact thread identifier used by the segment.
-  final String threadId;
-
-  /// Defines the optional segment thread manufacturer.
-  final String? threadBrand;
-
-  /// Defines the optional segment manufacturer catalog number.
-  final String? threadCatalogNumber;
-
-  /// Defines the optional human-readable segment thread color name.
-  final String? threadName;
-
-  /// Defines the canonical segment thread color in `#RRGGBB` notation.
-  final String threadColor;
-
-  /// Defines optional segment thread conversion notes.
-  final String? threadConversionNotes;
-
-  /// Defines whether the segment thread color was explicit or inferred.
-  final String threadEvidence;
-
-  /// Defines the optional number of thread strands used for the segment.
-  final int? threadCount;
+  /// Defines the reusable backstitch definition used by the segment.
+  final String definitionId;
 
   /// Defines the optional parser confidence for the segment.
   final double? confidence;
@@ -3429,14 +3976,7 @@ class PatternBackstitchRow extends DataClass
     required this.startColumn,
     required this.endRow,
     required this.endColumn,
-    required this.threadId,
-    this.threadBrand,
-    this.threadCatalogNumber,
-    this.threadName,
-    required this.threadColor,
-    this.threadConversionNotes,
-    required this.threadEvidence,
-    this.threadCount,
+    required this.definitionId,
     this.confidence,
     required this.needsReview,
     this.provenanceId,
@@ -3451,24 +3991,7 @@ class PatternBackstitchRow extends DataClass
     map['start_column'] = Variable<double>(startColumn);
     map['end_row'] = Variable<double>(endRow);
     map['end_column'] = Variable<double>(endColumn);
-    map['thread_id'] = Variable<String>(threadId);
-    if (!nullToAbsent || threadBrand != null) {
-      map['thread_brand'] = Variable<String>(threadBrand);
-    }
-    if (!nullToAbsent || threadCatalogNumber != null) {
-      map['thread_catalog_number'] = Variable<String>(threadCatalogNumber);
-    }
-    if (!nullToAbsent || threadName != null) {
-      map['thread_name'] = Variable<String>(threadName);
-    }
-    map['thread_color'] = Variable<String>(threadColor);
-    if (!nullToAbsent || threadConversionNotes != null) {
-      map['thread_conversion_notes'] = Variable<String>(threadConversionNotes);
-    }
-    map['thread_evidence'] = Variable<String>(threadEvidence);
-    if (!nullToAbsent || threadCount != null) {
-      map['thread_count'] = Variable<int>(threadCount);
-    }
+    map['definition_id'] = Variable<String>(definitionId);
     if (!nullToAbsent || confidence != null) {
       map['confidence'] = Variable<double>(confidence);
     }
@@ -3488,24 +4011,7 @@ class PatternBackstitchRow extends DataClass
       startColumn: Value(startColumn),
       endRow: Value(endRow),
       endColumn: Value(endColumn),
-      threadId: Value(threadId),
-      threadBrand: threadBrand == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadBrand),
-      threadCatalogNumber: threadCatalogNumber == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadCatalogNumber),
-      threadName: threadName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadName),
-      threadColor: Value(threadColor),
-      threadConversionNotes: threadConversionNotes == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadConversionNotes),
-      threadEvidence: Value(threadEvidence),
-      threadCount: threadCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadCount),
+      definitionId: Value(definitionId),
       confidence: confidence == null && nullToAbsent
           ? const Value.absent()
           : Value(confidence),
@@ -3529,18 +4035,7 @@ class PatternBackstitchRow extends DataClass
       startColumn: serializer.fromJson<double>(json['startColumn']),
       endRow: serializer.fromJson<double>(json['endRow']),
       endColumn: serializer.fromJson<double>(json['endColumn']),
-      threadId: serializer.fromJson<String>(json['threadId']),
-      threadBrand: serializer.fromJson<String?>(json['threadBrand']),
-      threadCatalogNumber: serializer.fromJson<String?>(
-        json['threadCatalogNumber'],
-      ),
-      threadName: serializer.fromJson<String?>(json['threadName']),
-      threadColor: serializer.fromJson<String>(json['threadColor']),
-      threadConversionNotes: serializer.fromJson<String?>(
-        json['threadConversionNotes'],
-      ),
-      threadEvidence: serializer.fromJson<String>(json['threadEvidence']),
-      threadCount: serializer.fromJson<int?>(json['threadCount']),
+      definitionId: serializer.fromJson<String>(json['definitionId']),
       confidence: serializer.fromJson<double?>(json['confidence']),
       needsReview: serializer.fromJson<bool>(json['needsReview']),
       provenanceId: serializer.fromJson<String?>(json['provenanceId']),
@@ -3557,16 +4052,7 @@ class PatternBackstitchRow extends DataClass
       'startColumn': serializer.toJson<double>(startColumn),
       'endRow': serializer.toJson<double>(endRow),
       'endColumn': serializer.toJson<double>(endColumn),
-      'threadId': serializer.toJson<String>(threadId),
-      'threadBrand': serializer.toJson<String?>(threadBrand),
-      'threadCatalogNumber': serializer.toJson<String?>(threadCatalogNumber),
-      'threadName': serializer.toJson<String?>(threadName),
-      'threadColor': serializer.toJson<String>(threadColor),
-      'threadConversionNotes': serializer.toJson<String?>(
-        threadConversionNotes,
-      ),
-      'threadEvidence': serializer.toJson<String>(threadEvidence),
-      'threadCount': serializer.toJson<int?>(threadCount),
+      'definitionId': serializer.toJson<String>(definitionId),
       'confidence': serializer.toJson<double?>(confidence),
       'needsReview': serializer.toJson<bool>(needsReview),
       'provenanceId': serializer.toJson<String?>(provenanceId),
@@ -3581,14 +4067,7 @@ class PatternBackstitchRow extends DataClass
     double? startColumn,
     double? endRow,
     double? endColumn,
-    String? threadId,
-    Value<String?> threadBrand = const Value.absent(),
-    Value<String?> threadCatalogNumber = const Value.absent(),
-    Value<String?> threadName = const Value.absent(),
-    String? threadColor,
-    Value<String?> threadConversionNotes = const Value.absent(),
-    String? threadEvidence,
-    Value<int?> threadCount = const Value.absent(),
+    String? definitionId,
     Value<double?> confidence = const Value.absent(),
     bool? needsReview,
     Value<String?> provenanceId = const Value.absent(),
@@ -3600,18 +4079,7 @@ class PatternBackstitchRow extends DataClass
     startColumn: startColumn ?? this.startColumn,
     endRow: endRow ?? this.endRow,
     endColumn: endColumn ?? this.endColumn,
-    threadId: threadId ?? this.threadId,
-    threadBrand: threadBrand.present ? threadBrand.value : this.threadBrand,
-    threadCatalogNumber: threadCatalogNumber.present
-        ? threadCatalogNumber.value
-        : this.threadCatalogNumber,
-    threadName: threadName.present ? threadName.value : this.threadName,
-    threadColor: threadColor ?? this.threadColor,
-    threadConversionNotes: threadConversionNotes.present
-        ? threadConversionNotes.value
-        : this.threadConversionNotes,
-    threadEvidence: threadEvidence ?? this.threadEvidence,
-    threadCount: threadCount.present ? threadCount.value : this.threadCount,
+    definitionId: definitionId ?? this.definitionId,
     confidence: confidence.present ? confidence.value : this.confidence,
     needsReview: needsReview ?? this.needsReview,
     provenanceId: provenanceId.present ? provenanceId.value : this.provenanceId,
@@ -3629,28 +4097,9 @@ class PatternBackstitchRow extends DataClass
           : this.startColumn,
       endRow: data.endRow.present ? data.endRow.value : this.endRow,
       endColumn: data.endColumn.present ? data.endColumn.value : this.endColumn,
-      threadId: data.threadId.present ? data.threadId.value : this.threadId,
-      threadBrand: data.threadBrand.present
-          ? data.threadBrand.value
-          : this.threadBrand,
-      threadCatalogNumber: data.threadCatalogNumber.present
-          ? data.threadCatalogNumber.value
-          : this.threadCatalogNumber,
-      threadName: data.threadName.present
-          ? data.threadName.value
-          : this.threadName,
-      threadColor: data.threadColor.present
-          ? data.threadColor.value
-          : this.threadColor,
-      threadConversionNotes: data.threadConversionNotes.present
-          ? data.threadConversionNotes.value
-          : this.threadConversionNotes,
-      threadEvidence: data.threadEvidence.present
-          ? data.threadEvidence.value
-          : this.threadEvidence,
-      threadCount: data.threadCount.present
-          ? data.threadCount.value
-          : this.threadCount,
+      definitionId: data.definitionId.present
+          ? data.definitionId.value
+          : this.definitionId,
       confidence: data.confidence.present
           ? data.confidence.value
           : this.confidence,
@@ -3673,14 +4122,7 @@ class PatternBackstitchRow extends DataClass
           ..write('startColumn: $startColumn, ')
           ..write('endRow: $endRow, ')
           ..write('endColumn: $endColumn, ')
-          ..write('threadId: $threadId, ')
-          ..write('threadBrand: $threadBrand, ')
-          ..write('threadCatalogNumber: $threadCatalogNumber, ')
-          ..write('threadName: $threadName, ')
-          ..write('threadColor: $threadColor, ')
-          ..write('threadConversionNotes: $threadConversionNotes, ')
-          ..write('threadEvidence: $threadEvidence, ')
-          ..write('threadCount: $threadCount, ')
+          ..write('definitionId: $definitionId, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId')
@@ -3697,14 +4139,7 @@ class PatternBackstitchRow extends DataClass
     startColumn,
     endRow,
     endColumn,
-    threadId,
-    threadBrand,
-    threadCatalogNumber,
-    threadName,
-    threadColor,
-    threadConversionNotes,
-    threadEvidence,
-    threadCount,
+    definitionId,
     confidence,
     needsReview,
     provenanceId,
@@ -3720,14 +4155,7 @@ class PatternBackstitchRow extends DataClass
           other.startColumn == this.startColumn &&
           other.endRow == this.endRow &&
           other.endColumn == this.endColumn &&
-          other.threadId == this.threadId &&
-          other.threadBrand == this.threadBrand &&
-          other.threadCatalogNumber == this.threadCatalogNumber &&
-          other.threadName == this.threadName &&
-          other.threadColor == this.threadColor &&
-          other.threadConversionNotes == this.threadConversionNotes &&
-          other.threadEvidence == this.threadEvidence &&
-          other.threadCount == this.threadCount &&
+          other.definitionId == this.definitionId &&
           other.confidence == this.confidence &&
           other.needsReview == this.needsReview &&
           other.provenanceId == this.provenanceId);
@@ -3742,14 +4170,7 @@ class PatternBackstitchesCompanion
   final Value<double> startColumn;
   final Value<double> endRow;
   final Value<double> endColumn;
-  final Value<String> threadId;
-  final Value<String?> threadBrand;
-  final Value<String?> threadCatalogNumber;
-  final Value<String?> threadName;
-  final Value<String> threadColor;
-  final Value<String?> threadConversionNotes;
-  final Value<String> threadEvidence;
-  final Value<int?> threadCount;
+  final Value<String> definitionId;
   final Value<double?> confidence;
   final Value<bool> needsReview;
   final Value<String?> provenanceId;
@@ -3762,14 +4183,7 @@ class PatternBackstitchesCompanion
     this.startColumn = const Value.absent(),
     this.endRow = const Value.absent(),
     this.endColumn = const Value.absent(),
-    this.threadId = const Value.absent(),
-    this.threadBrand = const Value.absent(),
-    this.threadCatalogNumber = const Value.absent(),
-    this.threadName = const Value.absent(),
-    this.threadColor = const Value.absent(),
-    this.threadConversionNotes = const Value.absent(),
-    this.threadEvidence = const Value.absent(),
-    this.threadCount = const Value.absent(),
+    this.definitionId = const Value.absent(),
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -3783,14 +4197,7 @@ class PatternBackstitchesCompanion
     required double startColumn,
     required double endRow,
     required double endColumn,
-    required String threadId,
-    this.threadBrand = const Value.absent(),
-    this.threadCatalogNumber = const Value.absent(),
-    this.threadName = const Value.absent(),
-    required String threadColor,
-    this.threadConversionNotes = const Value.absent(),
-    required String threadEvidence,
-    this.threadCount = const Value.absent(),
+    required String definitionId,
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -3802,9 +4209,7 @@ class PatternBackstitchesCompanion
        startColumn = Value(startColumn),
        endRow = Value(endRow),
        endColumn = Value(endColumn),
-       threadId = Value(threadId),
-       threadColor = Value(threadColor),
-       threadEvidence = Value(threadEvidence);
+       definitionId = Value(definitionId);
   static Insertable<PatternBackstitchRow> custom({
     Expression<String>? documentId,
     Expression<String>? id,
@@ -3813,14 +4218,7 @@ class PatternBackstitchesCompanion
     Expression<double>? startColumn,
     Expression<double>? endRow,
     Expression<double>? endColumn,
-    Expression<String>? threadId,
-    Expression<String>? threadBrand,
-    Expression<String>? threadCatalogNumber,
-    Expression<String>? threadName,
-    Expression<String>? threadColor,
-    Expression<String>? threadConversionNotes,
-    Expression<String>? threadEvidence,
-    Expression<int>? threadCount,
+    Expression<String>? definitionId,
     Expression<double>? confidence,
     Expression<bool>? needsReview,
     Expression<String>? provenanceId,
@@ -3834,16 +4232,7 @@ class PatternBackstitchesCompanion
       if (startColumn != null) 'start_column': startColumn,
       if (endRow != null) 'end_row': endRow,
       if (endColumn != null) 'end_column': endColumn,
-      if (threadId != null) 'thread_id': threadId,
-      if (threadBrand != null) 'thread_brand': threadBrand,
-      if (threadCatalogNumber != null)
-        'thread_catalog_number': threadCatalogNumber,
-      if (threadName != null) 'thread_name': threadName,
-      if (threadColor != null) 'thread_color': threadColor,
-      if (threadConversionNotes != null)
-        'thread_conversion_notes': threadConversionNotes,
-      if (threadEvidence != null) 'thread_evidence': threadEvidence,
-      if (threadCount != null) 'thread_count': threadCount,
+      if (definitionId != null) 'definition_id': definitionId,
       if (confidence != null) 'confidence': confidence,
       if (needsReview != null) 'needs_review': needsReview,
       if (provenanceId != null) 'provenance_id': provenanceId,
@@ -3859,14 +4248,7 @@ class PatternBackstitchesCompanion
     Value<double>? startColumn,
     Value<double>? endRow,
     Value<double>? endColumn,
-    Value<String>? threadId,
-    Value<String?>? threadBrand,
-    Value<String?>? threadCatalogNumber,
-    Value<String?>? threadName,
-    Value<String>? threadColor,
-    Value<String?>? threadConversionNotes,
-    Value<String>? threadEvidence,
-    Value<int?>? threadCount,
+    Value<String>? definitionId,
     Value<double?>? confidence,
     Value<bool>? needsReview,
     Value<String?>? provenanceId,
@@ -3880,15 +4262,7 @@ class PatternBackstitchesCompanion
       startColumn: startColumn ?? this.startColumn,
       endRow: endRow ?? this.endRow,
       endColumn: endColumn ?? this.endColumn,
-      threadId: threadId ?? this.threadId,
-      threadBrand: threadBrand ?? this.threadBrand,
-      threadCatalogNumber: threadCatalogNumber ?? this.threadCatalogNumber,
-      threadName: threadName ?? this.threadName,
-      threadColor: threadColor ?? this.threadColor,
-      threadConversionNotes:
-          threadConversionNotes ?? this.threadConversionNotes,
-      threadEvidence: threadEvidence ?? this.threadEvidence,
-      threadCount: threadCount ?? this.threadCount,
+      definitionId: definitionId ?? this.definitionId,
       confidence: confidence ?? this.confidence,
       needsReview: needsReview ?? this.needsReview,
       provenanceId: provenanceId ?? this.provenanceId,
@@ -3920,33 +4294,8 @@ class PatternBackstitchesCompanion
     if (endColumn.present) {
       map['end_column'] = Variable<double>(endColumn.value);
     }
-    if (threadId.present) {
-      map['thread_id'] = Variable<String>(threadId.value);
-    }
-    if (threadBrand.present) {
-      map['thread_brand'] = Variable<String>(threadBrand.value);
-    }
-    if (threadCatalogNumber.present) {
-      map['thread_catalog_number'] = Variable<String>(
-        threadCatalogNumber.value,
-      );
-    }
-    if (threadName.present) {
-      map['thread_name'] = Variable<String>(threadName.value);
-    }
-    if (threadColor.present) {
-      map['thread_color'] = Variable<String>(threadColor.value);
-    }
-    if (threadConversionNotes.present) {
-      map['thread_conversion_notes'] = Variable<String>(
-        threadConversionNotes.value,
-      );
-    }
-    if (threadEvidence.present) {
-      map['thread_evidence'] = Variable<String>(threadEvidence.value);
-    }
-    if (threadCount.present) {
-      map['thread_count'] = Variable<int>(threadCount.value);
+    if (definitionId.present) {
+      map['definition_id'] = Variable<String>(definitionId.value);
     }
     if (confidence.present) {
       map['confidence'] = Variable<double>(confidence.value);
@@ -3973,14 +4322,7 @@ class PatternBackstitchesCompanion
           ..write('startColumn: $startColumn, ')
           ..write('endRow: $endRow, ')
           ..write('endColumn: $endColumn, ')
-          ..write('threadId: $threadId, ')
-          ..write('threadBrand: $threadBrand, ')
-          ..write('threadCatalogNumber: $threadCatalogNumber, ')
-          ..write('threadName: $threadName, ')
-          ..write('threadColor: $threadColor, ')
-          ..write('threadConversionNotes: $threadConversionNotes, ')
-          ..write('threadEvidence: $threadEvidence, ')
-          ..write('threadCount: $threadCount, ')
+          ..write('definitionId: $definitionId, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId, ')
@@ -4051,28 +4393,6 @@ class $PatternCellsTable extends PatternCells
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _stitchTypeMeta = const VerificationMeta(
-    'stitchType',
-  );
-  @override
-  late final GeneratedColumn<String> stitchType = GeneratedColumn<String>(
-    'stitch_type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _threadCountMeta = const VerificationMeta(
-    'threadCount',
-  );
-  @override
-  late final GeneratedColumn<int> threadCount = GeneratedColumn<int>(
-    'thread_count',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _confidenceMeta = const VerificationMeta(
     'confidence',
   );
@@ -4117,8 +4437,6 @@ class $PatternCellsTable extends PatternCells
     gridRow,
     gridColumn,
     symbolId,
-    stitchType,
-    threadCount,
     confidence,
     needsReview,
     provenanceId,
@@ -4175,23 +4493,6 @@ class $PatternCellsTable extends PatternCells
     } else if (isInserting) {
       context.missing(_symbolIdMeta);
     }
-    if (data.containsKey('stitch_type')) {
-      context.handle(
-        _stitchTypeMeta,
-        stitchType.isAcceptableOrUnknown(data['stitch_type']!, _stitchTypeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_stitchTypeMeta);
-    }
-    if (data.containsKey('thread_count')) {
-      context.handle(
-        _threadCountMeta,
-        threadCount.isAcceptableOrUnknown(
-          data['thread_count']!,
-          _threadCountMeta,
-        ),
-      );
-    }
     if (data.containsKey('confidence')) {
       context.handle(
         _confidenceMeta,
@@ -4245,14 +4546,6 @@ class $PatternCellsTable extends PatternCells
         DriftSqlType.string,
         data['${effectivePrefix}symbol_id'],
       )!,
-      stitchType: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}stitch_type'],
-      )!,
-      threadCount: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}thread_count'],
-      ),
       confidence: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}confidence'],
@@ -4290,12 +4583,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   /// Defines the symbol rendered for this stitch.
   final String symbolId;
 
-  /// Defines the stitch technique using its portable enum name.
-  final String stitchType;
-
-  /// Defines the optional number of thread strands used for the stitch.
-  final int? threadCount;
-
   /// Defines the optional normalized parser confidence.
   final double? confidence;
 
@@ -4310,8 +4597,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     required this.gridRow,
     required this.gridColumn,
     required this.symbolId,
-    required this.stitchType,
-    this.threadCount,
     this.confidence,
     required this.needsReview,
     this.provenanceId,
@@ -4324,10 +4609,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     map['grid_row'] = Variable<int>(gridRow);
     map['grid_column'] = Variable<int>(gridColumn);
     map['symbol_id'] = Variable<String>(symbolId);
-    map['stitch_type'] = Variable<String>(stitchType);
-    if (!nullToAbsent || threadCount != null) {
-      map['thread_count'] = Variable<int>(threadCount);
-    }
     if (!nullToAbsent || confidence != null) {
       map['confidence'] = Variable<double>(confidence);
     }
@@ -4345,10 +4626,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       gridRow: Value(gridRow),
       gridColumn: Value(gridColumn),
       symbolId: Value(symbolId),
-      stitchType: Value(stitchType),
-      threadCount: threadCount == null && nullToAbsent
-          ? const Value.absent()
-          : Value(threadCount),
       confidence: confidence == null && nullToAbsent
           ? const Value.absent()
           : Value(confidence),
@@ -4370,8 +4647,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       gridRow: serializer.fromJson<int>(json['gridRow']),
       gridColumn: serializer.fromJson<int>(json['gridColumn']),
       symbolId: serializer.fromJson<String>(json['symbolId']),
-      stitchType: serializer.fromJson<String>(json['stitchType']),
-      threadCount: serializer.fromJson<int?>(json['threadCount']),
       confidence: serializer.fromJson<double?>(json['confidence']),
       needsReview: serializer.fromJson<bool>(json['needsReview']),
       provenanceId: serializer.fromJson<String?>(json['provenanceId']),
@@ -4386,8 +4661,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       'gridRow': serializer.toJson<int>(gridRow),
       'gridColumn': serializer.toJson<int>(gridColumn),
       'symbolId': serializer.toJson<String>(symbolId),
-      'stitchType': serializer.toJson<String>(stitchType),
-      'threadCount': serializer.toJson<int?>(threadCount),
       'confidence': serializer.toJson<double?>(confidence),
       'needsReview': serializer.toJson<bool>(needsReview),
       'provenanceId': serializer.toJson<String?>(provenanceId),
@@ -4400,8 +4673,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     int? gridRow,
     int? gridColumn,
     String? symbolId,
-    String? stitchType,
-    Value<int?> threadCount = const Value.absent(),
     Value<double?> confidence = const Value.absent(),
     bool? needsReview,
     Value<String?> provenanceId = const Value.absent(),
@@ -4411,8 +4682,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     gridRow: gridRow ?? this.gridRow,
     gridColumn: gridColumn ?? this.gridColumn,
     symbolId: symbolId ?? this.symbolId,
-    stitchType: stitchType ?? this.stitchType,
-    threadCount: threadCount.present ? threadCount.value : this.threadCount,
     confidence: confidence.present ? confidence.value : this.confidence,
     needsReview: needsReview ?? this.needsReview,
     provenanceId: provenanceId.present ? provenanceId.value : this.provenanceId,
@@ -4428,12 +4697,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
           ? data.gridColumn.value
           : this.gridColumn,
       symbolId: data.symbolId.present ? data.symbolId.value : this.symbolId,
-      stitchType: data.stitchType.present
-          ? data.stitchType.value
-          : this.stitchType,
-      threadCount: data.threadCount.present
-          ? data.threadCount.value
-          : this.threadCount,
       confidence: data.confidence.present
           ? data.confidence.value
           : this.confidence,
@@ -4454,8 +4717,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
           ..write('gridRow: $gridRow, ')
           ..write('gridColumn: $gridColumn, ')
           ..write('symbolId: $symbolId, ')
-          ..write('stitchType: $stitchType, ')
-          ..write('threadCount: $threadCount, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId')
@@ -4470,8 +4731,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     gridRow,
     gridColumn,
     symbolId,
-    stitchType,
-    threadCount,
     confidence,
     needsReview,
     provenanceId,
@@ -4485,8 +4744,6 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
           other.gridRow == this.gridRow &&
           other.gridColumn == this.gridColumn &&
           other.symbolId == this.symbolId &&
-          other.stitchType == this.stitchType &&
-          other.threadCount == this.threadCount &&
           other.confidence == this.confidence &&
           other.needsReview == this.needsReview &&
           other.provenanceId == this.provenanceId);
@@ -4498,8 +4755,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   final Value<int> gridRow;
   final Value<int> gridColumn;
   final Value<String> symbolId;
-  final Value<String> stitchType;
-  final Value<int?> threadCount;
   final Value<double?> confidence;
   final Value<bool> needsReview;
   final Value<String?> provenanceId;
@@ -4510,8 +4765,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     this.gridRow = const Value.absent(),
     this.gridColumn = const Value.absent(),
     this.symbolId = const Value.absent(),
-    this.stitchType = const Value.absent(),
-    this.threadCount = const Value.absent(),
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -4523,8 +4776,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     required int gridRow,
     required int gridColumn,
     required String symbolId,
-    required String stitchType,
-    this.threadCount = const Value.absent(),
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -4533,16 +4784,13 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
        sortOrder = Value(sortOrder),
        gridRow = Value(gridRow),
        gridColumn = Value(gridColumn),
-       symbolId = Value(symbolId),
-       stitchType = Value(stitchType);
+       symbolId = Value(symbolId);
   static Insertable<PatternCellRow> custom({
     Expression<String>? documentId,
     Expression<int>? sortOrder,
     Expression<int>? gridRow,
     Expression<int>? gridColumn,
     Expression<String>? symbolId,
-    Expression<String>? stitchType,
-    Expression<int>? threadCount,
     Expression<double>? confidence,
     Expression<bool>? needsReview,
     Expression<String>? provenanceId,
@@ -4554,8 +4802,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
       if (gridRow != null) 'grid_row': gridRow,
       if (gridColumn != null) 'grid_column': gridColumn,
       if (symbolId != null) 'symbol_id': symbolId,
-      if (stitchType != null) 'stitch_type': stitchType,
-      if (threadCount != null) 'thread_count': threadCount,
       if (confidence != null) 'confidence': confidence,
       if (needsReview != null) 'needs_review': needsReview,
       if (provenanceId != null) 'provenance_id': provenanceId,
@@ -4569,8 +4815,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     Value<int>? gridRow,
     Value<int>? gridColumn,
     Value<String>? symbolId,
-    Value<String>? stitchType,
-    Value<int?>? threadCount,
     Value<double?>? confidence,
     Value<bool>? needsReview,
     Value<String?>? provenanceId,
@@ -4582,8 +4826,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
       gridRow: gridRow ?? this.gridRow,
       gridColumn: gridColumn ?? this.gridColumn,
       symbolId: symbolId ?? this.symbolId,
-      stitchType: stitchType ?? this.stitchType,
-      threadCount: threadCount ?? this.threadCount,
       confidence: confidence ?? this.confidence,
       needsReview: needsReview ?? this.needsReview,
       provenanceId: provenanceId ?? this.provenanceId,
@@ -4609,12 +4851,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     if (symbolId.present) {
       map['symbol_id'] = Variable<String>(symbolId.value);
     }
-    if (stitchType.present) {
-      map['stitch_type'] = Variable<String>(stitchType.value);
-    }
-    if (threadCount.present) {
-      map['thread_count'] = Variable<int>(threadCount.value);
-    }
     if (confidence.present) {
       map['confidence'] = Variable<double>(confidence.value);
     }
@@ -4638,8 +4874,6 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
           ..write('gridRow: $gridRow, ')
           ..write('gridColumn: $gridColumn, ')
           ..write('symbolId: $symbolId, ')
-          ..write('stitchType: $stitchType, ')
-          ..write('threadCount: $threadCount, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId, ')
@@ -7763,7 +7997,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LibraryMetadataTable libraryMetadata = $LibraryMetadataTable(
     this,
   );
+  late final $PatternThreadsTable patternThreads = $PatternThreadsTable(this);
   late final $PatternSymbolsTable patternSymbols = $PatternSymbolsTable(this);
+  late final $PatternBackstitchDefinitionsTable patternBackstitchDefinitions =
+      $PatternBackstitchDefinitionsTable(this);
   late final $PatternRegionsTable patternRegions = $PatternRegionsTable(this);
   late final $PatternBackstitchesTable patternBackstitches =
       $PatternBackstitchesTable(this);
@@ -7796,6 +8033,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'pattern_symbols_document_thread',
     'CREATE INDEX pattern_symbols_document_thread ON pattern_symbols (document_id, thread_id)',
   );
+  late final Index patternBackstitchDefinitionsDocumentThread = Index(
+    'pattern_backstitch_definitions_document_thread',
+    'CREATE INDEX pattern_backstitch_definitions_document_thread ON pattern_backstitch_definitions (document_id, thread_id)',
+  );
   late final Index patternBackstitchesDocumentProvenance = Index(
     'pattern_backstitches_document_provenance',
     'CREATE INDEX pattern_backstitches_document_provenance ON pattern_backstitches (document_id, provenance_id)',
@@ -7817,7 +8058,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     patternDocuments,
     sourceMetadataEntries,
     libraryMetadata,
+    patternThreads,
     patternSymbols,
+    patternBackstitchDefinitions,
     patternRegions,
     patternBackstitches,
     patternCells,
@@ -7831,6 +8074,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     libraryMetadataLastOpened,
     libraryMetadataLastModified,
     patternSymbolsDocumentThread,
+    patternBackstitchDefinitionsDocumentThread,
     patternBackstitchesDocumentProvenance,
     patternRegionsDocumentPage,
     patternCellsDocumentSymbol,
@@ -9231,6 +9475,303 @@ typedef $$LibraryMetadataTableProcessedTableManager =
       LibraryMetadataRow,
       PrefetchHooks Function({bool documentId})
     >;
+typedef $$PatternThreadsTableCreateCompanionBuilder =
+    PatternThreadsCompanion Function({
+      required String documentId,
+      required String id,
+      required int sortOrder,
+      Value<String?> brand,
+      Value<String?> catalogNumber,
+      Value<String?> name,
+      required String color,
+      Value<String?> conversionNotes,
+      required String evidence,
+      Value<int> rowid,
+    });
+typedef $$PatternThreadsTableUpdateCompanionBuilder =
+    PatternThreadsCompanion Function({
+      Value<String> documentId,
+      Value<String> id,
+      Value<int> sortOrder,
+      Value<String?> brand,
+      Value<String?> catalogNumber,
+      Value<String?> name,
+      Value<String> color,
+      Value<String?> conversionNotes,
+      Value<String> evidence,
+      Value<int> rowid,
+    });
+
+class $$PatternThreadsTableFilterComposer
+    extends Composer<_$AppDatabase, $PatternThreadsTable> {
+  $$PatternThreadsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get brand => $composableBuilder(
+    column: $table.brand,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get catalogNumber => $composableBuilder(
+    column: $table.catalogNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get conversionNotes => $composableBuilder(
+    column: $table.conversionNotes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get evidence => $composableBuilder(
+    column: $table.evidence,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PatternThreadsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PatternThreadsTable> {
+  $$PatternThreadsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get brand => $composableBuilder(
+    column: $table.brand,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get catalogNumber => $composableBuilder(
+    column: $table.catalogNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get conversionNotes => $composableBuilder(
+    column: $table.conversionNotes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get evidence => $composableBuilder(
+    column: $table.evidence,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PatternThreadsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PatternThreadsTable> {
+  $$PatternThreadsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get brand =>
+      $composableBuilder(column: $table.brand, builder: (column) => column);
+
+  GeneratedColumn<String> get catalogNumber => $composableBuilder(
+    column: $table.catalogNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<String> get conversionNotes => $composableBuilder(
+    column: $table.conversionNotes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get evidence =>
+      $composableBuilder(column: $table.evidence, builder: (column) => column);
+}
+
+class $$PatternThreadsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PatternThreadsTable,
+          PatternThreadRow,
+          $$PatternThreadsTableFilterComposer,
+          $$PatternThreadsTableOrderingComposer,
+          $$PatternThreadsTableAnnotationComposer,
+          $$PatternThreadsTableCreateCompanionBuilder,
+          $$PatternThreadsTableUpdateCompanionBuilder,
+          (
+            PatternThreadRow,
+            BaseReferences<
+              _$AppDatabase,
+              $PatternThreadsTable,
+              PatternThreadRow
+            >,
+          ),
+          PatternThreadRow,
+          PrefetchHooks Function()
+        > {
+  $$PatternThreadsTableTableManager(
+    _$AppDatabase db,
+    $PatternThreadsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PatternThreadsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PatternThreadsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PatternThreadsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> documentId = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<String?> brand = const Value.absent(),
+                Value<String?> catalogNumber = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<String> color = const Value.absent(),
+                Value<String?> conversionNotes = const Value.absent(),
+                Value<String> evidence = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PatternThreadsCompanion(
+                documentId: documentId,
+                id: id,
+                sortOrder: sortOrder,
+                brand: brand,
+                catalogNumber: catalogNumber,
+                name: name,
+                color: color,
+                conversionNotes: conversionNotes,
+                evidence: evidence,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String documentId,
+                required String id,
+                required int sortOrder,
+                Value<String?> brand = const Value.absent(),
+                Value<String?> catalogNumber = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                required String color,
+                Value<String?> conversionNotes = const Value.absent(),
+                required String evidence,
+                Value<int> rowid = const Value.absent(),
+              }) => PatternThreadsCompanion.insert(
+                documentId: documentId,
+                id: id,
+                sortOrder: sortOrder,
+                brand: brand,
+                catalogNumber: catalogNumber,
+                name: name,
+                color: color,
+                conversionNotes: conversionNotes,
+                evidence: evidence,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PatternThreadsTable, PatternThreadRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $PatternThreadsTable,
+                    PatternThreadRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PatternThreadsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PatternThreadsTable,
+      PatternThreadRow,
+      $$PatternThreadsTableFilterComposer,
+      $$PatternThreadsTableOrderingComposer,
+      $$PatternThreadsTableAnnotationComposer,
+      $$PatternThreadsTableCreateCompanionBuilder,
+      $$PatternThreadsTableUpdateCompanionBuilder,
+      (
+        PatternThreadRow,
+        BaseReferences<_$AppDatabase, $PatternThreadsTable, PatternThreadRow>,
+      ),
+      PatternThreadRow,
+      PrefetchHooks Function()
+    >;
 typedef $$PatternSymbolsTableCreateCompanionBuilder =
     PatternSymbolsCompanion Function({
       required String documentId,
@@ -9240,12 +9781,8 @@ typedef $$PatternSymbolsTableCreateCompanionBuilder =
       required String normalizedKey,
       required String displayGlyph,
       required String threadId,
-      Value<String?> threadBrand,
-      Value<String?> threadCatalogNumber,
-      Value<String?> threadName,
-      required String threadColor,
-      Value<String?> threadConversionNotes,
-      required String threadEvidence,
+      required String stitchType,
+      Value<int?> threadCount,
       Value<String?> legendEvidence,
       Value<int> rowid,
     });
@@ -9258,12 +9795,8 @@ typedef $$PatternSymbolsTableUpdateCompanionBuilder =
       Value<String> normalizedKey,
       Value<String> displayGlyph,
       Value<String> threadId,
-      Value<String?> threadBrand,
-      Value<String?> threadCatalogNumber,
-      Value<String?> threadName,
-      Value<String> threadColor,
-      Value<String?> threadConversionNotes,
-      Value<String> threadEvidence,
+      Value<String> stitchType,
+      Value<int?> threadCount,
       Value<String?> legendEvidence,
       Value<int> rowid,
     });
@@ -9312,33 +9845,13 @@ class $$PatternSymbolsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get threadBrand => $composableBuilder(
-    column: $table.threadBrand,
+  ColumnFilters<String> get stitchType => $composableBuilder(
+    column: $table.stitchType,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get threadCatalogNumber => $composableBuilder(
-    column: $table.threadCatalogNumber,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadName => $composableBuilder(
-    column: $table.threadName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadColor => $composableBuilder(
-    column: $table.threadColor,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadConversionNotes => $composableBuilder(
-    column: $table.threadConversionNotes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadEvidence => $composableBuilder(
-    column: $table.threadEvidence,
+  ColumnFilters<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9392,33 +9905,13 @@ class $$PatternSymbolsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get threadBrand => $composableBuilder(
-    column: $table.threadBrand,
+  ColumnOrderings<String> get stitchType => $composableBuilder(
+    column: $table.stitchType,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get threadCatalogNumber => $composableBuilder(
-    column: $table.threadCatalogNumber,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadName => $composableBuilder(
-    column: $table.threadName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadColor => $composableBuilder(
-    column: $table.threadColor,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadConversionNotes => $composableBuilder(
-    column: $table.threadConversionNotes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadEvidence => $composableBuilder(
-    column: $table.threadEvidence,
+  ColumnOrderings<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -9466,33 +9959,13 @@ class $$PatternSymbolsTableAnnotationComposer
   GeneratedColumn<String> get threadId =>
       $composableBuilder(column: $table.threadId, builder: (column) => column);
 
-  GeneratedColumn<String> get threadBrand => $composableBuilder(
-    column: $table.threadBrand,
+  GeneratedColumn<String> get stitchType => $composableBuilder(
+    column: $table.stitchType,
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get threadCatalogNumber => $composableBuilder(
-    column: $table.threadCatalogNumber,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadName => $composableBuilder(
-    column: $table.threadName,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadColor => $composableBuilder(
-    column: $table.threadColor,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadConversionNotes => $composableBuilder(
-    column: $table.threadConversionNotes,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadEvidence => $composableBuilder(
-    column: $table.threadEvidence,
+  GeneratedColumn<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
     builder: (column) => column,
   );
 
@@ -9546,12 +10019,8 @@ class $$PatternSymbolsTableTableManager
                 Value<String> normalizedKey = const Value.absent(),
                 Value<String> displayGlyph = const Value.absent(),
                 Value<String> threadId = const Value.absent(),
-                Value<String?> threadBrand = const Value.absent(),
-                Value<String?> threadCatalogNumber = const Value.absent(),
-                Value<String?> threadName = const Value.absent(),
-                Value<String> threadColor = const Value.absent(),
-                Value<String?> threadConversionNotes = const Value.absent(),
-                Value<String> threadEvidence = const Value.absent(),
+                Value<String> stitchType = const Value.absent(),
+                Value<int?> threadCount = const Value.absent(),
                 Value<String?> legendEvidence = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PatternSymbolsCompanion(
@@ -9562,12 +10031,8 @@ class $$PatternSymbolsTableTableManager
                 normalizedKey: normalizedKey,
                 displayGlyph: displayGlyph,
                 threadId: threadId,
-                threadBrand: threadBrand,
-                threadCatalogNumber: threadCatalogNumber,
-                threadName: threadName,
-                threadColor: threadColor,
-                threadConversionNotes: threadConversionNotes,
-                threadEvidence: threadEvidence,
+                stitchType: stitchType,
+                threadCount: threadCount,
                 legendEvidence: legendEvidence,
                 rowid: rowid,
               ),
@@ -9580,12 +10045,8 @@ class $$PatternSymbolsTableTableManager
                 required String normalizedKey,
                 required String displayGlyph,
                 required String threadId,
-                Value<String?> threadBrand = const Value.absent(),
-                Value<String?> threadCatalogNumber = const Value.absent(),
-                Value<String?> threadName = const Value.absent(),
-                required String threadColor,
-                Value<String?> threadConversionNotes = const Value.absent(),
-                required String threadEvidence,
+                required String stitchType,
+                Value<int?> threadCount = const Value.absent(),
                 Value<String?> legendEvidence = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PatternSymbolsCompanion.insert(
@@ -9596,12 +10057,8 @@ class $$PatternSymbolsTableTableManager
                 normalizedKey: normalizedKey,
                 displayGlyph: displayGlyph,
                 threadId: threadId,
-                threadBrand: threadBrand,
-                threadCatalogNumber: threadCatalogNumber,
-                threadName: threadName,
-                threadColor: threadColor,
-                threadConversionNotes: threadConversionNotes,
-                threadEvidence: threadEvidence,
+                stitchType: stitchType,
+                threadCount: threadCount,
                 legendEvidence: legendEvidence,
                 rowid: rowid,
               ),
@@ -9637,6 +10094,241 @@ typedef $$PatternSymbolsTableProcessedTableManager =
         BaseReferences<_$AppDatabase, $PatternSymbolsTable, PatternSymbolRow>,
       ),
       PatternSymbolRow,
+      PrefetchHooks Function()
+    >;
+typedef $$PatternBackstitchDefinitionsTableCreateCompanionBuilder =
+    PatternBackstitchDefinitionsCompanion Function({
+      required String documentId,
+      required String id,
+      required int sortOrder,
+      required String threadId,
+      Value<int?> threadCount,
+      Value<int> rowid,
+    });
+typedef $$PatternBackstitchDefinitionsTableUpdateCompanionBuilder =
+    PatternBackstitchDefinitionsCompanion Function({
+      Value<String> documentId,
+      Value<String> id,
+      Value<int> sortOrder,
+      Value<String> threadId,
+      Value<int?> threadCount,
+      Value<int> rowid,
+    });
+
+class $$PatternBackstitchDefinitionsTableFilterComposer
+    extends Composer<_$AppDatabase, $PatternBackstitchDefinitionsTable> {
+  $$PatternBackstitchDefinitionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get threadId => $composableBuilder(
+    column: $table.threadId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PatternBackstitchDefinitionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PatternBackstitchDefinitionsTable> {
+  $$PatternBackstitchDefinitionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get threadId => $composableBuilder(
+    column: $table.threadId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PatternBackstitchDefinitionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PatternBackstitchDefinitionsTable> {
+  $$PatternBackstitchDefinitionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get threadId =>
+      $composableBuilder(column: $table.threadId, builder: (column) => column);
+
+  GeneratedColumn<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
+    builder: (column) => column,
+  );
+}
+
+class $$PatternBackstitchDefinitionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PatternBackstitchDefinitionsTable,
+          PatternBackstitchDefinitionRow,
+          $$PatternBackstitchDefinitionsTableFilterComposer,
+          $$PatternBackstitchDefinitionsTableOrderingComposer,
+          $$PatternBackstitchDefinitionsTableAnnotationComposer,
+          $$PatternBackstitchDefinitionsTableCreateCompanionBuilder,
+          $$PatternBackstitchDefinitionsTableUpdateCompanionBuilder,
+          (
+            PatternBackstitchDefinitionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $PatternBackstitchDefinitionsTable,
+              PatternBackstitchDefinitionRow
+            >,
+          ),
+          PatternBackstitchDefinitionRow,
+          PrefetchHooks Function()
+        > {
+  $$PatternBackstitchDefinitionsTableTableManager(
+    _$AppDatabase db,
+    $PatternBackstitchDefinitionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PatternBackstitchDefinitionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$PatternBackstitchDefinitionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$PatternBackstitchDefinitionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> documentId = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
+                Value<String> threadId = const Value.absent(),
+                Value<int?> threadCount = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PatternBackstitchDefinitionsCompanion(
+                documentId: documentId,
+                id: id,
+                sortOrder: sortOrder,
+                threadId: threadId,
+                threadCount: threadCount,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String documentId,
+                required String id,
+                required int sortOrder,
+                required String threadId,
+                Value<int?> threadCount = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PatternBackstitchDefinitionsCompanion.insert(
+                documentId: documentId,
+                id: id,
+                sortOrder: sortOrder,
+                threadId: threadId,
+                threadCount: threadCount,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $PatternBackstitchDefinitionsTable,
+                    PatternBackstitchDefinitionRow
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $PatternBackstitchDefinitionsTable,
+                    PatternBackstitchDefinitionRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PatternBackstitchDefinitionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PatternBackstitchDefinitionsTable,
+      PatternBackstitchDefinitionRow,
+      $$PatternBackstitchDefinitionsTableFilterComposer,
+      $$PatternBackstitchDefinitionsTableOrderingComposer,
+      $$PatternBackstitchDefinitionsTableAnnotationComposer,
+      $$PatternBackstitchDefinitionsTableCreateCompanionBuilder,
+      $$PatternBackstitchDefinitionsTableUpdateCompanionBuilder,
+      (
+        PatternBackstitchDefinitionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $PatternBackstitchDefinitionsTable,
+          PatternBackstitchDefinitionRow
+        >,
+      ),
+      PatternBackstitchDefinitionRow,
       PrefetchHooks Function()
     >;
 typedef $$PatternRegionsTableCreateCompanionBuilder =
@@ -9947,14 +10639,7 @@ typedef $$PatternBackstitchesTableCreateCompanionBuilder =
       required double startColumn,
       required double endRow,
       required double endColumn,
-      required String threadId,
-      Value<String?> threadBrand,
-      Value<String?> threadCatalogNumber,
-      Value<String?> threadName,
-      required String threadColor,
-      Value<String?> threadConversionNotes,
-      required String threadEvidence,
-      Value<int?> threadCount,
+      required String definitionId,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -9969,14 +10654,7 @@ typedef $$PatternBackstitchesTableUpdateCompanionBuilder =
       Value<double> startColumn,
       Value<double> endRow,
       Value<double> endColumn,
-      Value<String> threadId,
-      Value<String?> threadBrand,
-      Value<String?> threadCatalogNumber,
-      Value<String?> threadName,
-      Value<String> threadColor,
-      Value<String?> threadConversionNotes,
-      Value<String> threadEvidence,
-      Value<int?> threadCount,
+      Value<String> definitionId,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -10027,43 +10705,8 @@ class $$PatternBackstitchesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get threadId => $composableBuilder(
-    column: $table.threadId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadBrand => $composableBuilder(
-    column: $table.threadBrand,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadCatalogNumber => $composableBuilder(
-    column: $table.threadCatalogNumber,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadName => $composableBuilder(
-    column: $table.threadName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadColor => $composableBuilder(
-    column: $table.threadColor,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadConversionNotes => $composableBuilder(
-    column: $table.threadConversionNotes,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get threadEvidence => $composableBuilder(
-    column: $table.threadEvidence,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get threadCount => $composableBuilder(
-    column: $table.threadCount,
+  ColumnFilters<String> get definitionId => $composableBuilder(
+    column: $table.definitionId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10127,43 +10770,8 @@ class $$PatternBackstitchesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get threadId => $composableBuilder(
-    column: $table.threadId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadBrand => $composableBuilder(
-    column: $table.threadBrand,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadCatalogNumber => $composableBuilder(
-    column: $table.threadCatalogNumber,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadName => $composableBuilder(
-    column: $table.threadName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadColor => $composableBuilder(
-    column: $table.threadColor,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadConversionNotes => $composableBuilder(
-    column: $table.threadConversionNotes,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get threadEvidence => $composableBuilder(
-    column: $table.threadEvidence,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get threadCount => $composableBuilder(
-    column: $table.threadCount,
+  ColumnOrderings<String> get definitionId => $composableBuilder(
+    column: $table.definitionId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -10217,41 +10825,8 @@ class $$PatternBackstitchesTableAnnotationComposer
   GeneratedColumn<double> get endColumn =>
       $composableBuilder(column: $table.endColumn, builder: (column) => column);
 
-  GeneratedColumn<String> get threadId =>
-      $composableBuilder(column: $table.threadId, builder: (column) => column);
-
-  GeneratedColumn<String> get threadBrand => $composableBuilder(
-    column: $table.threadBrand,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadCatalogNumber => $composableBuilder(
-    column: $table.threadCatalogNumber,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadName => $composableBuilder(
-    column: $table.threadName,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadColor => $composableBuilder(
-    column: $table.threadColor,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadConversionNotes => $composableBuilder(
-    column: $table.threadConversionNotes,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get threadEvidence => $composableBuilder(
-    column: $table.threadEvidence,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get threadCount => $composableBuilder(
-    column: $table.threadCount,
+  GeneratedColumn<String> get definitionId => $composableBuilder(
+    column: $table.definitionId,
     builder: (column) => column,
   );
 
@@ -10321,14 +10896,7 @@ class $$PatternBackstitchesTableTableManager
                 Value<double> startColumn = const Value.absent(),
                 Value<double> endRow = const Value.absent(),
                 Value<double> endColumn = const Value.absent(),
-                Value<String> threadId = const Value.absent(),
-                Value<String?> threadBrand = const Value.absent(),
-                Value<String?> threadCatalogNumber = const Value.absent(),
-                Value<String?> threadName = const Value.absent(),
-                Value<String> threadColor = const Value.absent(),
-                Value<String?> threadConversionNotes = const Value.absent(),
-                Value<String> threadEvidence = const Value.absent(),
-                Value<int?> threadCount = const Value.absent(),
+                Value<String> definitionId = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10341,14 +10909,7 @@ class $$PatternBackstitchesTableTableManager
                 startColumn: startColumn,
                 endRow: endRow,
                 endColumn: endColumn,
-                threadId: threadId,
-                threadBrand: threadBrand,
-                threadCatalogNumber: threadCatalogNumber,
-                threadName: threadName,
-                threadColor: threadColor,
-                threadConversionNotes: threadConversionNotes,
-                threadEvidence: threadEvidence,
-                threadCount: threadCount,
+                definitionId: definitionId,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,
@@ -10363,14 +10924,7 @@ class $$PatternBackstitchesTableTableManager
                 required double startColumn,
                 required double endRow,
                 required double endColumn,
-                required String threadId,
-                Value<String?> threadBrand = const Value.absent(),
-                Value<String?> threadCatalogNumber = const Value.absent(),
-                Value<String?> threadName = const Value.absent(),
-                required String threadColor,
-                Value<String?> threadConversionNotes = const Value.absent(),
-                required String threadEvidence,
-                Value<int?> threadCount = const Value.absent(),
+                required String definitionId,
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10383,14 +10937,7 @@ class $$PatternBackstitchesTableTableManager
                 startColumn: startColumn,
                 endRow: endRow,
                 endColumn: endColumn,
-                threadId: threadId,
-                threadBrand: threadBrand,
-                threadCatalogNumber: threadCatalogNumber,
-                threadName: threadName,
-                threadColor: threadColor,
-                threadConversionNotes: threadConversionNotes,
-                threadEvidence: threadEvidence,
-                threadCount: threadCount,
+                definitionId: definitionId,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,
@@ -10443,8 +10990,6 @@ typedef $$PatternCellsTableCreateCompanionBuilder =
       required int gridRow,
       required int gridColumn,
       required String symbolId,
-      required String stitchType,
-      Value<int?> threadCount,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -10457,8 +11002,6 @@ typedef $$PatternCellsTableUpdateCompanionBuilder =
       Value<int> gridRow,
       Value<int> gridColumn,
       Value<String> symbolId,
-      Value<String> stitchType,
-      Value<int?> threadCount,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -10496,16 +11039,6 @@ class $$PatternCellsTableFilterComposer
 
   ColumnFilters<String> get symbolId => $composableBuilder(
     column: $table.symbolId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get stitchType => $composableBuilder(
-    column: $table.stitchType,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get threadCount => $composableBuilder(
-    column: $table.threadCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10559,16 +11092,6 @@ class $$PatternCellsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get stitchType => $composableBuilder(
-    column: $table.stitchType,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get threadCount => $composableBuilder(
-    column: $table.threadCount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<double> get confidence => $composableBuilder(
     column: $table.confidence,
     builder: (column) => ColumnOrderings(column),
@@ -10612,16 +11135,6 @@ class $$PatternCellsTableAnnotationComposer
 
   GeneratedColumn<String> get symbolId =>
       $composableBuilder(column: $table.symbolId, builder: (column) => column);
-
-  GeneratedColumn<String> get stitchType => $composableBuilder(
-    column: $table.stitchType,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<int> get threadCount => $composableBuilder(
-    column: $table.threadCount,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<double> get confidence => $composableBuilder(
     column: $table.confidence,
@@ -10675,8 +11188,6 @@ class $$PatternCellsTableTableManager
                 Value<int> gridRow = const Value.absent(),
                 Value<int> gridColumn = const Value.absent(),
                 Value<String> symbolId = const Value.absent(),
-                Value<String> stitchType = const Value.absent(),
-                Value<int?> threadCount = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10687,8 +11198,6 @@ class $$PatternCellsTableTableManager
                 gridRow: gridRow,
                 gridColumn: gridColumn,
                 symbolId: symbolId,
-                stitchType: stitchType,
-                threadCount: threadCount,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,
@@ -10701,8 +11210,6 @@ class $$PatternCellsTableTableManager
                 required int gridRow,
                 required int gridColumn,
                 required String symbolId,
-                required String stitchType,
-                Value<int?> threadCount = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10713,8 +11220,6 @@ class $$PatternCellsTableTableManager
                 gridRow: gridRow,
                 gridColumn: gridColumn,
                 symbolId: symbolId,
-                stitchType: stitchType,
-                threadCount: threadCount,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,
@@ -12414,8 +12919,16 @@ class $AppDatabaseManager {
       $$SourceMetadataEntriesTableTableManager(_db, _db.sourceMetadataEntries);
   $$LibraryMetadataTableTableManager get libraryMetadata =>
       $$LibraryMetadataTableTableManager(_db, _db.libraryMetadata);
+  $$PatternThreadsTableTableManager get patternThreads =>
+      $$PatternThreadsTableTableManager(_db, _db.patternThreads);
   $$PatternSymbolsTableTableManager get patternSymbols =>
       $$PatternSymbolsTableTableManager(_db, _db.patternSymbols);
+  $$PatternBackstitchDefinitionsTableTableManager
+  get patternBackstitchDefinitions =>
+      $$PatternBackstitchDefinitionsTableTableManager(
+        _db,
+        _db.patternBackstitchDefinitions,
+      );
   $$PatternRegionsTableTableManager get patternRegions =>
       $$PatternRegionsTableTableManager(_db, _db.patternRegions);
   $$PatternBackstitchesTableTableManager get patternBackstitches =>

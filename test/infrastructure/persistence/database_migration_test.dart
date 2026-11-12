@@ -22,8 +22,8 @@ void main() {
           .getForDocument('old'))!;
 
       expect(document.sourceMetadata['filename'], 'old.pdf');
-      expect(document.symbols.single.thread.id, 'red');
-      expect(document.symbols.single.thread.color, '#AABBCC');
+      expect(document.symbols.single.threadId, 'red');
+      expect(document.threads.single.color, '#AABBCC');
       expect(document.grid.cells.single.coordinate.row, 1);
       expect(progress.markers.single.coordinate.row, 1);
       expect(progress.markers.single.coordinate.column, 2);
@@ -32,7 +32,7 @@ void main() {
       expect(
         (await database.customSelect('PRAGMA user_version').getSingle())
             .read<int>('user_version'),
-        7,
+        9,
       );
       expect(
         await database.customSelect('PRAGMA foreign_key_check').get(),
@@ -62,9 +62,115 @@ void main() {
     expect(
       (await database.customSelect('PRAGMA user_version').getSingle())
           .read<int>('user_version'),
-      7,
+      9,
     );
   });
+
+  test('normalizes version 8 stitch and thread rows', () async {
+    final legacy = sqlite3.openInMemory();
+    _createVersionEightPatternFixture(legacy);
+    final database = AppDatabase(NativeDatabase.opened(legacy));
+    addTearDown(database.close);
+
+    final thread = await database
+        .customSelect('SELECT * FROM pattern_threads')
+        .getSingle();
+    final symbol = await database
+        .customSelect('SELECT * FROM pattern_symbols')
+        .getSingle();
+    final definition = await database
+        .customSelect('SELECT * FROM pattern_backstitch_definitions')
+        .getSingle();
+    final backstitch = await database
+        .customSelect('SELECT * FROM pattern_backstitches')
+        .getSingle();
+    final cellColumns = await database
+        .customSelect('PRAGMA table_info(pattern_cells)')
+        .get();
+
+    expect(thread.read<String>('id'), 'red');
+    expect(thread.read<String>('color'), '#AABBCC');
+    expect(symbol.read<String>('stitch_type'), 'half');
+    expect(symbol.read<int>('thread_count'), 2);
+    expect(definition.read<String>('thread_id'), 'red');
+    expect(definition.read<int>('thread_count'), 1);
+    expect(
+      backstitch.read<String>('definition_id'),
+      definition.read<String>('id'),
+    );
+    expect(
+      cellColumns.map((row) => row.read<String>('name')),
+      isNot(contains('stitch_type')),
+    );
+    expect(
+      await database.customSelect('PRAGMA foreign_key_check').get(),
+      isEmpty,
+    );
+  });
+}
+
+/// Builds the version 8 embedded-thread layout immediately before normalization.
+void _createVersionEightPatternFixture(Database database) {
+  database.execute(
+    'CREATE TABLE pattern_documents ('
+    'id TEXT PRIMARY KEY, title TEXT NOT NULL, schema_version INTEGER NOT NULL, '
+    'row_count INTEGER NOT NULL, column_count INTEGER NOT NULL, source_checksum TEXT)',
+  );
+  database.execute(
+    'CREATE TABLE pattern_regions ('
+    'document_id TEXT NOT NULL, id TEXT NOT NULL, sort_order INTEGER NOT NULL, '
+    'source_page INTEGER NOT NULL, origin_row INTEGER NOT NULL, '
+    'origin_column INTEGER NOT NULL, row_count INTEGER NOT NULL, '
+    'column_count INTEGER NOT NULL, label TEXT, '
+    'PRIMARY KEY (document_id, id))',
+  );
+  database.execute(
+    'CREATE TABLE pattern_symbols ('
+    'document_id TEXT NOT NULL, id TEXT NOT NULL, sort_order INTEGER NOT NULL, '
+    'source_symbol TEXT NOT NULL, normalized_key TEXT NOT NULL, '
+    'display_glyph TEXT NOT NULL, thread_id TEXT NOT NULL, thread_brand TEXT, '
+    'thread_catalog_number TEXT, thread_name TEXT, thread_color TEXT NOT NULL, '
+    'thread_conversion_notes TEXT, thread_evidence TEXT NOT NULL, '
+    'legend_evidence TEXT, PRIMARY KEY (document_id, id))',
+  );
+  database.execute(
+    'CREATE TABLE pattern_cells ('
+    'document_id TEXT NOT NULL, sort_order INTEGER NOT NULL, '
+    'grid_row INTEGER NOT NULL, grid_column INTEGER NOT NULL, '
+    'symbol_id TEXT NOT NULL, stitch_type TEXT NOT NULL, thread_count INTEGER, '
+    'confidence REAL, needs_review INTEGER NOT NULL, provenance_id TEXT, '
+    'PRIMARY KEY (document_id, grid_row, grid_column))',
+  );
+  database.execute(
+    'CREATE TABLE pattern_backstitches ('
+    'document_id TEXT NOT NULL, id TEXT NOT NULL, sort_order INTEGER NOT NULL, '
+    'start_row REAL NOT NULL, start_column REAL NOT NULL, '
+    'end_row REAL NOT NULL, end_column REAL NOT NULL, thread_id TEXT NOT NULL, '
+    'thread_brand TEXT, thread_catalog_number TEXT, thread_name TEXT, '
+    'thread_color TEXT NOT NULL, thread_conversion_notes TEXT, '
+    'thread_evidence TEXT NOT NULL, thread_count INTEGER, confidence REAL, '
+    'needs_review INTEGER NOT NULL, provenance_id TEXT, '
+    'PRIMARY KEY (document_id, id))',
+  );
+  database.execute(
+    "INSERT INTO pattern_documents VALUES ('old', 'Old', 1, 2, 2, NULL)",
+  );
+  database.execute(
+    "INSERT INTO pattern_regions VALUES ('old', 'page', 0, 0, 0, 0, 2, 2, NULL)",
+  );
+  database.execute(
+    "INSERT INTO pattern_symbols VALUES ('old', 'x', 0, 'X', 'x', 'X', "
+    "'red', 'DMC', '1', 'Red', '#AABBCC', NULL, 'explicit', NULL)",
+  );
+  database.execute(
+    "INSERT INTO pattern_cells VALUES ('old', 0, 0, 0, 'x', 'half', 2, "
+    "NULL, 0, 'page')",
+  );
+  database.execute(
+    "INSERT INTO pattern_backstitches VALUES ('old', 'line', 0, 0, 0, 1, 1, "
+    "'red', 'DMC', '1', 'Red', '#AABBCC', NULL, 'explicit', 1, NULL, 0, 'page')",
+  );
+  database.execute('PRAGMA user_version = 8');
 }
 
 /// Builds the version 5 viewport layout immediately preceding this migration.

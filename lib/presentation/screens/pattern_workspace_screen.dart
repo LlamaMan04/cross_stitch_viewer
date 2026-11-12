@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import '../../domain/pattern_definitions.dart';
 import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_document.dart';
-import '../../domain/pattern_grid.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/repositories.dart';
 import '../../domain/value_objects.dart';
@@ -54,6 +53,9 @@ class PatternWorkspaceScreen extends StatefulWidget {
 class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   /// Pending document and progress read retained across rebuilds.
   late final Future<PatternDocument?> _document;
+
+  /// Loaded immutable document used to resolve selection references.
+  PatternDocument? _loadedDocument;
 
   /// Current persisted or default render settings.
   PatternRenderSettings _settings = const PatternRenderSettings();
@@ -137,6 +139,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     );
     _settings =
         progress?.viewport?.renderSettings ?? const PatternRenderSettings();
+    _loadedDocument = document;
     return document;
   }
 
@@ -302,7 +305,12 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   void _selectSymbol(String? symbolId) {
     _dismissCompletionUndo();
     setState(() {
-      _selection = _selection.select(symbolId);
+      final symbol = symbolId == null
+          ? null
+          : _loadedDocument?.symbolById(symbolId);
+      _selection = symbol == null
+          ? const PatternRenderSelection()
+          : _selection.selectSymbol(symbol.id, symbol.threadId);
     });
   }
 
@@ -344,7 +352,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
         _completionSelection = _completionSelection.clear();
       }
       if (_activeMenuOption == _WorkspaceMenuOption.completionSelection) {
-        _selection = _selection.select(null);
+        _selection = _selection.clear();
       }
       if (updatedSettings != null) {
         _settings = updatedSettings;
@@ -1168,14 +1176,18 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
   /// Builds selected details followed by every selectable document symbol.
   @override
   Widget build(BuildContext context) {
-    final selected = selection.selectedSymbolId == null
+    final selectedSymbol = selection.selectedSymbolId == null
         ? null
         : document.symbolById(selection.selectedSymbolId!);
-    final backstitchGroups = _groupBackstitchesByColor(document.backstitches);
-    final selectedBackstitchGroup = _backstitchGroupForColor(
-      backstitchGroups,
-      selection.backstitchColorKey,
-    );
+    final selectedBackstitchDefinition =
+        selection.selectedBackstitchDefinitionId == null
+        ? null
+        : document.backstitchDefinitionById(
+            selection.selectedBackstitchDefinitionId!,
+          );
+    final selectedThread = selection.threadId == null
+        ? null
+        : document.threadById(selection.threadId!);
     return Material(
       elevation: 8,
       color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -1208,55 +1220,79 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
               ],
             ),
           ),
-          if (selected != null)
-            _SelectedSymbolDetails(
-              symbol: selected,
-              stitches: document.grid.cells.where(
-                (cell) => cell.symbolId == selected.id,
-              ),
-            ),
-          if (selectedBackstitchGroup != null)
-            _SelectedBackstitchDetails(
-              segment: selectedBackstitchGroup.representative,
-              matchingCount: selectedBackstitchGroup.segmentCount,
-            ),
-          const Divider(),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(bottom: 8),
               children: [
-                for (final symbol in document.symbols)
-                  ListTile(
-                    key: ValueKey('symbol-palette-${symbol.id}'),
-                    dense: true,
-                    selected: symbol.id == selection.selectedSymbolId,
-                    onTap: () => onSelected(
-                      PatternRenderSelection(selectedSymbolId: symbol.id),
-                    ),
-                    leading: _SymbolSwatch(symbol: symbol),
-                    title: Text(symbol.thread.name ?? symbol.id),
-                    subtitle: Text(_threadSummary(symbol.thread)),
-                    trailing: Text(
-                      symbol.displayGlyph,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
+                if (selectedThread != null)
+                  _SelectedThreadDetails(
+                    thread: selectedThread,
+                    symbol: selectedSymbol,
+                    backstitchDefinition: selectedBackstitchDefinition,
+                    matchingBackstitchCount:
+                        selectedBackstitchDefinition == null
+                        ? 0
+                        : document.backstitches
+                              .where(
+                                (segment) =>
+                                    segment.definitionId ==
+                                    selectedBackstitchDefinition.id,
+                              )
+                              .length,
                   ),
-                if (backstitchGroups.isNotEmpty)
+                const Divider(),
+                for (final symbol in document.symbols)
+                  Builder(
+                    builder: (context) {
+                      final thread = document.threadForSymbol(symbol)!;
+                      return ListTile(
+                        key: ValueKey('symbol-palette-${symbol.id}'),
+                        dense: true,
+                        selected:
+                            selection.selectedSymbolId != null &&
+                            thread.id == selection.threadId,
+                        onTap: () => onSelected(
+                          PatternRenderSelection().selectSymbol(
+                            symbol.id,
+                            thread.id,
+                          ),
+                        ),
+                        leading: _SymbolSwatch(symbol: symbol, thread: thread),
+                        title: Text(thread.name ?? symbol.id),
+                        subtitle: Text(_threadSummary(thread)),
+                        trailing: Text(
+                          symbol.displayGlyph,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      );
+                    },
+                  ),
+                if (document.backstitchDefinitions.isNotEmpty)
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Text('Backstitches'),
                   ),
-                for (final group in backstitchGroups)
-                  ListTile(
-                    key: ValueKey('backstitch-palette-${group.colorKey}'),
-                    dense: true,
-                    selected: group.colorKey == selection.backstitchColorKey,
-                    onTap: () => onSelected(
-                      PatternRenderSelection().selectBackstitch(group.colorKey),
-                    ),
-                    leading: _BackstitchSwatch(thread: group.thread),
-                    title: Text(group.thread.name ?? group.thread.id),
-                    subtitle: Text(_threadSummary(group.thread)),
+                for (final definition in document.backstitchDefinitions)
+                  Builder(
+                    builder: (context) {
+                      final thread = document.threadForBackstitch(definition)!;
+                      return ListTile(
+                        key: ValueKey('backstitch-palette-${definition.id}'),
+                        dense: true,
+                        selected:
+                            selection.hasBackstitchSelection &&
+                            thread.id == selection.threadId,
+                        onTap: () => onSelected(
+                          PatternRenderSelection().selectBackstitch(
+                            definition.id,
+                            thread.id,
+                          ),
+                        ),
+                        leading: _BackstitchSwatch(thread: thread),
+                        title: Text(thread.name ?? thread.id),
+                        subtitle: Text(_threadSummary(thread)),
+                      );
+                    },
                   ),
               ],
             ),
@@ -1267,113 +1303,93 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
   }
 }
 
-/// Detailed metadata for the currently selected symbol and thread.
-class _SelectedSymbolDetails extends StatelessWidget {
-  /// Creates an inspector for [symbol].
-  const _SelectedSymbolDetails({required this.symbol, required this.stitches});
-
-  /// Selected symbol whose thread metadata is displayed.
-  final SymbolDefinition symbol;
-
-  /// Stitches using [symbol], used to show stitch-specific metadata.
-  final Iterable<StitchCell> stitches;
-
-  /// Builds glyph, catalog, and conversion information.
-  @override
-  Widget build(BuildContext context) {
-    final thread = symbol.thread;
-    final stitchMetadata = stitches.toList(growable: false);
-    final stitchType = _sharedStitchType(stitchMetadata);
-    final threadCount = _sharedThreadCount(stitchMetadata);
-    return Padding(
-      key: const ValueKey('selected-symbol-details'),
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _SymbolSwatch(symbol: symbol, size: 48),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      thread.name ?? symbol.id,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    Text(_threadSummary(thread)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text('Stitch type: ${_stitchTypeLabel(stitchType)}'),
-          Text('Thread: ${_threadSummary(thread)}'),
-          if (threadCount != null) Text('Number of strands: $threadCount'),
-          if (thread.conversionNotes != null)
-            Text('Conversion: ${thread.conversionNotes}'),
-        ],
-      ),
-    );
-  }
-}
-
-/// Detailed thread information for the selected backstitch color group.
-class _SelectedBackstitchDetails extends StatelessWidget {
-  /// Creates an inspector for a backstitch [segment].
-  const _SelectedBackstitchDetails({
-    required this.segment,
-    required this.matchingCount,
+/// Detailed metadata for the selected stitch definition and shared thread.
+class _SelectedThreadDetails extends StatelessWidget {
+  /// Creates an inspector for one selected symbol or backstitch definition.
+  const _SelectedThreadDetails({
+    required this.thread,
+    required this.symbol,
+    required this.backstitchDefinition,
+    required this.matchingBackstitchCount,
   });
 
-  /// Representative selected line segment whose thread metadata is displayed.
-  final BackstitchSegment segment;
+  /// Complete reusable thread record displayed by the inspector.
+  final ThreadDefinition thread;
 
-  /// Number of document line segments sharing the selected thread color.
-  final int matchingCount;
+  /// Symbol that originated selection, when a cell or symbol was selected.
+  final SymbolDefinition? symbol;
 
-  /// Builds thread metadata and matching segment count.
+  /// Definition that originated selection, when linework was selected.
+  final BackstitchDefinition? backstitchDefinition;
+
+  /// Number of line segments using [backstitchDefinition].
+  final int matchingBackstitchCount;
+
+  /// Builds stitch metadata followed by every thread-information field.
   @override
   Widget build(BuildContext context) {
-    final thread = segment.thread;
+    final selectedSymbol = symbol;
+    final selectedBackstitch = backstitchDefinition;
     return Semantics(
-      label:
-          'Selected backstitch color, ${_threadSummary(thread)}, '
-          '$matchingCount matching segments',
+      label: selectedBackstitch == null
+          ? 'Selected symbol thread ${thread.id}'
+          : 'Selected backstitch thread ${thread.id}, '
+                '$matchingBackstitchCount matching segments',
       child: Padding(
-        key: const ValueKey('selected-backstitch-details'),
+        key: ValueKey(
+          selectedBackstitch == null
+              ? 'selected-symbol-details'
+              : 'selected-backstitch-details',
+        ),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                _BackstitchSwatch(thread: thread, size: 48),
+                if (selectedSymbol != null)
+                  _SymbolSwatch(
+                    symbol: selectedSymbol,
+                    thread: thread,
+                    size: 48,
+                  )
+                else
+                  _BackstitchSwatch(thread: thread, size: 48),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        thread.name ?? thread.id,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      Text(_threadSummary(thread)),
-                    ],
+                  child: Text(
+                    thread.name ?? thread.id,
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            const Text('Stitch type: Backstitch'),
-            Text('Thread: ${_threadSummary(thread)}'),
-            if (segment.threadCount != null)
-              Text('Number of strands: ${segment.threadCount}'),
-            if (thread.conversionNotes != null)
-              Text('Conversion: ${thread.conversionNotes}'),
+            if (selectedSymbol != null) ...[
+              Text(
+                'Stitch type: ${_stitchTypeLabel(selectedSymbol.stitchType)}',
+              ),
+              Text('Source symbol: ${selectedSymbol.sourceSymbol}'),
+              Text('Display glyph: ${selectedSymbol.displayGlyph}'),
+              Text(
+                'Number of strands: ${_optionalValue(selectedSymbol.threadCount)}',
+              ),
+            ],
+            if (selectedBackstitch != null) ...[
+              const Text('Stitch type: Backstitch'),
+              Text(
+                'Number of strands: '
+                '${_optionalValue(selectedBackstitch.threadCount)}',
+              ),
+              Text('Matching segments: $matchingBackstitchCount'),
+            ],
+            Text('Thread ID: ${thread.id}'),
+            Text('Brand: ${_optionalValue(thread.brand)}'),
+            Text('Catalog number: ${_optionalValue(thread.catalogNumber)}'),
+            Text('Color name: ${_optionalValue(thread.name)}'),
+            Text('Color: ${thread.color}'),
+            Text('Color evidence: ${thread.evidence.name}'),
+            Text('Conversion notes: ${_optionalValue(thread.conversionNotes)}'),
           ],
         ),
       ),
@@ -1381,66 +1397,20 @@ class _SelectedBackstitchDetails extends StatelessWidget {
   }
 }
 
-/// One palette entry representing every backstitch with the same thread color.
-class _BackstitchColorGroup {
-  /// Creates a color group using its first segment as the thread representative.
-  const _BackstitchColorGroup({
-    required this.colorKey,
-    required this.representative,
-    required this.segmentCount,
-  });
-
-  /// Normalized color used to identify every segment in this group.
-  final String colorKey;
-
-  /// Segment that supplies the group thread metadata and selection ID.
-  final BackstitchSegment representative;
-
-  /// Number of segments represented by this color group.
-  final int segmentCount;
-
-  /// Thread details shared by the color group's segments.
-  ThreadDefinition get thread => representative.thread;
-}
-
-/// Groups backstitches by normalized thread color while retaining source order.
-List<_BackstitchColorGroup> _groupBackstitchesByColor(
-  Iterable<BackstitchSegment> segments,
-) {
-  final segmentsByColor = <String, List<BackstitchSegment>>{};
-  for (final segment in segments) {
-    final colorKey = segment.thread.color.toUpperCase();
-    (segmentsByColor[colorKey] ??= <BackstitchSegment>[]).add(segment);
-  }
-  return List<_BackstitchColorGroup>.unmodifiable([
-    for (final entry in segmentsByColor.entries)
-      _BackstitchColorGroup(
-        colorKey: entry.key,
-        representative: entry.value.first,
-        segmentCount: entry.value.length,
-      ),
-  ]);
-}
-
-/// Returns the palette group identified by [colorKey], if a color is selected.
-_BackstitchColorGroup? _backstitchGroupForColor(
-  Iterable<_BackstitchColorGroup> groups,
-  String? colorKey,
-) {
-  if (colorKey == null) return null;
-  for (final group in groups) {
-    if (group.colorKey == colorKey) return group;
-  }
-  return null;
-}
-
 /// Colored glyph swatch shared by palette rows and selected details.
 class _SymbolSwatch extends StatelessWidget {
   /// Creates a square swatch for [symbol].
-  const _SymbolSwatch({required this.symbol, this.size = 36});
+  const _SymbolSwatch({
+    required this.symbol,
+    required this.thread,
+    this.size = 36,
+  });
 
   /// Symbol whose glyph and thread color are represented.
   final SymbolDefinition symbol;
+
+  /// Separately stored thread whose color fills the swatch.
+  final ThreadDefinition thread;
 
   /// Logical width and height of the square swatch.
   final double size;
@@ -1448,7 +1418,7 @@ class _SymbolSwatch extends StatelessWidget {
   /// Builds a contrast-aware glyph over the imported thread color.
   @override
   Widget build(BuildContext context) {
-    final color = _parseThreadColor(symbol.thread.color);
+    final color = _parseThreadColor(thread.color);
     final foreground = color.computeLuminance() > 0.45
         ? Colors.black87
         : Colors.white;
@@ -1513,17 +1483,8 @@ String _threadSummary(ThreadDefinition thread) {
   return parts.isEmpty ? thread.color : parts.join(' ');
 }
 
-/// Returns the shared stitch type, or null when the selected symbol varies.
-StitchType? _sharedStitchType(Iterable<StitchCell> stitches) {
-  final types = stitches.map((stitch) => stitch.stitchType).toSet();
-  return types.length == 1 ? types.single : null;
-}
-
-/// Returns the shared strand count, or null when it is absent or varies.
-int? _sharedThreadCount(Iterable<StitchCell> stitches) {
-  final counts = stitches.map((stitch) => stitch.threadCount).toSet();
-  return counts.length == 1 ? counts.single : null;
-}
+/// Formats nullable thread metadata without hiding absent fields.
+String _optionalValue(Object? value) => value?.toString() ?? 'Not specified';
 
 /// Produces a user-facing label for an optional [type].
 String _stitchTypeLabel(StitchType? type) {

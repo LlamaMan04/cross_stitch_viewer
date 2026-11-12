@@ -18,7 +18,7 @@ void main() {
     expect(firstDocument.symbols, hasLength(greaterThanOrEqualTo(10)));
     expect(firstDocument.backstitches, isEmpty);
     expect(
-      firstDocument.symbols.map((symbol) => symbol.thread.color).toSet(),
+      firstDocument.threads.map((thread) => thread.color).toSet(),
       hasLength(greaterThanOrEqualTo(10)),
     );
     expect(

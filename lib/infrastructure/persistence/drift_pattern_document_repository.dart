@@ -32,10 +32,16 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
         database.patternBackstitches,
       )..where((table) => table.documentId.equals(document.id))).go();
       await (database.delete(
+        database.patternBackstitchDefinitions,
+      )..where((table) => table.documentId.equals(document.id))).go();
+      await (database.delete(
         database.parserDiagnostics,
       )..where((table) => table.documentId.equals(document.id))).go();
       await (database.delete(
         database.patternSymbols,
+      )..where((table) => table.documentId.equals(document.id))).go();
+      await (database.delete(
+        database.patternThreads,
       )..where((table) => table.documentId.equals(document.id))).go();
       await (database.delete(
         database.patternRegions,
@@ -50,8 +56,16 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
       await database.batch((batch) {
         batch.insertAll(database.sourceMetadataEntries, metadata);
         batch.insertAll(
+          database.patternThreads,
+          PatternMapper.threads(document),
+        );
+        batch.insertAll(
           database.patternSymbols,
           PatternMapper.symbols(document),
+        );
+        batch.insertAll(
+          database.patternBackstitchDefinitions,
+          PatternMapper.backstitchDefinitions(document),
         );
         batch.insertAll(
           database.patternRegions,
@@ -104,6 +118,16 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
               ..where((table) => table.documentId.equals(id))
               ..orderBy([(table) => OrderingTerm.asc(table.sortOrder)]))
             .get();
+    final threads =
+        await (database.select(database.patternThreads)
+              ..where((table) => table.documentId.equals(id))
+              ..orderBy([(table) => OrderingTerm.asc(table.sortOrder)]))
+            .get();
+    final backstitchDefinitions =
+        await (database.select(database.patternBackstitchDefinitions)
+              ..where((table) => table.documentId.equals(id))
+              ..orderBy([(table) => OrderingTerm.asc(table.sortOrder)]))
+            .get();
     final regions =
         await (database.select(database.patternRegions)
               ..where((table) => table.documentId.equals(id))
@@ -127,7 +151,9 @@ class DriftPatternDocumentRepository implements PatternDocumentRepository {
     return PatternMapper.fromRows(
       document: root,
       metadata: metadata,
+      threads: threads,
       symbols: symbols,
+      backstitchDefinitions: backstitchDefinitions,
       regions: regions,
       cells: cells,
       backstitches: backstitches,

@@ -279,11 +279,13 @@ class ViewportPatternPainter extends CustomPainter {
     final lines = visibleBackstitches;
     if (lines.isEmpty) return 0;
     var drawCalls = 0;
-    final selectedColorKey = selection.backstitchColorKey;
-    if (selectedColorKey != null) {
+    final selectedThreadId = selection.hasBackstitchSelection
+        ? selection.threadId
+        : null;
+    if (selectedThreadId != null) {
       final highlightPaint = _backstitchSelectionPaint();
       for (final line in lines) {
-        if (line.colorKey != selectedColorKey) continue;
+        if (line.threadId != selectedThreadId) continue;
         final segment = line.segment;
         canvas.drawLine(
           camera.gridToScreen(
@@ -322,13 +324,16 @@ class ViewportPatternPainter extends CustomPainter {
   /// Matching visible cells used by selection painting and focused tests.
   Iterable<StitchCell> get selectedVisibleCells sync* {
     if (renderLod == RenderLod.overview) return;
-    final selectedSymbolId = selection.selectedSymbolId;
-    if (selectedSymbolId == null) return;
+    final selectedThreadId = selection.hasSymbolSelection
+        ? selection.threadId
+        : null;
+    if (selectedThreadId == null) return;
     for (final cell in _visibleCells) {
       final isExcludedCompletedCell =
           !settings.includeCompletedCellsInSelection &&
           completedCells.contains(cell.coordinate);
-      if (cell.symbolId == selectedSymbolId && !isExcludedCompletedCell) {
+      final metadata = symbolRenderCache.metadataFor(cell.symbolId);
+      if (metadata?.threadId == selectedThreadId && !isExcludedCompletedCell) {
         yield cell;
       }
     }

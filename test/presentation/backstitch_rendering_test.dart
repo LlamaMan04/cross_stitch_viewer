@@ -23,13 +23,13 @@ void main() {
     id: 'crossing',
     start: BackstitchCoordinate(row: 2, column: 0),
     end: BackstitchCoordinate(row: 2, column: 10),
-    thread: thread,
+    definitionId: 'red-line',
   );
   const outside = BackstitchSegment(
     id: 'outside',
     start: BackstitchCoordinate(row: 8, column: 0),
     end: BackstitchCoordinate(row: 8, column: 10),
-    thread: thread,
+    definitionId: 'red-line',
   );
   final document = PatternDocument(
     id: 'test',
@@ -39,7 +39,11 @@ void main() {
       dimensions: const PatternDimensions(10, 10),
       cells: const [],
     ),
+    threads: const [thread],
     symbols: const [],
+    backstitchDefinitions: const [
+      BackstitchDefinition(id: 'red-line', threadId: 'red'),
+    ],
     backstitches: const [crossing, outside],
   );
   final cache = PatternSymbolRenderCache(document);
@@ -114,4 +118,3 @@ void main() {
     );
   }
 }
-

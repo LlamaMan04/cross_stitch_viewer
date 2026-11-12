@@ -24,6 +24,7 @@ void main() {
                 includeCompletedCellsInSelection: false,
               ),
               selection: const PatternRenderSelection(
+                threadId: 'dmc-321',
                 selectedSymbolId: 'flower',
               ),
               completedCells: <GridCoordinate>{const GridCoordinate(0, 0)},

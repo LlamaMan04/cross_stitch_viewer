@@ -424,6 +424,7 @@ void main() {
       await tester.tapAt(flowerCenter);
       await tester.pumpAndSettle();
       expect(painter().selection.selectedSymbolId, 'flower');
+      expect(painter().selection.threadId, 'dmc-321');
       expect(painter().selectedVisibleCells, hasLength(2));
       expect(await progress.getForDocument('sample-garden-sampler'), isNull);
 
@@ -441,8 +442,22 @@ void main() {
       );
       expect(find.text('DMC 321'), findsWidgets);
       expect(find.text('Stitch type: Full stitch'), findsOneWidget);
-      expect(find.text('Thread: DMC 321'), findsOneWidget);
       expect(find.text('Number of strands: 2'), findsOneWidget);
+      expect(find.text('Thread ID: dmc-321'), findsOneWidget);
+      expect(find.text('Brand: DMC'), findsOneWidget);
+      expect(find.text('Catalog number: 321'), findsOneWidget);
+      expect(find.text('Color name: Red'), findsOneWidget);
+      expect(find.text('Color: #C72C41'), findsOneWidget);
+      expect(find.text('Color evidence: explicit'), findsOneWidget);
+      expect(find.text('Conversion notes: Not specified'), findsOneWidget);
+      expect(
+        tester
+            .widget<ListTile>(
+              find.byKey(const ValueKey('symbol-palette-flower')),
+            )
+            .selected,
+        isTrue,
+      );
 
       final originBeforePan = painter().camera.origin;
       await tester.dragFrom(
@@ -453,7 +468,14 @@ void main() {
       expect(painter().camera.origin.dx, lessThan(originBeforePan.dx));
       expect(painter().selection.selectedSymbolId, 'flower');
 
-      await tester.tap(find.byKey(const ValueKey('symbol-palette-leaf')));
+      final leaf = find.byKey(const ValueKey('symbol-palette-leaf'));
+      final paletteList = find.descendant(
+        of: find.byKey(const ValueKey('symbol-palette-panel')),
+        matching: find.byType(ListView),
+      );
+      await tester.drag(paletteList, const Offset(0, -520));
+      await tester.pumpAndSettle();
+      await tester.tap(leaf);
       await tester.pumpAndSettle();
       expect(painter().selection.selectedSymbolId, 'leaf');
       expect(painter().selectedVisibleCells, hasLength(1));
@@ -485,10 +507,10 @@ void main() {
       const ValueKey('floating-menu-symbol-palette'),
     );
     final backstitch = find.byKey(
-      const ValueKey('backstitch-palette-#C72C41'),
+      const ValueKey('backstitch-palette-flower-outline'),
     );
     expect(
-      find.byKey(const ValueKey('backstitch-palette-#5B8C3A')),
+      find.byKey(const ValueKey('backstitch-palette-leaf-vein')),
       findsOneWidget,
     );
     expect(
@@ -507,6 +529,14 @@ void main() {
     );
     expect(find.text('Stitch type: Backstitch'), findsOneWidget);
     expect(find.text('Number of strands: 2'), findsOneWidget);
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final painter =
+        tester.widget<CustomPaint>(canvasFinder).painter!
+            as ViewportPatternPainter;
+    expect(painter.selection.threadId, 'dmc-321');
+    expect(painter.selection.hasBackstitchSelection, isTrue);
+    expect(painter.selection.selectedSymbolId, isNull);
+    expect(painter.selectedVisibleCells, isEmpty);
     expect(find.textContaining('Endpoints:'), findsNothing);
   });
 }

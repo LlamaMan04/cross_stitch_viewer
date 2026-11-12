@@ -34,6 +34,22 @@ abstract final class PatternMapper {
           ),
       ];
 
+  /// Maps ordered reusable thread definitions.
+  static List<PatternThreadsCompanion> threads(PatternDocument value) => [
+    for (var index = 0; index < value.threads.length; index++)
+      PatternThreadsCompanion.insert(
+        documentId: value.id,
+        id: value.threads[index].id,
+        sortOrder: index,
+        brand: Value(value.threads[index].brand),
+        catalogNumber: Value(value.threads[index].catalogNumber),
+        name: Value(value.threads[index].name),
+        color: value.threads[index].color,
+        conversionNotes: Value(value.threads[index].conversionNotes),
+        evidence: value.threads[index].evidence.name,
+      ),
+  ];
+
   /// Maps ordered symbol definitions.
   static List<PatternSymbolsCompanion> symbols(PatternDocument value) => [
     for (var index = 0; index < value.symbols.length; index++)
@@ -44,16 +60,24 @@ abstract final class PatternMapper {
         sourceSymbol: value.symbols[index].sourceSymbol,
         normalizedKey: value.symbols[index].normalizedKey,
         displayGlyph: value.symbols[index].displayGlyph,
-        threadId: value.symbols[index].thread.id,
-        threadBrand: Value(value.symbols[index].thread.brand),
-        threadCatalogNumber: Value(value.symbols[index].thread.catalogNumber),
-        threadName: Value(value.symbols[index].thread.name),
-        threadColor: value.symbols[index].thread.color,
-        threadConversionNotes: Value(
-          value.symbols[index].thread.conversionNotes,
-        ),
-        threadEvidence: value.symbols[index].thread.evidence.name,
+        threadId: value.symbols[index].threadId,
+        stitchType: value.symbols[index].stitchType.name,
+        threadCount: Value(value.symbols[index].threadCount),
         legendEvidence: Value(value.symbols[index].legendEvidence),
+      ),
+  ];
+
+  /// Maps ordered reusable backstitch definitions.
+  static List<PatternBackstitchDefinitionsCompanion> backstitchDefinitions(
+    PatternDocument value,
+  ) => [
+    for (var index = 0; index < value.backstitchDefinitions.length; index++)
+      PatternBackstitchDefinitionsCompanion.insert(
+        documentId: value.id,
+        id: value.backstitchDefinitions[index].id,
+        sortOrder: index,
+        threadId: value.backstitchDefinitions[index].threadId,
+        threadCount: Value(value.backstitchDefinitions[index].threadCount),
       ),
   ];
 
@@ -82,15 +106,13 @@ abstract final class PatternMapper {
         gridRow: value.grid.cells[index].coordinate.row,
         gridColumn: value.grid.cells[index].coordinate.column,
         symbolId: value.grid.cells[index].symbolId,
-        stitchType: value.grid.cells[index].stitchType.name,
-        threadCount: Value(value.grid.cells[index].threadCount),
         confidence: Value(value.grid.cells[index].confidence?.value),
         needsReview: Value(value.grid.cells[index].needsReview),
         provenanceId: Value(value.grid.cells[index].provenanceId),
       ),
   ];
 
-  /// Maps ordered linear backstitch segments and their embedded thread data.
+  /// Maps ordered linear backstitch segments and definition references.
   static List<PatternBackstitchesCompanion> backstitches(
     PatternDocument value,
   ) => [
@@ -103,18 +125,7 @@ abstract final class PatternMapper {
         startColumn: value.backstitches[index].start.column,
         endRow: value.backstitches[index].end.row,
         endColumn: value.backstitches[index].end.column,
-        threadId: value.backstitches[index].thread.id,
-        threadBrand: Value(value.backstitches[index].thread.brand),
-        threadCatalogNumber: Value(
-          value.backstitches[index].thread.catalogNumber,
-        ),
-        threadName: Value(value.backstitches[index].thread.name),
-        threadColor: value.backstitches[index].thread.color,
-        threadConversionNotes: Value(
-          value.backstitches[index].thread.conversionNotes,
-        ),
-        threadEvidence: value.backstitches[index].thread.evidence.name,
-        threadCount: Value(value.backstitches[index].threadCount),
+        definitionId: value.backstitches[index].definitionId,
         confidence: Value(value.backstitches[index].confidence?.value),
         needsReview: Value(value.backstitches[index].needsReview),
         provenanceId: Value(value.backstitches[index].provenanceId),
@@ -146,7 +157,9 @@ abstract final class PatternMapper {
   static PatternDocument fromRows({
     required PatternDocumentRow document,
     required List<SourceMetadataEntryRow> metadata,
+    required List<PatternThreadRow> threads,
     required List<PatternSymbolRow> symbols,
+    required List<PatternBackstitchDefinitionRow> backstitchDefinitions,
     required List<PatternRegionRow> regions,
     required List<PatternCellRow> cells,
     required List<PatternBackstitchRow> backstitches,
@@ -163,8 +176,6 @@ abstract final class PatternMapper {
             StitchCell(
               coordinate: GridCoordinate(row.gridRow, row.gridColumn),
               symbolId: row.symbolId,
-              stitchType: StitchType.values.byName(row.stitchType),
-              threadCount: row.threadCount,
               confidence: row.confidence == null
                   ? null
                   : Confidence(row.confidence!),
@@ -173,6 +184,18 @@ abstract final class PatternMapper {
             ),
         ],
       ),
+      threads: [
+        for (final row in threads)
+          ThreadDefinition(
+            id: row.id,
+            color: row.color,
+            brand: row.brand,
+            catalogNumber: row.catalogNumber,
+            name: row.name,
+            conversionNotes: row.conversionNotes,
+            evidence: ColorEvidence.values.byName(row.evidence),
+          ),
+      ],
       symbols: [
         for (final row in symbols)
           SymbolDefinition(
@@ -180,16 +203,18 @@ abstract final class PatternMapper {
             sourceSymbol: row.sourceSymbol,
             normalizedKey: row.normalizedKey,
             displayGlyph: row.displayGlyph,
-            thread: ThreadDefinition(
-              id: row.threadId,
-              color: row.threadColor,
-              brand: row.threadBrand,
-              catalogNumber: row.threadCatalogNumber,
-              name: row.threadName,
-              conversionNotes: row.threadConversionNotes,
-              evidence: ColorEvidence.values.byName(row.threadEvidence),
-            ),
+            threadId: row.threadId,
+            stitchType: StitchType.values.byName(row.stitchType),
+            threadCount: row.threadCount,
             legendEvidence: row.legendEvidence,
+          ),
+      ],
+      backstitchDefinitions: [
+        for (final row in backstitchDefinitions)
+          BackstitchDefinition(
+            id: row.id,
+            threadId: row.threadId,
+            threadCount: row.threadCount,
           ),
       ],
       backstitches: [
@@ -201,16 +226,7 @@ abstract final class PatternMapper {
               column: row.startColumn,
             ),
             end: BackstitchCoordinate(row: row.endRow, column: row.endColumn),
-            thread: ThreadDefinition(
-              id: row.threadId,
-              color: row.threadColor,
-              brand: row.threadBrand,
-              catalogNumber: row.threadCatalogNumber,
-              name: row.threadName,
-              conversionNotes: row.threadConversionNotes,
-              evidence: ColorEvidence.values.byName(row.threadEvidence),
-            ),
-            threadCount: row.threadCount,
+            definitionId: row.definitionId,
             confidence: row.confidence == null
                 ? null
                 : Confidence(row.confidence!),

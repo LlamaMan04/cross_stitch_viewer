@@ -29,6 +29,7 @@ abstract final class ExtraLargeSamplePatternFixture {
       dimensions: const PatternDimensions(rows, columns),
       cells: _buildCells(),
     ),
+    threads: LargeSamplePatternFixture.threads,
     symbols: LargeSamplePatternFixture.symbols,
     regions: const [
       PatternRegion(

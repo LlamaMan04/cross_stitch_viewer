@@ -12,20 +12,31 @@ class PatternDocument {
     required this.title,
     required this.schemaVersion,
     required this.grid,
+    required Iterable<ThreadDefinition> threads,
     required Iterable<SymbolDefinition> symbols,
+    Iterable<BackstitchDefinition> backstitchDefinitions = const [],
     Iterable<BackstitchSegment> backstitches = const [],
     Iterable<PatternRegion> regions = const [],
     Map<String, Object?> sourceMetadata = const {},
     this.sourceChecksum,
     Iterable<ParserDiagnostic> diagnostics = const [],
   }) {
+    this.threads = List.unmodifiable(threads);
     this.symbols = List.unmodifiable(symbols);
+    this.backstitchDefinitions = List.unmodifiable(backstitchDefinitions);
     this.backstitches = List.unmodifiable(backstitches);
     this.regions = List.unmodifiable(regions);
     this.sourceMetadata = Map.unmodifiable(sourceMetadata);
     this.diagnostics = List.unmodifiable(diagnostics);
+    _threadsById = Map.unmodifiable({
+      for (final thread in this.threads) thread.id: thread,
+    });
     _symbolsById = Map.unmodifiable({
       for (final symbol in this.symbols) symbol.id: symbol,
+    });
+    _backstitchDefinitionsById = Map.unmodifiable({
+      for (final definition in this.backstitchDefinitions)
+        definition.id: definition,
     });
     _backstitchesById = Map.unmodifiable({
       for (final backstitch in this.backstitches) backstitch.id: backstitch,
@@ -72,11 +83,23 @@ class PatternDocument {
   /// Sparse stitch grid and its complete rectangular dimensions.
   final PatternGrid grid;
 
+  /// Thread catalog entries referenced by stitch definitions.
+  late final List<ThreadDefinition> threads;
+
+  /// Direct thread lookup by stable ID.
+  late final Map<String, ThreadDefinition> _threadsById;
+
   /// Symbol definitions referenced by populated cells.
   late final List<SymbolDefinition> symbols;
 
   /// Direct symbol lookup by stable ID.
   late final Map<String, SymbolDefinition> _symbolsById;
+
+  /// Backstitch definitions referenced by linear segments.
+  late final List<BackstitchDefinition> backstitchDefinitions;
+
+  /// Direct backstitch-definition lookup by stable ID.
+  late final Map<String, BackstitchDefinition> _backstitchDefinitionsById;
 
   /// Linear stitches rendered independently from sparse grid cells.
   late final List<BackstitchSegment> backstitches;
@@ -104,6 +127,25 @@ class PatternDocument {
 
   /// Returns the symbol with [id], if the document defines one.
   SymbolDefinition? symbolById(String id) => _symbolsById[id];
+
+  /// Returns the thread with [id], if the document defines one.
+  ThreadDefinition? threadById(String id) => _threadsById[id];
+
+  /// Returns the thread referenced by [symbol].
+  ThreadDefinition? threadForSymbol(SymbolDefinition symbol) =>
+      _threadsById[symbol.threadId];
+
+  /// Returns the backstitch definition with [id], if present.
+  BackstitchDefinition? backstitchDefinitionById(String id) =>
+      _backstitchDefinitionsById[id];
+
+  /// Returns the definition referenced by [segment].
+  BackstitchDefinition? definitionForBackstitch(BackstitchSegment segment) =>
+      _backstitchDefinitionsById[segment.definitionId];
+
+  /// Returns the thread referenced by [definition].
+  ThreadDefinition? threadForBackstitch(BackstitchDefinition definition) =>
+      _threadsById[definition.threadId];
 
   /// Returns the backstitch segment with [id], if the document defines one.
   BackstitchSegment? backstitchById(String id) => _backstitchesById[id];
@@ -155,11 +197,13 @@ class PatternDocument {
       );
     }
     grid.validate();
-    if (_symbolsById.length != symbols.length ||
+    if (_threadsById.length != threads.length ||
+        _symbolsById.length != symbols.length ||
+        _backstitchDefinitionsById.length != backstitchDefinitions.length ||
         _backstitchesById.length != backstitches.length ||
         _regionsById.length != regions.length) {
       throw const DocumentValidationException(
-        'Definition, backstitch, and region IDs must be unique.',
+        'Thread, definition, backstitch, and region IDs must be unique.',
       );
     }
     for (final region in regions) {
@@ -175,8 +219,28 @@ class PatternDocument {
         );
       }
     }
+    for (final thread in threads) {
+      if (thread.id.isEmpty) {
+        throw const DocumentValidationException('Thread ID is required.');
+      }
+      thread.validate();
+    }
     for (final symbol in symbols) {
-      symbol.thread.validate();
+      symbol.validate();
+      if (!_threadsById.containsKey(symbol.threadId)) {
+        throw DocumentValidationException(
+          'Symbol ${symbol.id} references missing thread ${symbol.threadId}.',
+        );
+      }
+    }
+    for (final definition in backstitchDefinitions) {
+      definition.validate();
+      if (!_threadsById.containsKey(definition.threadId)) {
+        throw DocumentValidationException(
+          'Backstitch definition ${definition.id} references missing thread '
+          '${definition.threadId}.',
+        );
+      }
     }
     for (final cell in grid.cells) {
       if (!_symbolsById.containsKey(cell.symbolId)) {
@@ -204,6 +268,12 @@ class PatternDocument {
     }
     for (final backstitch in backstitches) {
       backstitch.validate();
+      if (!_backstitchDefinitionsById.containsKey(backstitch.definitionId)) {
+        throw DocumentValidationException(
+          'Backstitch ${backstitch.id} references missing definition '
+          '${backstitch.definitionId}.',
+        );
+      }
       _validateBackstitchCoordinate(backstitch.start, backstitch.id);
       _validateBackstitchCoordinate(backstitch.end, backstitch.id);
       final provenanceId = backstitch.provenanceId;

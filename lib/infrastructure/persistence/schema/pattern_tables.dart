@@ -88,6 +88,54 @@ class LibraryMetadata extends Table {
   Set<Column<Object>> get primaryKey => {documentId};
 }
 
+/// Stores reusable thread catalog and color information for one pattern.
+@DataClassName('PatternThreadRow')
+class PatternThreads extends Table {
+  /// Defines the parent pattern document.
+  TextColumn get documentId => text()();
+
+  /// Defines the stable thread identifier within the document.
+  TextColumn get id => text()();
+
+  /// Preserves the thread's order in the portable document.
+  IntColumn get sortOrder => integer()();
+
+  /// Defines the optional thread manufacturer.
+  TextColumn get brand => text().nullable()();
+
+  /// Defines the optional manufacturer catalog number.
+  TextColumn get catalogNumber => text().nullable()();
+
+  /// Defines the optional human-readable thread color name.
+  TextColumn get name => text().nullable()();
+
+  /// Defines the canonical thread color in `#RRGGBB` notation.
+  TextColumn get color => text()();
+
+  /// Defines optional substitution or conversion notes.
+  TextColumn get conversionNotes => text().nullable()();
+
+  /// Defines whether the thread color was explicit or inferred.
+  TextColumn get evidence => text()();
+
+  /// Uniquely identifies a thread within its parent document.
+  @override
+  Set<Column<Object>> get primaryKey => {documentId, id};
+
+  /// Links threads to their document and validates catalog data.
+  @override
+  List<String> get customConstraints => const [
+    'FOREIGN KEY (document_id) REFERENCES pattern_documents(id) '
+        'ON DELETE CASCADE',
+    'UNIQUE (document_id, sort_order)',
+    'CHECK (length(id) > 0)',
+    'CHECK (sort_order >= 0)',
+    "CHECK (color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
+        "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
+    "CHECK (evidence IN ('explicit', 'inferred'))",
+  ];
+}
+
 /// Stores symbol definitions belonging to a normalized pattern.
 @DataClassName('PatternSymbolRow')
 @TableIndex(
@@ -116,23 +164,11 @@ class PatternSymbols extends Table {
   /// Defines the exact thread identifier used by the symbol.
   TextColumn get threadId => text()();
 
-  /// Defines the optional thread manufacturer.
-  TextColumn get threadBrand => text().nullable()();
+  /// Defines the stitch technique shared by cells using this symbol.
+  TextColumn get stitchType => text()();
 
-  /// Defines the optional manufacturer catalog number.
-  TextColumn get threadCatalogNumber => text().nullable()();
-
-  /// Defines the optional human-readable thread color name.
-  TextColumn get threadName => text().nullable()();
-
-  /// Defines the canonical thread color in `#RRGGBB` notation.
-  TextColumn get threadColor => text()();
-
-  /// Defines optional substitution or conversion notes.
-  TextColumn get threadConversionNotes => text().nullable()();
-
-  /// Defines whether the thread color was explicit or inferred.
-  TextColumn get threadEvidence => text()();
+  /// Defines the optional strand count shared by cells using this symbol.
+  IntColumn get threadCount => integer().nullable()();
 
   /// Defines optional source legend evidence for the mapping.
   TextColumn get legendEvidence => text().nullable()();
@@ -141,11 +177,13 @@ class PatternSymbols extends Table {
   @override
   Set<Column<Object>> get primaryKey => {documentId, id};
 
-  /// Links symbols to their document and validates their embedded thread.
+  /// Links symbols to their document and separately stored thread.
   @override
   List<String> get customConstraints => const [
     'FOREIGN KEY (document_id) REFERENCES pattern_documents(id) '
         'ON DELETE CASCADE',
+    'FOREIGN KEY (document_id, thread_id) '
+        'REFERENCES pattern_threads(document_id, id)',
     'UNIQUE (document_id, sort_order)',
     'CHECK (length(id) > 0)',
     'CHECK (sort_order >= 0)',
@@ -153,9 +191,49 @@ class PatternSymbols extends Table {
     'CHECK (length(normalized_key) > 0)',
     'CHECK (length(display_glyph) > 0)',
     'CHECK (length(thread_id) > 0)',
-    "CHECK (thread_color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
-        "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
-    "CHECK (thread_evidence IN ('explicit', 'inferred'))",
+    "CHECK (stitch_type IN ('full', 'half', 'quarter', 'threeQuarter', "
+        "'frenchKnot', 'unknown'))",
+    'CHECK (thread_count IS NULL OR thread_count > 0)',
+  ];
+}
+
+/// Stores reusable thread and strand choices for backstitch linework.
+@DataClassName('PatternBackstitchDefinitionRow')
+@TableIndex(
+  name: 'pattern_backstitch_definitions_document_thread',
+  columns: {#documentId, #threadId},
+)
+class PatternBackstitchDefinitions extends Table {
+  /// Defines the parent pattern document.
+  TextColumn get documentId => text()();
+
+  /// Defines the stable backstitch definition identifier.
+  TextColumn get id => text()();
+
+  /// Preserves definition order in the portable document.
+  IntColumn get sortOrder => integer()();
+
+  /// Defines the separately stored thread used by this definition.
+  TextColumn get threadId => text()();
+
+  /// Defines the optional number of thread strands.
+  IntColumn get threadCount => integer().nullable()();
+
+  /// Uniquely identifies a definition within its parent document.
+  @override
+  Set<Column<Object>> get primaryKey => {documentId, id};
+
+  /// Links definitions to documents and threads and validates strand data.
+  @override
+  List<String> get customConstraints => const [
+    'FOREIGN KEY (document_id) REFERENCES pattern_documents(id) '
+        'ON DELETE CASCADE',
+    'FOREIGN KEY (document_id, thread_id) '
+        'REFERENCES pattern_threads(document_id, id)',
+    'UNIQUE (document_id, sort_order)',
+    'CHECK (length(id) > 0)',
+    'CHECK (sort_order >= 0)',
+    'CHECK (thread_count IS NULL OR thread_count > 0)',
   ];
 }
 
@@ -187,29 +265,8 @@ class PatternBackstitches extends Table {
   /// Defines the segment's ending column on the grid line lattice.
   RealColumn get endColumn => real()();
 
-  /// Defines the exact thread identifier used by the segment.
-  TextColumn get threadId => text()();
-
-  /// Defines the optional segment thread manufacturer.
-  TextColumn get threadBrand => text().nullable()();
-
-  /// Defines the optional segment manufacturer catalog number.
-  TextColumn get threadCatalogNumber => text().nullable()();
-
-  /// Defines the optional human-readable segment thread color name.
-  TextColumn get threadName => text().nullable()();
-
-  /// Defines the canonical segment thread color in `#RRGGBB` notation.
-  TextColumn get threadColor => text()();
-
-  /// Defines optional segment thread conversion notes.
-  TextColumn get threadConversionNotes => text().nullable()();
-
-  /// Defines whether the segment thread color was explicit or inferred.
-  TextColumn get threadEvidence => text()();
-
-  /// Defines the optional number of thread strands used for the segment.
-  IntColumn get threadCount => integer().nullable()();
+  /// Defines the reusable backstitch definition used by the segment.
+  TextColumn get definitionId => text()();
 
   /// Defines the optional parser confidence for the segment.
   RealColumn get confidence => real().nullable()();
@@ -229,6 +286,8 @@ class PatternBackstitches extends Table {
   List<String> get customConstraints => const [
     'FOREIGN KEY (document_id) REFERENCES pattern_documents(id) '
         'ON DELETE CASCADE',
+    'FOREIGN KEY (document_id, definition_id) '
+        'REFERENCES pattern_backstitch_definitions(document_id, id)',
     'FOREIGN KEY (document_id, provenance_id) '
         'REFERENCES pattern_regions(document_id, id)',
     'UNIQUE (document_id, sort_order)',
@@ -239,11 +298,7 @@ class PatternBackstitches extends Table {
     'CHECK (end_row >= 0)',
     'CHECK (end_column >= 0)',
     'CHECK (start_row != end_row OR start_column != end_column)',
-    'CHECK (length(thread_id) > 0)',
-    "CHECK (thread_color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
-        "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
-    "CHECK (thread_evidence IN ('explicit', 'inferred'))",
-    'CHECK (thread_count IS NULL OR thread_count > 0)',
+    'CHECK (length(definition_id) > 0)',
     'CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))',
   ];
 }
@@ -324,12 +379,6 @@ class PatternCells extends Table {
   /// Defines the symbol rendered for this stitch.
   TextColumn get symbolId => text()();
 
-  /// Defines the stitch technique using its portable enum name.
-  TextColumn get stitchType => text()();
-
-  /// Defines the optional number of thread strands used for the stitch.
-  IntColumn get threadCount => integer().nullable()();
-
   /// Defines the optional normalized parser confidence.
   RealColumn get confidence => real().nullable()();
 
@@ -356,9 +405,6 @@ class PatternCells extends Table {
     'CHECK (sort_order >= 0)',
     'CHECK (grid_row >= 0)',
     'CHECK (grid_column >= 0)',
-    "CHECK (stitch_type IN ('full', 'half', 'quarter', 'threeQuarter', "
-        "'backstitch', 'frenchKnot', 'unknown'))",
-    'CHECK (thread_count IS NULL OR thread_count > 0)',
     'CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))',
   ];
 }

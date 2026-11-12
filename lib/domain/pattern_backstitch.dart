@@ -1,5 +1,4 @@
 import 'domain_error.dart';
-import 'pattern_definitions.dart';
 import 'value_objects.dart';
 
 /// A fractional row and column position on the pattern grid line lattice.
@@ -38,15 +37,47 @@ class BackstitchCoordinate {
   String toString() => '($row, $column)';
 }
 
+/// Thread and strand definition shared by one or more backstitch segments.
+class BackstitchDefinition {
+  /// Creates a reusable backstitch definition.
+  const BackstitchDefinition({
+    required this.id,
+    required this.threadId,
+    this.threadCount,
+  });
+
+  /// Stable definition ID referenced by backstitch segments.
+  final String id;
+
+  /// ID of the separately stored thread used by this definition.
+  final String threadId;
+
+  /// Number of strands used by segments referencing this definition.
+  final int? threadCount;
+
+  /// Validates the definition's identifiers and optional strand count.
+  void validate() {
+    if (id.isEmpty || threadId.isEmpty) {
+      throw const DocumentValidationException(
+        'Backstitch definition and thread IDs are required.',
+      );
+    }
+    if (threadCount != null && threadCount! <= 0) {
+      throw const DocumentValidationException(
+        'Backstitch thread count must be greater than zero.',
+      );
+    }
+  }
+}
+
 /// One linear outline or detail stitch drawn between two pattern coordinates.
 class BackstitchSegment {
-  /// Creates a backstitch segment with thread and optional import data.
+  /// Creates a backstitch segment with a definition and optional import data.
   const BackstitchSegment({
     required this.id,
     required this.start,
     required this.end,
-    required this.thread,
-    this.threadCount,
+    required this.definitionId,
     this.confidence,
     this.needsReview = false,
     this.provenanceId,
@@ -61,11 +92,8 @@ class BackstitchSegment {
   /// Pattern-space coordinate at which the rendered line ends.
   final BackstitchCoordinate end;
 
-  /// Exact thread information that supplies this segment's rendered color.
-  final ThreadDefinition thread;
-
-  /// Number of thread strands used for this segment when supplied by the pattern.
-  final int? threadCount;
+  /// ID of the reusable backstitch definition for this segment.
+  final String definitionId;
 
   /// Parser confidence when the segment was imported.
   final Confidence? confidence;
@@ -90,10 +118,9 @@ class BackstitchSegment {
         'Backstitch segment endpoints must be distinct.',
       );
     }
-    thread.validate();
-    if (threadCount != null && threadCount! <= 0) {
+    if (definitionId.isEmpty) {
       throw const DocumentValidationException(
-        'Backstitch thread count must be greater than zero.',
+        'Backstitch definition ID is required.',
       );
     }
     confidence?.validate();

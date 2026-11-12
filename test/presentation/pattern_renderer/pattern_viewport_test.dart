@@ -377,6 +377,7 @@ void main() {
             child: PatternRenderView(
               document: LargeSamplePatternFixture.create(),
               selection: const PatternRenderSelection(
+                threadId: 'dmc-321',
                 selectedSymbolId: 'large-red',
               ),
             ),

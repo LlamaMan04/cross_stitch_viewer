@@ -23,7 +23,7 @@ void main() {
             id: 'outline-a',
             start: BackstitchCoordinate(row: 0, column: 0),
             end: BackstitchCoordinate(row: 1.5, column: 2),
-            thread: _outlineThread,
+            definitionId: 'outline',
           ),
         ],
       );
@@ -43,7 +43,7 @@ void main() {
           id: 'outer-edge',
           start: BackstitchCoordinate(row: 0, column: 0),
           end: BackstitchCoordinate(row: 3, column: 4),
-          thread: _outlineThread,
+          definitionId: 'outline',
         ),
       ],
     );
@@ -51,26 +51,22 @@ void main() {
     expect(document.validate, returnsNormally);
   });
 
-  test('rejects nonpositive thread counts for stitches and backstitches', () {
-    final grid = PatternGrid(
-      dimensions: const PatternDimensions(1, 1),
-      cells: const [
-        StitchCell(
-          coordinate: GridCoordinate(0, 0),
-          symbolId: 'outline',
-          threadCount: 0,
-        ),
-      ],
+  test('rejects nonpositive thread counts in stitch definitions', () {
+    const symbol = SymbolDefinition(
+      id: 'invalid-symbol',
+      sourceSymbol: 'X',
+      normalizedKey: 'x',
+      displayGlyph: 'X',
+      threadId: 'outline-red',
+      threadCount: 0,
     );
-    const backstitch = BackstitchSegment(
-      id: 'invalid-count',
-      start: BackstitchCoordinate(row: 0, column: 0),
-      end: BackstitchCoordinate(row: 1, column: 1),
-      thread: _outlineThread,
+    const backstitch = BackstitchDefinition(
+      id: 'invalid-backstitch',
+      threadId: 'outline-red',
       threadCount: 0,
     );
 
-    expect(grid.validate, throwsA(isA<DocumentValidationException>()));
+    expect(symbol.validate, throwsA(isA<DocumentValidationException>()));
     expect(backstitch.validate, throwsA(isA<DocumentValidationException>()));
   });
 
@@ -82,7 +78,7 @@ void main() {
             id: 'outside',
             start: BackstitchCoordinate(row: 0, column: 0),
             end: BackstitchCoordinate(row: 3.1, column: 4),
-            thread: _outlineThread,
+            definitionId: 'outline',
           ),
         ],
       ),
@@ -92,7 +88,7 @@ void main() {
             id: 'zero-length',
             start: BackstitchCoordinate(row: 1, column: 1),
             end: BackstitchCoordinate(row: 1, column: 1),
-            thread: _outlineThread,
+            definitionId: 'outline',
           ),
         ],
       ),
@@ -102,17 +98,18 @@ void main() {
             id: 'non-finite',
             start: BackstitchCoordinate(row: double.nan, column: 0),
             end: BackstitchCoordinate(row: 1, column: 1),
-            thread: _outlineThread,
+            definitionId: 'outline',
           ),
         ],
       ),
       _document(
+        thread: const ThreadDefinition(id: 'outline-red', color: '#invalid'),
         backstitches: const [
           BackstitchSegment(
             id: 'invalid-thread',
             start: BackstitchCoordinate(row: 0, column: 0),
             end: BackstitchCoordinate(row: 1, column: 1),
-            thread: ThreadDefinition(id: 'invalid', color: '#invalid'),
+            definitionId: 'outline',
           ),
         ],
       ),
@@ -122,13 +119,13 @@ void main() {
             id: 'duplicate',
             start: BackstitchCoordinate(row: 0, column: 0),
             end: BackstitchCoordinate(row: 1, column: 1),
-            thread: _outlineThread,
+            definitionId: 'outline',
           ),
           BackstitchSegment(
             id: 'duplicate',
             start: BackstitchCoordinate(row: 1, column: 1),
             end: BackstitchCoordinate(row: 2, column: 2),
-            thread: _outlineThread,
+            definitionId: 'outline',
           ),
         ],
       ),
@@ -143,11 +140,16 @@ void main() {
 /// Creates a minimal document with optional line-segment data for validation.
 PatternDocument _document({
   required Iterable<BackstitchSegment> backstitches,
+  ThreadDefinition thread = _outlineThread,
 }) => PatternDocument(
   id: 'backstitch-contract',
   title: 'Backstitch contract',
   schemaVersion: 1,
   grid: PatternGrid(dimensions: const PatternDimensions(3, 4), cells: const []),
+  threads: [thread],
   symbols: const [],
+  backstitchDefinitions: const [
+    BackstitchDefinition(id: 'outline', threadId: 'outline-red'),
+  ],
   backstitches: backstitches,
 );

@@ -4,11 +4,11 @@ import '../../support/test_database.dart';
 
 /// Verifies the database boundary can create and configure the current schema.
 void main() {
-  test('creates the version 8 schema and enables foreign keys', () async {
+  test('creates the version 9 schema and enables foreign keys', () async {
     final database = openTestDatabase();
     addTearDown(database.close);
 
-    expect(database.schemaVersion, 8);
+    expect(database.schemaVersion, 9);
 
     final foreignKeys = await database
         .customSelect('PRAGMA foreign_keys')
@@ -18,7 +18,7 @@ void main() {
     final userVersion = await database
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(userVersion.data['user_version'], 8);
+    expect(userVersion.data['user_version'], 9);
   });
 
   test('creates every initial pattern and progress table', () async {
@@ -37,7 +37,9 @@ void main() {
         'pattern_documents',
         'source_metadata_entries',
         'library_metadata',
+        'pattern_threads',
         'pattern_symbols',
+        'pattern_backstitch_definitions',
         'pattern_backstitches',
         'pattern_regions',
         'pattern_cells',
@@ -62,6 +64,7 @@ void main() {
         'library_metadata_last_opened',
         'library_metadata_last_modified',
         'pattern_symbols_document_thread',
+        'pattern_backstitch_definitions_document_thread',
         'pattern_backstitches_document_provenance',
         'pattern_regions_document_page',
         'pattern_cells_document_symbol',
@@ -160,7 +163,7 @@ void main() {
     },
   );
 
-  test('embeds complete thread definitions in each symbol', () async {
+  test('stores stitch definitions separately from cells and threads', () async {
     final database = openTestDatabase();
     addTearDown(database.close);
 
@@ -170,25 +173,20 @@ void main() {
     final cells = await database
         .customSelect('PRAGMA table_info(pattern_cells)')
         .get();
+    final threads = await database
+        .customSelect('PRAGMA table_info(pattern_threads)')
+        .get();
     expect(
       symbols.map((row) => row.read<String>('name')),
-      containsAll({
-        'thread_id',
-        'thread_brand',
-        'thread_catalog_number',
-        'thread_name',
-        'thread_color',
-        'thread_conversion_notes',
-        'thread_evidence',
-      }),
+      containsAll({'thread_id', 'stitch_type', 'thread_count'}),
+    );
+    expect(
+      threads.map((row) => row.read<String>('name')),
+      containsAll({'brand', 'catalog_number', 'name', 'color', 'evidence'}),
     );
     expect(
       cells.map((row) => row.read<String>('name')),
-      containsAll({'sort_order', 'thread_count'}),
-    );
-    expect(
-      cells.map((row) => row.read<String>('name')),
-      isNot(contains('thread_id')),
+      isNot(containsAll({'thread_id', 'thread_count', 'stitch_type'})),
     );
   });
 
@@ -212,26 +210,31 @@ void main() {
     );
   });
 
-  test('stores backstitch geometry and thread fields', () async {
-    final database = openTestDatabase();
-    addTearDown(database.close);
-    final columns = await database
-        .customSelect('PRAGMA table_info(pattern_backstitches)')
-        .get();
-    expect(
-      columns.map((row) => row.read<String>('name')),
-      containsAll({
-        'start_row',
-        'start_column',
-        'end_row',
-        'end_column',
-        'thread_id',
-        'thread_color',
-        'thread_count',
-        'confidence',
-        'needs_review',
-        'provenance_id',
-      }),
-    );
-  });
+  test(
+    'stores backstitch geometry with a separate definition reference',
+    () async {
+      final database = openTestDatabase();
+      addTearDown(database.close);
+      final columns = await database
+          .customSelect('PRAGMA table_info(pattern_backstitches)')
+          .get();
+      expect(
+        columns.map((row) => row.read<String>('name')),
+        containsAll({
+          'start_row',
+          'start_column',
+          'end_row',
+          'end_column',
+          'definition_id',
+          'confidence',
+          'needs_review',
+          'provenance_id',
+        }),
+      );
+      expect(
+        columns.map((row) => row.read<String>('name')),
+        isNot(containsAll({'thread_id', 'thread_color', 'thread_count'})),
+      );
+    },
+  );
 }

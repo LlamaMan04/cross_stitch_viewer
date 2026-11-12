@@ -58,7 +58,7 @@ void main() {
     );
     final painter = canvas.painter! as ViewportPatternPainter;
     expect(painter.document.grid.cells, hasLength(3));
-    expect(painter.document.symbolById('flower')?.thread.color, '#C72C41');
+    expect(painter.document.threadById('dmc-321')?.color, '#C72C41');
     expect(
       painter.document.grid.cellsIntersecting(painter.visibleBounds),
       hasLength(3),

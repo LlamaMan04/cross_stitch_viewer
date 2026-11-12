@@ -387,7 +387,8 @@ class _PatternViewportState extends State<PatternViewport> {
       if (segment != null) {
         widget.onBackstitchSelected?.call(
           PatternRenderSelection().selectBackstitch(
-            segment.colorKey,
+            segment.definition.id,
+            segment.threadId,
           ),
         );
         return;

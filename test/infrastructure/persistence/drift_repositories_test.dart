@@ -34,14 +34,14 @@ void main() {
       loaded.grid.cells.map((cell) => cell.coordinate),
       original.grid.cells.map((cell) => cell.coordinate),
     );
-    expect(loaded.grid.cells.first.stitchType, StitchType.half);
-    expect(loaded.grid.cells.first.threadCount, 2);
+    expect(loaded.symbols.first.stitchType, StitchType.half);
+    expect(loaded.symbols.first.threadCount, 2);
     expect(loaded.grid.cells.first.confidence?.value, 0.4);
     expect(loaded.grid.cells.first.needsReview, isTrue);
     expect(loaded.grid.cells.first.provenanceId, 'page');
-    expect(loaded.symbols.first.thread.id, 'blue');
+    expect(loaded.symbols.first.threadId, 'blue');
     expect(loaded.symbols.first.legendEvidence, 'unresolved');
-    expect(loaded.symbols.first.thread.evidence, ColorEvidence.inferred);
+    expect(loaded.threads.first.evidence, ColorEvidence.inferred);
     expect(
       loaded.backstitches.single.start,
       const BackstitchCoordinate(row: 0, column: 0),
@@ -50,12 +50,12 @@ void main() {
       loaded.backstitches.single.end,
       const BackstitchCoordinate(row: 1.5, column: 2),
     );
-    expect(loaded.backstitches.single.thread.id, 'blue');
-    expect(loaded.backstitches.single.threadCount, 1);
+    expect(loaded.backstitches.single.definitionId, 'blue-outline');
+    expect(loaded.backstitchDefinitions.single.threadCount, 1);
     expect(loaded.backstitches.single.confidence?.value, 0.9);
     expect(loaded.backstitches.single.needsReview, isTrue);
     expect(loaded.backstitches.single.provenanceId, 'page');
-    expect(loaded.symbols.first.thread.conversionNotes, 'approximate');
+    expect(loaded.threads.first.conversionNotes, 'approximate');
     expect(loaded.regions.first.label, 'top');
     expect(loaded.diagnostics.first.coordinate, const GridCoordinate(0, 1));
     expect(loaded.diagnostics.first.confidence?.value, 0.7);
@@ -80,6 +80,7 @@ void main() {
           dimensions: const PatternDimensions(1, 1),
           cells: const [],
         ),
+        threads: const [],
         symbols: const [],
       ),
     );
@@ -163,13 +164,14 @@ void main() {
         dimensions: const PatternDimensions(1, 1),
         cells: const [],
       ),
+      threads: const [ThreadDefinition(id: 'invalid', color: '#000000')],
       symbols: const [
         SymbolDefinition(
           id: 'invalid',
           sourceSymbol: '',
           normalizedKey: 'x',
           displayGlyph: 'x',
-          thread: ThreadDefinition(id: 'invalid', color: '#000000'),
+          threadId: 'invalid',
         ),
       ],
     );
@@ -190,6 +192,7 @@ void main() {
         dimensions: const PatternDimensions(1, 1),
         cells: const [],
       ),
+      threads: const [],
       symbols: const [],
       sourceMetadata: const {'unsupported': Object()},
     );
@@ -243,8 +246,6 @@ PatternDocument _document() => PatternDocument(
       StitchCell(
         coordinate: GridCoordinate(0, 1),
         symbolId: 'unknown',
-        stitchType: StitchType.half,
-        threadCount: 2,
         confidence: Confidence(0.4),
         needsReview: true,
         provenanceId: 'page',
@@ -252,39 +253,38 @@ PatternDocument _document() => PatternDocument(
       StitchCell(coordinate: GridCoordinate(2, 3), symbolId: 'unknown'),
     ],
   ),
+  threads: const [
+    ThreadDefinition(
+      id: 'blue',
+      color: '#123ABC',
+      brand: 'DMC',
+      catalogNumber: '1',
+      name: 'Blue',
+      conversionNotes: 'approximate',
+      evidence: ColorEvidence.inferred,
+    ),
+  ],
   symbols: const [
     SymbolDefinition(
       id: 'unknown',
       sourceSymbol: '?',
       normalizedKey: '?',
       displayGlyph: '?',
-      thread: ThreadDefinition(
-        id: 'blue',
-        color: '#123ABC',
-        brand: 'DMC',
-        catalogNumber: '1',
-        name: 'Blue',
-        conversionNotes: 'approximate',
-        evidence: ColorEvidence.inferred,
-      ),
+      threadId: 'blue',
+      stitchType: StitchType.half,
+      threadCount: 2,
       legendEvidence: 'unresolved',
     ),
+  ],
+  backstitchDefinitions: const [
+    BackstitchDefinition(id: 'blue-outline', threadId: 'blue', threadCount: 1),
   ],
   backstitches: const [
     BackstitchSegment(
       id: 'outline',
       start: BackstitchCoordinate(row: 0, column: 0),
       end: BackstitchCoordinate(row: 1.5, column: 2),
-      thread: ThreadDefinition(
-        id: 'blue',
-        color: '#123ABC',
-        brand: 'DMC',
-        catalogNumber: '1',
-        name: 'Blue',
-        conversionNotes: 'approximate',
-        evidence: ColorEvidence.inferred,
-      ),
-      threadCount: 1,
+      definitionId: 'blue-outline',
       confidence: Confidence(0.9),
       needsReview: true,
       provenanceId: 'page',

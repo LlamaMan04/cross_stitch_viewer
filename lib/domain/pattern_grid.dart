@@ -73,35 +73,12 @@ class GridBounds {
       'columns: [$startColumn, $endColumn))';
 }
 
-/// Stitch technique represented by a populated grid cell.
-enum StitchType {
-  /// Standard full cross stitch.
-  full,
-
-  /// Stitch covering half of a grid cell.
-  half,
-
-  /// Stitch covering one quarter of a grid cell.
-  quarter,
-
-  /// Three-quarter stitch combining a half and a quarter stitch.
-  threeQuarter,
-
-  /// Small knotted stitch used for decorative details.
-  frenchKnot,
-
-  /// Technique was not identified by the source or parser.
-  unknown,
-}
-
 /// One populated coordinate in the sparse pattern grid.
 class StitchCell {
   /// Creates a stitch cell with a symbol reference and optional metadata.
   const StitchCell({
     required this.coordinate,
     required this.symbolId,
-    this.stitchType = StitchType.full,
-    this.threadCount,
     this.confidence,
     this.needsReview = false,
     this.provenanceId,
@@ -112,12 +89,6 @@ class StitchCell {
 
   /// ID of the symbol definition used to render this stitch.
   final String symbolId;
-
-  /// Technique used for this stitch.
-  final StitchType stitchType;
-
-  /// Number of thread strands used for this stitch when supplied by the pattern.
-  final int? threadCount;
 
   /// Parser confidence when the cell was imported.
   final Confidence? confidence;
@@ -362,11 +333,6 @@ class PatternGrid {
       if (!seen.add(cell.coordinate)) {
         throw DocumentValidationException(
           'Duplicate cell coordinate ${cell.coordinate}.',
-        );
-      }
-      if (cell.threadCount != null && cell.threadCount! <= 0) {
-        throw const DocumentValidationException(
-          'Stitch cell thread count must be greater than zero.',
         );
       }
       cell.confidence?.validate();

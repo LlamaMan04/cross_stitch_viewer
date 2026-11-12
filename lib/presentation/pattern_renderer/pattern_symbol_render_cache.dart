@@ -10,11 +10,15 @@ class PatternSymbolRenderMetadata {
   /// Creates renderer metadata for [symbol] and its parsed [threadColor].
   const PatternSymbolRenderMetadata({
     required this.symbol,
+    required this.threadId,
     required this.threadColor,
   });
 
   /// Source symbol definition used for glyph and thread details.
   final SymbolDefinition symbol;
+
+  /// Stable thread identity used for cross-definition selection.
+  final String threadId;
 
   /// Opaque thread color parsed from the symbol's canonical RGB value.
   final Color threadColor;
@@ -22,33 +26,39 @@ class PatternSymbolRenderMetadata {
 
 /// Cached geometry and opaque thread color for one backstitch.
 class BackstitchRenderMetadata {
-  /// Resolves immutable rendering information for [segment].
-  BackstitchRenderMetadata(this.segment)
-    : colorKey = segment.thread.color.toUpperCase(),
-      threadColor = PatternSymbolRenderCache._parseColor(segment.thread.color),
-      bounds = Rect.fromLTRB(
-        segment.start.column < segment.end.column
-            ? segment.start.column
-            : segment.end.column,
-        segment.start.row < segment.end.row
-            ? segment.start.row
-            : segment.end.row,
-        segment.start.column > segment.end.column
-            ? segment.start.column
-            : segment.end.column,
-        segment.start.row > segment.end.row
-            ? segment.start.row
-            : segment.end.row,
-      );
+  /// Resolves immutable rendering information for a segment and definition.
+  BackstitchRenderMetadata({
+    required this.segment,
+    required this.definition,
+    required ThreadDefinition thread,
+  }) : threadId = thread.id,
+       threadColor = PatternSymbolRenderCache._parseColor(thread.color),
+       bounds = Rect.fromLTRB(
+         segment.start.column < segment.end.column
+             ? segment.start.column
+             : segment.end.column,
+         segment.start.row < segment.end.row
+             ? segment.start.row
+             : segment.end.row,
+         segment.start.column > segment.end.column
+             ? segment.start.column
+             : segment.end.column,
+         segment.start.row > segment.end.row
+             ? segment.start.row
+             : segment.end.row,
+       );
 
   /// Source line and stable segment identity.
   final BackstitchSegment segment;
 
+  /// Reusable stitch definition referenced by [segment].
+  final BackstitchDefinition definition;
+
   /// Opaque color resolved before painting.
   final Color threadColor;
 
-  /// Canonical color identity used to select matching linework.
-  final String colorKey;
+  /// Stable thread identity used to select matching linework.
+  final String threadId;
 
   /// Inclusive axis-aligned bounds in pattern coordinates.
   final Rect bounds;
@@ -70,11 +80,19 @@ class PatternSymbolRenderCache {
         for (final symbol in document.symbols)
           symbol.id: PatternSymbolRenderMetadata(
             symbol: symbol,
-            threadColor: _parseColor(symbol.thread.color),
+            threadId: symbol.threadId,
+            threadColor: _parseColor(document.threadForSymbol(symbol)!.color),
           ),
       }),
       _backstitches = List.unmodifiable(
-        document.backstitches.map(BackstitchRenderMetadata.new),
+        document.backstitches.map((segment) {
+          final definition = document.definitionForBackstitch(segment)!;
+          return BackstitchRenderMetadata(
+            segment: segment,
+            definition: definition,
+            thread: document.threadForBackstitch(definition)!,
+          );
+        }),
       );
 
   /// Immutable render metadata keyed by stable symbol ID.
