@@ -460,4 +460,36 @@ void main() {
       expect(painter().selectedVisibleCells, isEmpty);
     },
   );
+
+  testWidgets('shows backstitch thread details from the symbol palette', (
+    tester,
+  ) async {
+    final documents = InMemoryPatternDocumentRepository();
+    final progress = InMemoryProgressRepository();
+    await tester.pumpWidget(
+      buildLibraryApp(
+        documents,
+        progress: progress,
+        seedDocument: SamplePatternFixture.create(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Garden Sampler'));
+    await tester.pumpAndSettle();
+
+    await selectWorkspaceMenuOption(
+      tester,
+      const ValueKey('floating-menu-symbol-palette'),
+    );
+    final backstitch = find.byKey(
+      const ValueKey('backstitch-palette-sample-flower-outline-top'),
+    );
+    await tester.scrollUntilVisible(backstitch, 160);
+    await tester.tap(backstitch);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('selected-backstitch-details')), findsOneWidget);
+    expect(find.text('2 matching backstitch segments'), findsOneWidget);
+    expect(find.textContaining('Endpoints:'), findsOneWidget);
+  });
 }

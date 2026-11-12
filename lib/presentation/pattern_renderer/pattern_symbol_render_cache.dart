@@ -24,7 +24,8 @@ class PatternSymbolRenderMetadata {
 class BackstitchRenderMetadata {
   /// Resolves immutable rendering information for [segment].
   BackstitchRenderMetadata(this.segment)
-    : threadColor = PatternSymbolRenderCache._parseColor(segment.thread.color),
+    : colorKey = segment.thread.color.toUpperCase(),
+      threadColor = PatternSymbolRenderCache._parseColor(segment.thread.color),
       bounds = Rect.fromLTRB(
         segment.start.column < segment.end.column
             ? segment.start.column
@@ -45,6 +46,9 @@ class BackstitchRenderMetadata {
 
   /// Opaque color resolved before painting.
   final Color threadColor;
+
+  /// Canonical color identity used to select matching linework.
+  final String colorKey;
 
   /// Inclusive axis-aligned bounds in pattern coordinates.
   final Rect bounds;

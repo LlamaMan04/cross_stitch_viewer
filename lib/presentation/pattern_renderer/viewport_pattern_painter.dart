@@ -266,10 +266,36 @@ class ViewportPatternPainter extends CustomPainter {
     ..strokeCap = StrokeCap.round
     ..strokeJoin = StrokeJoin.round;
 
+  /// Paints beneath selected lines so their normal thread color stays visible.
+  Paint _backstitchSelectionPaint() => Paint()
+    ..color = completionSelectionColor
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = backstitchStrokeWidth + 4
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+
   /// Paints viewport-relevant lines above grid and region outlines.
   int _paintBackstitches(Canvas canvas) {
     final lines = visibleBackstitches;
     if (lines.isEmpty) return 0;
+    var drawCalls = 0;
+    final selectedColorKey = selection.backstitchColorKey;
+    if (selectedColorKey != null) {
+      final highlightPaint = _backstitchSelectionPaint();
+      for (final line in lines) {
+        if (line.colorKey != selectedColorKey) continue;
+        final segment = line.segment;
+        canvas.drawLine(
+          camera.gridToScreen(
+            row: segment.start.row,
+            column: segment.start.column,
+          ),
+          camera.gridToScreen(row: segment.end.row, column: segment.end.column),
+          highlightPaint,
+        );
+        drawCalls++;
+      }
+    }
     final paint = _backstitchPaint();
     for (final line in lines) {
       final segment = line.segment;
@@ -283,7 +309,7 @@ class ViewportPatternPainter extends CustomPainter {
         paint,
       );
     }
-    return lines.length;
+    return drawCalls + lines.length;
   }
 
   /// Completed populated cells intersecting the current visible bounds.

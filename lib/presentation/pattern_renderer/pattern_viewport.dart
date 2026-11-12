@@ -32,6 +32,7 @@ class PatternViewport extends StatefulWidget {
     required this.interactionMode,
     required this.completionSelection,
     this.onSymbolSelected,
+    this.onBackstitchSelected,
     this.onCompletionCellSelected,
     this.onCompletionCellAdded,
     this.onCompletionEditUnavailable,
@@ -61,6 +62,9 @@ class PatternViewport extends StatefulWidget {
 
   /// Reports a tapped populated cell's symbol ID, or null for an empty cell.
   final ValueChanged<String?>? onSymbolSelected;
+
+  /// Reports a selected backstitch, or null when a browse tap clears it.
+  final ValueChanged<PatternRenderSelection>? onBackstitchSelected;
 
   /// Reports a populated coordinate tapped in completion-edit mode.
   final ValueChanged<GridCoordinate>? onCompletionCellSelected;
@@ -280,6 +284,7 @@ class _PatternViewportState extends State<PatternViewport> {
                   onScaleEnd: _handleScaleEnd,
                   onTapUp:
                       widget.onSymbolSelected == null &&
+                          widget.onBackstitchSelected == null &&
                           widget.onCompletionCellSelected == null
                       ? null
                       : _handleTapUp,
@@ -362,7 +367,7 @@ class _PatternViewportState extends State<PatternViewport> {
   Color _gridColor(String colorHex) =>
       Color(int.parse('FF${colorHex.substring(1)}', radix: 16));
 
-  /// Converts a tap into a populated cell's symbol selection.
+  /// Converts a tap into a backstitch or populated cell selection.
   void _handleTapUp(TapUpDetails details) {
     if (_suppressNextTap) {
       _suppressNextTap = false;
@@ -377,6 +382,18 @@ class _PatternViewportState extends State<PatternViewport> {
       widget.onCompletionEditUnavailable?.call();
       return;
     }
+    if (widget.interactionMode == PatternInteractionMode.browse) {
+      final segment = _nearestBackstitchAt(details.localPosition, camera);
+      if (segment != null) {
+        widget.onBackstitchSelected?.call(
+          PatternRenderSelection().selectBackstitch(
+            segmentId: segment.segment.id,
+            colorKey: segment.colorKey,
+          ),
+        );
+        return;
+      }
+    }
     final gridPoint = camera.screenToGrid(details.localPosition);
     final coordinate = GridCoordinate(
       gridPoint.dy.floor(),
@@ -385,6 +402,7 @@ class _PatternViewportState extends State<PatternViewport> {
     if (!widget.document.grid.dimensions.contains(coordinate)) {
       if (widget.interactionMode == PatternInteractionMode.browse) {
         widget.onSymbolSelected?.call(null);
+        widget.onBackstitchSelected?.call(const PatternRenderSelection());
       }
       return;
     }
@@ -393,7 +411,56 @@ class _PatternViewportState extends State<PatternViewport> {
       if (cell != null) widget.onCompletionCellSelected?.call(coordinate);
       return;
     }
+    if (cell == null) {
+      widget.onBackstitchSelected?.call(const PatternRenderSelection());
+    }
     widget.onSymbolSelected?.call(cell?.symbolId);
+  }
+
+  /// Returns the nearest visible segment within a touch-friendly tolerance.
+  BackstitchRenderMetadata? _nearestBackstitchAt(
+    Offset point,
+    PatternCamera camera,
+  ) {
+    final viewportSize = _viewportSize;
+    if (viewportSize == null) return null;
+    final bounds = camera.visibleBounds(
+      viewportSize: viewportSize,
+      dimensions: widget.document.grid.dimensions,
+    );
+    final strokeWidth =
+        (camera.cellSize * ViewportPatternPainter.backstitchStrokeScale).clamp(
+          ViewportPatternPainter.minimumBackstitchStrokeWidth,
+          ViewportPatternPainter.maximumBackstitchStrokeWidth,
+        );
+    final tolerance = math.max(12.0, strokeWidth / 2 + 6);
+    BackstitchRenderMetadata? nearest;
+    var nearestDistance = tolerance;
+    for (final line in _symbolRenderCache.backstitchesIntersecting(bounds)) {
+      final start = camera.gridToScreen(
+        row: line.segment.start.row,
+        column: line.segment.start.column,
+      );
+      final end = camera.gridToScreen(
+        row: line.segment.end.row,
+        column: line.segment.end.column,
+      );
+      final direction = end - start;
+      final lengthSquared = direction.distanceSquared;
+      final progress = lengthSquared == 0
+          ? 0.0
+          : (((point - start).dx * direction.dx +
+                        (point - start).dy * direction.dy) /
+                    lengthSquared)
+                .clamp(0.0, 1.0)
+                .toDouble();
+      final distance = (point - (start + direction * progress)).distance;
+      if (distance < nearestDistance) {
+        nearest = line;
+        nearestDistance = distance;
+      }
+    }
+    return nearest;
   }
 
   /// Begins an additive drag for a modifier or nearby second tap/click.

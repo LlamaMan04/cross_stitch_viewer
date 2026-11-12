@@ -159,12 +159,7 @@ class ViewportRulerPainter extends CustomPainter {
         tickPaint,
       );
       if (row % labelInterval == 0) {
-        _paintLabel(
-          canvas,
-          '$row',
-          Offset(2, y + 1),
-          maxWidth: leftExtent - 4,
-        );
+        _paintLabel(canvas, '$row', Offset(2, y + 1), maxWidth: leftExtent - 4);
       }
     }
   }

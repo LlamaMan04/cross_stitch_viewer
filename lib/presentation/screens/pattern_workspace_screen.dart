@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../domain/pattern_definitions.dart';
+import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/repositories.dart';
@@ -217,6 +218,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   interactionMode: _interactionMode,
                   completionSelection: _completionSelection,
                   onSymbolSelected: _selectSymbol,
+                  onBackstitchSelected: _selectBackstitch,
                   onCompletionCellSelected: _toggleCompletionCell,
                   onCompletionCellAdded: _addCompletionCell,
                   onCompletionEditUnavailable: _showCompletionZoomGuidance,
@@ -252,7 +254,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   child: _PatternSymbolPalettePanel(
                     document: document,
                     selection: _selection,
-                    onSelected: _selectSymbol,
+                    onSelected: _selectSelection,
                     onClose: _closeActiveMenuOption,
                   ),
                 ),
@@ -301,6 +303,18 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     setState(() {
       _selection = _selection.select(symbolId);
     });
+  }
+
+  /// Selects backstitch linework without changing the active workspace surface.
+  void _selectBackstitch(PatternRenderSelection selection) {
+    _dismissCompletionUndo();
+    setState(() => _selection = selection);
+  }
+
+  /// Applies the symbol or backstitch selection produced by the palette.
+  void _selectSelection(PatternRenderSelection selection) {
+    _dismissCompletionUndo();
+    setState(() => _selection = selection);
   }
 
   /// Opens or collapses the floating menu without changing the active choice.
@@ -1144,8 +1158,8 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
   /// Current ephemeral symbol selection.
   final PatternRenderSelection selection;
 
-  /// Callback used to select or clear a symbol.
-  final ValueChanged<String?> onSelected;
+  /// Callback used to select or clear an item in the palette.
+  final ValueChanged<PatternRenderSelection> onSelected;
 
   /// Closes the palette without reopening the floating menu.
   final VoidCallback onClose;
@@ -1156,6 +1170,9 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
     final selected = selection.selectedSymbolId == null
         ? null
         : document.symbolById(selection.selectedSymbolId!);
+    final selectedBackstitch = selection.selectedBackstitchId == null
+        ? null
+        : document.backstitchById(selection.selectedBackstitchId!);
     return Material(
       elevation: 8,
       color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -1176,7 +1193,7 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
                 if (selection.hasSelection)
                   TextButton(
                     key: const ValueKey('clear-symbol-selection'),
-                    onPressed: () => onSelected(null),
+                    onPressed: () => onSelected(const PatternRenderSelection()),
                     child: const Text('Clear'),
                   ),
                 IconButton(
@@ -1189,6 +1206,17 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
             ),
           ),
           if (selected != null) _SelectedSymbolDetails(symbol: selected),
+          if (selectedBackstitch != null)
+            _SelectedBackstitchDetails(
+              segment: selectedBackstitch,
+              matchingCount: document.backstitches
+                  .where(
+                    (segment) =>
+                        segment.thread.color.toUpperCase() ==
+                        selection.backstitchColorKey,
+                  )
+                  .length,
+            ),
           const Divider(),
           Expanded(
             child: ListView(
@@ -1199,13 +1227,39 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
                     key: ValueKey('symbol-palette-${symbol.id}'),
                     dense: true,
                     selected: symbol.id == selection.selectedSymbolId,
-                    onTap: () => onSelected(symbol.id),
+                    onTap: () => onSelected(
+                      PatternRenderSelection(selectedSymbolId: symbol.id),
+                    ),
                     leading: _SymbolSwatch(symbol: symbol),
                     title: Text(symbol.thread.name ?? symbol.id),
                     subtitle: Text(_threadSummary(symbol.thread)),
                     trailing: Text(
                       symbol.displayGlyph,
                       style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                if (document.backstitches.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: Text('Backstitches'),
+                  ),
+                for (final segment in document.backstitches)
+                  ListTile(
+                    key: ValueKey('backstitch-palette-${segment.id}'),
+                    dense: true,
+                    selected: segment.id == selection.selectedBackstitchId,
+                    onTap: () => onSelected(
+                      PatternRenderSelection().selectBackstitch(
+                        segmentId: segment.id,
+                        colorKey: segment.thread.color.toUpperCase(),
+                      ),
+                    ),
+                    leading: _BackstitchSwatch(thread: segment.thread),
+                    title: Text(segment.thread.name ?? segment.thread.id),
+                    subtitle: Text(
+                      '${_threadSummary(segment.thread)} • '
+                      '(${segment.start.row}, ${segment.start.column}) → '
+                      '(${segment.end.row}, ${segment.end.column})',
                     ),
                   ),
               ],
@@ -1262,6 +1316,66 @@ class _SelectedSymbolDetails extends StatelessWidget {
   }
 }
 
+/// Detailed thread and geometry information for the selected backstitch.
+class _SelectedBackstitchDetails extends StatelessWidget {
+  /// Creates an inspector for a backstitch [segment].
+  const _SelectedBackstitchDetails({
+    required this.segment,
+    required this.matchingCount,
+  });
+
+  /// Selected line segment whose thread metadata is displayed.
+  final BackstitchSegment segment;
+
+  /// Number of document line segments sharing the selected thread color.
+  final int matchingCount;
+
+  /// Builds thread metadata and concise endpoint information.
+  @override
+  Widget build(BuildContext context) {
+    final thread = segment.thread;
+    return Semantics(
+      label:
+          'Selected backstitch from ${segment.start} to ${segment.end}, '
+          '${_threadSummary(thread)}, $matchingCount matching segments',
+      child: Padding(
+        key: const ValueKey('selected-backstitch-details'),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _BackstitchSwatch(thread: thread, size: 48),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        thread.name ?? thread.id,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(_threadSummary(thread)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Endpoints: ${segment.start} → ${segment.end}'),
+            Text(
+              '$matchingCount matching backstitch segment${matchingCount == 1 ? '' : 's'}',
+            ),
+            if (thread.conversionNotes != null)
+              Text('Conversion: ${thread.conversionNotes}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Colored glyph swatch shared by palette rows and selected details.
 class _SymbolSwatch extends StatelessWidget {
   /// Creates a square swatch for [symbol].
@@ -1300,6 +1414,38 @@ class _SymbolSwatch extends StatelessWidget {
   }
 }
 
+/// Colored line swatch used for palette backstitch entries and details.
+class _BackstitchSwatch extends StatelessWidget {
+  /// Creates a line swatch for one backstitch [thread].
+  const _BackstitchSwatch({required this.thread, this.size = 36});
+
+  /// Thread whose color is represented by the swatch.
+  final ThreadDefinition thread;
+
+  /// Logical width and height of the swatch.
+  final double size;
+
+  /// Builds a thread-colored line over a neutral rounded surface.
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Container(
+      width: size * 0.68,
+      height: 5,
+      decoration: BoxDecoration(
+        color: _parseThreadColor(thread.color),
+        borderRadius: BorderRadius.circular(3),
+      ),
+    ),
+  );
+}
+
 /// Produces a compact manufacturer and catalog label for [thread].
 String _threadSummary(ThreadDefinition thread) {
   final parts = <String>[
@@ -1324,6 +1470,7 @@ class PatternRenderView extends StatelessWidget {
     this.interactionMode = PatternInteractionMode.browse,
     CompletionCellSelection? completionSelection,
     this.onSymbolSelected,
+    this.onBackstitchSelected,
     this.onCompletionCellSelected,
     this.onCompletionCellAdded,
     this.onCompletionEditUnavailable,
@@ -1354,6 +1501,9 @@ class PatternRenderView extends StatelessWidget {
 
   /// Reports direct pattern-cell selection changes.
   final ValueChanged<String?>? onSymbolSelected;
+
+  /// Reports a backstitch selection made directly on the viewport.
+  final ValueChanged<PatternRenderSelection>? onBackstitchSelected;
 
   /// Reports exact-cell selection changes in completion-edit mode.
   final ValueChanged<GridCoordinate>? onCompletionCellSelected;
@@ -1391,6 +1541,7 @@ class PatternRenderView extends StatelessWidget {
         interactionMode: interactionMode,
         completionSelection: completionSelection,
         onSymbolSelected: onSymbolSelected,
+        onBackstitchSelected: onBackstitchSelected,
         onCompletionCellSelected: onCompletionCellSelected,
         onCompletionCellAdded: onCompletionCellAdded,
         onCompletionEditUnavailable: onCompletionEditUnavailable,
