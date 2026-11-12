@@ -268,7 +268,7 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Paints beneath selected lines so their normal thread color stays visible.
   Paint _backstitchSelectionPaint() => Paint()
-    ..color = completionSelectionColor
+    ..color = _parseColor(settings.selectionHighlightColor.colorHex)
     ..style = PaintingStyle.stroke
     ..strokeWidth = backstitchStrokeWidth + 4
     ..strokeCap = StrokeCap.round

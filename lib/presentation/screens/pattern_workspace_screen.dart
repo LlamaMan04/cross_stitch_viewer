@@ -1170,9 +1170,11 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
     final selected = selection.selectedSymbolId == null
         ? null
         : document.symbolById(selection.selectedSymbolId!);
-    final selectedBackstitch = selection.selectedBackstitchId == null
-        ? null
-        : document.backstitchById(selection.selectedBackstitchId!);
+    final backstitchGroups = _groupBackstitchesByColor(document.backstitches);
+    final selectedBackstitchGroup = _backstitchGroupForColor(
+      backstitchGroups,
+      selection.backstitchColorKey,
+    );
     return Material(
       elevation: 8,
       color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -1206,16 +1208,10 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
             ),
           ),
           if (selected != null) _SelectedSymbolDetails(symbol: selected),
-          if (selectedBackstitch != null)
+          if (selectedBackstitchGroup != null)
             _SelectedBackstitchDetails(
-              segment: selectedBackstitch,
-              matchingCount: document.backstitches
-                  .where(
-                    (segment) =>
-                        segment.thread.color.toUpperCase() ==
-                        selection.backstitchColorKey,
-                  )
-                  .length,
+              segment: selectedBackstitchGroup.representative,
+              matchingCount: selectedBackstitchGroup.segmentCount,
             ),
           const Divider(),
           Expanded(
@@ -1238,28 +1234,25 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
-                if (document.backstitches.isNotEmpty)
+                if (backstitchGroups.isNotEmpty)
                   const Padding(
                     padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Text('Backstitches'),
                   ),
-                for (final segment in document.backstitches)
+                for (final group in backstitchGroups)
                   ListTile(
-                    key: ValueKey('backstitch-palette-${segment.id}'),
+                    key: ValueKey('backstitch-palette-${group.colorKey}'),
                     dense: true,
-                    selected: segment.id == selection.selectedBackstitchId,
+                    selected: group.colorKey == selection.backstitchColorKey,
                     onTap: () => onSelected(
                       PatternRenderSelection().selectBackstitch(
-                        segmentId: segment.id,
-                        colorKey: segment.thread.color.toUpperCase(),
+                        group.colorKey,
                       ),
                     ),
-                    leading: _BackstitchSwatch(thread: segment.thread),
-                    title: Text(segment.thread.name ?? segment.thread.id),
+                    leading: _BackstitchSwatch(thread: group.thread),
+                    title: Text(group.thread.name ?? group.thread.id),
                     subtitle: Text(
-                      '${_threadSummary(segment.thread)} • '
-                      '(${segment.start.row}, ${segment.start.column}) → '
-                      '(${segment.end.row}, ${segment.end.column})',
+                      _threadSummary(group.thread)
                     ),
                   ),
               ],
@@ -1316,7 +1309,7 @@ class _SelectedSymbolDetails extends StatelessWidget {
   }
 }
 
-/// Detailed thread and geometry information for the selected backstitch.
+/// Detailed thread information for the selected backstitch color group.
 class _SelectedBackstitchDetails extends StatelessWidget {
   /// Creates an inspector for a backstitch [segment].
   const _SelectedBackstitchDetails({
@@ -1324,20 +1317,20 @@ class _SelectedBackstitchDetails extends StatelessWidget {
     required this.matchingCount,
   });
 
-  /// Selected line segment whose thread metadata is displayed.
+  /// Representative selected line segment whose thread metadata is displayed.
   final BackstitchSegment segment;
 
   /// Number of document line segments sharing the selected thread color.
   final int matchingCount;
 
-  /// Builds thread metadata and concise endpoint information.
+  /// Builds thread metadata and matching segment count.
   @override
   Widget build(BuildContext context) {
     final thread = segment.thread;
     return Semantics(
       label:
-          'Selected backstitch from ${segment.start} to ${segment.end}, '
-          '${_threadSummary(thread)}, $matchingCount matching segments',
+          'Selected backstitch color, ${_threadSummary(thread)}, '
+          '$matchingCount matching segments',
       child: Padding(
         key: const ValueKey('selected-backstitch-details'),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -1363,10 +1356,6 @@ class _SelectedBackstitchDetails extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text('Endpoints: ${segment.start} → ${segment.end}'),
-            Text(
-              '$matchingCount matching backstitch segment${matchingCount == 1 ? '' : 's'}',
-            ),
             if (thread.conversionNotes != null)
               Text('Conversion: ${thread.conversionNotes}'),
           ],
@@ -1374,6 +1363,59 @@ class _SelectedBackstitchDetails extends StatelessWidget {
       ),
     );
   }
+}
+
+/// One palette entry representing every backstitch with the same thread color.
+class _BackstitchColorGroup {
+  /// Creates a color group using its first segment as the thread representative.
+  const _BackstitchColorGroup({
+    required this.colorKey,
+    required this.representative,
+    required this.segmentCount,
+  });
+
+  /// Normalized color used to identify every segment in this group.
+  final String colorKey;
+
+  /// Segment that supplies the group thread metadata and selection ID.
+  final BackstitchSegment representative;
+
+  /// Number of segments represented by this color group.
+  final int segmentCount;
+
+  /// Thread details shared by the color group's segments.
+  ThreadDefinition get thread => representative.thread;
+}
+
+/// Groups backstitches by normalized thread color while retaining source order.
+List<_BackstitchColorGroup> _groupBackstitchesByColor(
+  Iterable<BackstitchSegment> segments,
+) {
+  final segmentsByColor = <String, List<BackstitchSegment>>{};
+  for (final segment in segments) {
+    final colorKey = segment.thread.color.toUpperCase();
+    (segmentsByColor[colorKey] ??= <BackstitchSegment>[]).add(segment);
+  }
+  return List<_BackstitchColorGroup>.unmodifiable([
+    for (final entry in segmentsByColor.entries)
+      _BackstitchColorGroup(
+        colorKey: entry.key,
+        representative: entry.value.first,
+        segmentCount: entry.value.length,
+      ),
+  ]);
+}
+
+/// Returns the palette group identified by [colorKey], if a color is selected.
+_BackstitchColorGroup? _backstitchGroupForColor(
+  Iterable<_BackstitchColorGroup> groups,
+  String? colorKey,
+) {
+  if (colorKey == null) return null;
+  for (final group in groups) {
+    if (group.colorKey == colorKey) return group;
+  }
+  return null;
 }
 
 /// Colored glyph swatch shared by palette rows and selected details.

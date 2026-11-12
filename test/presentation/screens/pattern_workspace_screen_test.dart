@@ -482,7 +482,17 @@ void main() {
       const ValueKey('floating-menu-symbol-palette'),
     );
     final backstitch = find.byKey(
-      const ValueKey('backstitch-palette-sample-flower-outline-top'),
+      const ValueKey('backstitch-palette-#C72C41'),
+    );
+    expect(
+      find.byKey(const ValueKey('backstitch-palette-#5B8C3A')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('backstitch-palette-sample-flower-outline-right'),
+      ),
+      findsNothing,
     );
     await tester.scrollUntilVisible(backstitch, 160);
     await tester.tap(backstitch);
@@ -490,6 +500,6 @@ void main() {
 
     expect(find.byKey(const ValueKey('selected-backstitch-details')), findsOneWidget);
     expect(find.text('2 matching backstitch segments'), findsOneWidget);
-    expect(find.textContaining('Endpoints:'), findsOneWidget);
+    expect(find.textContaining('Endpoints:'), findsNothing);
   });
 }
