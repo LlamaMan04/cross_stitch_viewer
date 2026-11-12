@@ -3043,6 +3043,17 @@ class $PatternBackstitchesTable extends PatternBackstitches
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _threadCountMeta = const VerificationMeta(
+    'threadCount',
+  );
+  @override
+  late final GeneratedColumn<int> threadCount = GeneratedColumn<int>(
+    'thread_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _confidenceMeta = const VerificationMeta(
     'confidence',
   );
@@ -3096,6 +3107,7 @@ class $PatternBackstitchesTable extends PatternBackstitches
     threadColor,
     threadConversionNotes,
     threadEvidence,
+    threadCount,
     confidence,
     needsReview,
     provenanceId,
@@ -3231,6 +3243,15 @@ class $PatternBackstitchesTable extends PatternBackstitches
     } else if (isInserting) {
       context.missing(_threadEvidenceMeta);
     }
+    if (data.containsKey('thread_count')) {
+      context.handle(
+        _threadCountMeta,
+        threadCount.isAcceptableOrUnknown(
+          data['thread_count']!,
+          _threadCountMeta,
+        ),
+      );
+    }
     if (data.containsKey('confidence')) {
       context.handle(
         _confidenceMeta,
@@ -3320,6 +3341,10 @@ class $PatternBackstitchesTable extends PatternBackstitches
         DriftSqlType.string,
         data['${effectivePrefix}thread_evidence'],
       )!,
+      threadCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}thread_count'],
+      ),
       confidence: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}confidence'],
@@ -3385,6 +3410,9 @@ class PatternBackstitchRow extends DataClass
   /// Defines whether the segment thread color was explicit or inferred.
   final String threadEvidence;
 
+  /// Defines the optional number of thread strands used for the segment.
+  final int? threadCount;
+
   /// Defines the optional parser confidence for the segment.
   final double? confidence;
 
@@ -3408,6 +3436,7 @@ class PatternBackstitchRow extends DataClass
     required this.threadColor,
     this.threadConversionNotes,
     required this.threadEvidence,
+    this.threadCount,
     this.confidence,
     required this.needsReview,
     this.provenanceId,
@@ -3437,6 +3466,9 @@ class PatternBackstitchRow extends DataClass
       map['thread_conversion_notes'] = Variable<String>(threadConversionNotes);
     }
     map['thread_evidence'] = Variable<String>(threadEvidence);
+    if (!nullToAbsent || threadCount != null) {
+      map['thread_count'] = Variable<int>(threadCount);
+    }
     if (!nullToAbsent || confidence != null) {
       map['confidence'] = Variable<double>(confidence);
     }
@@ -3471,6 +3503,9 @@ class PatternBackstitchRow extends DataClass
           ? const Value.absent()
           : Value(threadConversionNotes),
       threadEvidence: Value(threadEvidence),
+      threadCount: threadCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadCount),
       confidence: confidence == null && nullToAbsent
           ? const Value.absent()
           : Value(confidence),
@@ -3505,6 +3540,7 @@ class PatternBackstitchRow extends DataClass
         json['threadConversionNotes'],
       ),
       threadEvidence: serializer.fromJson<String>(json['threadEvidence']),
+      threadCount: serializer.fromJson<int?>(json['threadCount']),
       confidence: serializer.fromJson<double?>(json['confidence']),
       needsReview: serializer.fromJson<bool>(json['needsReview']),
       provenanceId: serializer.fromJson<String?>(json['provenanceId']),
@@ -3530,6 +3566,7 @@ class PatternBackstitchRow extends DataClass
         threadConversionNotes,
       ),
       'threadEvidence': serializer.toJson<String>(threadEvidence),
+      'threadCount': serializer.toJson<int?>(threadCount),
       'confidence': serializer.toJson<double?>(confidence),
       'needsReview': serializer.toJson<bool>(needsReview),
       'provenanceId': serializer.toJson<String?>(provenanceId),
@@ -3551,6 +3588,7 @@ class PatternBackstitchRow extends DataClass
     String? threadColor,
     Value<String?> threadConversionNotes = const Value.absent(),
     String? threadEvidence,
+    Value<int?> threadCount = const Value.absent(),
     Value<double?> confidence = const Value.absent(),
     bool? needsReview,
     Value<String?> provenanceId = const Value.absent(),
@@ -3573,6 +3611,7 @@ class PatternBackstitchRow extends DataClass
         ? threadConversionNotes.value
         : this.threadConversionNotes,
     threadEvidence: threadEvidence ?? this.threadEvidence,
+    threadCount: threadCount.present ? threadCount.value : this.threadCount,
     confidence: confidence.present ? confidence.value : this.confidence,
     needsReview: needsReview ?? this.needsReview,
     provenanceId: provenanceId.present ? provenanceId.value : this.provenanceId,
@@ -3609,6 +3648,9 @@ class PatternBackstitchRow extends DataClass
       threadEvidence: data.threadEvidence.present
           ? data.threadEvidence.value
           : this.threadEvidence,
+      threadCount: data.threadCount.present
+          ? data.threadCount.value
+          : this.threadCount,
       confidence: data.confidence.present
           ? data.confidence.value
           : this.confidence,
@@ -3638,6 +3680,7 @@ class PatternBackstitchRow extends DataClass
           ..write('threadColor: $threadColor, ')
           ..write('threadConversionNotes: $threadConversionNotes, ')
           ..write('threadEvidence: $threadEvidence, ')
+          ..write('threadCount: $threadCount, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId')
@@ -3661,6 +3704,7 @@ class PatternBackstitchRow extends DataClass
     threadColor,
     threadConversionNotes,
     threadEvidence,
+    threadCount,
     confidence,
     needsReview,
     provenanceId,
@@ -3683,6 +3727,7 @@ class PatternBackstitchRow extends DataClass
           other.threadColor == this.threadColor &&
           other.threadConversionNotes == this.threadConversionNotes &&
           other.threadEvidence == this.threadEvidence &&
+          other.threadCount == this.threadCount &&
           other.confidence == this.confidence &&
           other.needsReview == this.needsReview &&
           other.provenanceId == this.provenanceId);
@@ -3704,6 +3749,7 @@ class PatternBackstitchesCompanion
   final Value<String> threadColor;
   final Value<String?> threadConversionNotes;
   final Value<String> threadEvidence;
+  final Value<int?> threadCount;
   final Value<double?> confidence;
   final Value<bool> needsReview;
   final Value<String?> provenanceId;
@@ -3723,6 +3769,7 @@ class PatternBackstitchesCompanion
     this.threadColor = const Value.absent(),
     this.threadConversionNotes = const Value.absent(),
     this.threadEvidence = const Value.absent(),
+    this.threadCount = const Value.absent(),
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -3743,6 +3790,7 @@ class PatternBackstitchesCompanion
     required String threadColor,
     this.threadConversionNotes = const Value.absent(),
     required String threadEvidence,
+    this.threadCount = const Value.absent(),
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -3772,6 +3820,7 @@ class PatternBackstitchesCompanion
     Expression<String>? threadColor,
     Expression<String>? threadConversionNotes,
     Expression<String>? threadEvidence,
+    Expression<int>? threadCount,
     Expression<double>? confidence,
     Expression<bool>? needsReview,
     Expression<String>? provenanceId,
@@ -3794,6 +3843,7 @@ class PatternBackstitchesCompanion
       if (threadConversionNotes != null)
         'thread_conversion_notes': threadConversionNotes,
       if (threadEvidence != null) 'thread_evidence': threadEvidence,
+      if (threadCount != null) 'thread_count': threadCount,
       if (confidence != null) 'confidence': confidence,
       if (needsReview != null) 'needs_review': needsReview,
       if (provenanceId != null) 'provenance_id': provenanceId,
@@ -3816,6 +3866,7 @@ class PatternBackstitchesCompanion
     Value<String>? threadColor,
     Value<String?>? threadConversionNotes,
     Value<String>? threadEvidence,
+    Value<int?>? threadCount,
     Value<double?>? confidence,
     Value<bool>? needsReview,
     Value<String?>? provenanceId,
@@ -3837,6 +3888,7 @@ class PatternBackstitchesCompanion
       threadConversionNotes:
           threadConversionNotes ?? this.threadConversionNotes,
       threadEvidence: threadEvidence ?? this.threadEvidence,
+      threadCount: threadCount ?? this.threadCount,
       confidence: confidence ?? this.confidence,
       needsReview: needsReview ?? this.needsReview,
       provenanceId: provenanceId ?? this.provenanceId,
@@ -3893,6 +3945,9 @@ class PatternBackstitchesCompanion
     if (threadEvidence.present) {
       map['thread_evidence'] = Variable<String>(threadEvidence.value);
     }
+    if (threadCount.present) {
+      map['thread_count'] = Variable<int>(threadCount.value);
+    }
     if (confidence.present) {
       map['confidence'] = Variable<double>(confidence.value);
     }
@@ -3925,6 +3980,7 @@ class PatternBackstitchesCompanion
           ..write('threadColor: $threadColor, ')
           ..write('threadConversionNotes: $threadConversionNotes, ')
           ..write('threadEvidence: $threadEvidence, ')
+          ..write('threadCount: $threadCount, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId, ')
@@ -4006,6 +4062,17 @@ class $PatternCellsTable extends PatternCells
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _threadCountMeta = const VerificationMeta(
+    'threadCount',
+  );
+  @override
+  late final GeneratedColumn<int> threadCount = GeneratedColumn<int>(
+    'thread_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _confidenceMeta = const VerificationMeta(
     'confidence',
   );
@@ -4051,6 +4118,7 @@ class $PatternCellsTable extends PatternCells
     gridColumn,
     symbolId,
     stitchType,
+    threadCount,
     confidence,
     needsReview,
     provenanceId,
@@ -4115,6 +4183,15 @@ class $PatternCellsTable extends PatternCells
     } else if (isInserting) {
       context.missing(_stitchTypeMeta);
     }
+    if (data.containsKey('thread_count')) {
+      context.handle(
+        _threadCountMeta,
+        threadCount.isAcceptableOrUnknown(
+          data['thread_count']!,
+          _threadCountMeta,
+        ),
+      );
+    }
     if (data.containsKey('confidence')) {
       context.handle(
         _confidenceMeta,
@@ -4172,6 +4249,10 @@ class $PatternCellsTable extends PatternCells
         DriftSqlType.string,
         data['${effectivePrefix}stitch_type'],
       )!,
+      threadCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}thread_count'],
+      ),
       confidence: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}confidence'],
@@ -4212,6 +4293,9 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
   /// Defines the stitch technique using its portable enum name.
   final String stitchType;
 
+  /// Defines the optional number of thread strands used for the stitch.
+  final int? threadCount;
+
   /// Defines the optional normalized parser confidence.
   final double? confidence;
 
@@ -4227,6 +4311,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     required this.gridColumn,
     required this.symbolId,
     required this.stitchType,
+    this.threadCount,
     this.confidence,
     required this.needsReview,
     this.provenanceId,
@@ -4240,6 +4325,9 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     map['grid_column'] = Variable<int>(gridColumn);
     map['symbol_id'] = Variable<String>(symbolId);
     map['stitch_type'] = Variable<String>(stitchType);
+    if (!nullToAbsent || threadCount != null) {
+      map['thread_count'] = Variable<int>(threadCount);
+    }
     if (!nullToAbsent || confidence != null) {
       map['confidence'] = Variable<double>(confidence);
     }
@@ -4258,6 +4346,9 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       gridColumn: Value(gridColumn),
       symbolId: Value(symbolId),
       stitchType: Value(stitchType),
+      threadCount: threadCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(threadCount),
       confidence: confidence == null && nullToAbsent
           ? const Value.absent()
           : Value(confidence),
@@ -4280,6 +4371,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       gridColumn: serializer.fromJson<int>(json['gridColumn']),
       symbolId: serializer.fromJson<String>(json['symbolId']),
       stitchType: serializer.fromJson<String>(json['stitchType']),
+      threadCount: serializer.fromJson<int?>(json['threadCount']),
       confidence: serializer.fromJson<double?>(json['confidence']),
       needsReview: serializer.fromJson<bool>(json['needsReview']),
       provenanceId: serializer.fromJson<String?>(json['provenanceId']),
@@ -4295,6 +4387,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       'gridColumn': serializer.toJson<int>(gridColumn),
       'symbolId': serializer.toJson<String>(symbolId),
       'stitchType': serializer.toJson<String>(stitchType),
+      'threadCount': serializer.toJson<int?>(threadCount),
       'confidence': serializer.toJson<double?>(confidence),
       'needsReview': serializer.toJson<bool>(needsReview),
       'provenanceId': serializer.toJson<String?>(provenanceId),
@@ -4308,6 +4401,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     int? gridColumn,
     String? symbolId,
     String? stitchType,
+    Value<int?> threadCount = const Value.absent(),
     Value<double?> confidence = const Value.absent(),
     bool? needsReview,
     Value<String?> provenanceId = const Value.absent(),
@@ -4318,6 +4412,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     gridColumn: gridColumn ?? this.gridColumn,
     symbolId: symbolId ?? this.symbolId,
     stitchType: stitchType ?? this.stitchType,
+    threadCount: threadCount.present ? threadCount.value : this.threadCount,
     confidence: confidence.present ? confidence.value : this.confidence,
     needsReview: needsReview ?? this.needsReview,
     provenanceId: provenanceId.present ? provenanceId.value : this.provenanceId,
@@ -4336,6 +4431,9 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
       stitchType: data.stitchType.present
           ? data.stitchType.value
           : this.stitchType,
+      threadCount: data.threadCount.present
+          ? data.threadCount.value
+          : this.threadCount,
       confidence: data.confidence.present
           ? data.confidence.value
           : this.confidence,
@@ -4357,6 +4455,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
           ..write('gridColumn: $gridColumn, ')
           ..write('symbolId: $symbolId, ')
           ..write('stitchType: $stitchType, ')
+          ..write('threadCount: $threadCount, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId')
@@ -4372,6 +4471,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
     gridColumn,
     symbolId,
     stitchType,
+    threadCount,
     confidence,
     needsReview,
     provenanceId,
@@ -4386,6 +4486,7 @@ class PatternCellRow extends DataClass implements Insertable<PatternCellRow> {
           other.gridColumn == this.gridColumn &&
           other.symbolId == this.symbolId &&
           other.stitchType == this.stitchType &&
+          other.threadCount == this.threadCount &&
           other.confidence == this.confidence &&
           other.needsReview == this.needsReview &&
           other.provenanceId == this.provenanceId);
@@ -4398,6 +4499,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
   final Value<int> gridColumn;
   final Value<String> symbolId;
   final Value<String> stitchType;
+  final Value<int?> threadCount;
   final Value<double?> confidence;
   final Value<bool> needsReview;
   final Value<String?> provenanceId;
@@ -4409,6 +4511,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     this.gridColumn = const Value.absent(),
     this.symbolId = const Value.absent(),
     this.stitchType = const Value.absent(),
+    this.threadCount = const Value.absent(),
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -4421,6 +4524,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     required int gridColumn,
     required String symbolId,
     required String stitchType,
+    this.threadCount = const Value.absent(),
     this.confidence = const Value.absent(),
     this.needsReview = const Value.absent(),
     this.provenanceId = const Value.absent(),
@@ -4438,6 +4542,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     Expression<int>? gridColumn,
     Expression<String>? symbolId,
     Expression<String>? stitchType,
+    Expression<int>? threadCount,
     Expression<double>? confidence,
     Expression<bool>? needsReview,
     Expression<String>? provenanceId,
@@ -4450,6 +4555,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
       if (gridColumn != null) 'grid_column': gridColumn,
       if (symbolId != null) 'symbol_id': symbolId,
       if (stitchType != null) 'stitch_type': stitchType,
+      if (threadCount != null) 'thread_count': threadCount,
       if (confidence != null) 'confidence': confidence,
       if (needsReview != null) 'needs_review': needsReview,
       if (provenanceId != null) 'provenance_id': provenanceId,
@@ -4464,6 +4570,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     Value<int>? gridColumn,
     Value<String>? symbolId,
     Value<String>? stitchType,
+    Value<int?>? threadCount,
     Value<double?>? confidence,
     Value<bool>? needsReview,
     Value<String?>? provenanceId,
@@ -4476,6 +4583,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
       gridColumn: gridColumn ?? this.gridColumn,
       symbolId: symbolId ?? this.symbolId,
       stitchType: stitchType ?? this.stitchType,
+      threadCount: threadCount ?? this.threadCount,
       confidence: confidence ?? this.confidence,
       needsReview: needsReview ?? this.needsReview,
       provenanceId: provenanceId ?? this.provenanceId,
@@ -4504,6 +4612,9 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
     if (stitchType.present) {
       map['stitch_type'] = Variable<String>(stitchType.value);
     }
+    if (threadCount.present) {
+      map['thread_count'] = Variable<int>(threadCount.value);
+    }
     if (confidence.present) {
       map['confidence'] = Variable<double>(confidence.value);
     }
@@ -4528,6 +4639,7 @@ class PatternCellsCompanion extends UpdateCompanion<PatternCellRow> {
           ..write('gridColumn: $gridColumn, ')
           ..write('symbolId: $symbolId, ')
           ..write('stitchType: $stitchType, ')
+          ..write('threadCount: $threadCount, ')
           ..write('confidence: $confidence, ')
           ..write('needsReview: $needsReview, ')
           ..write('provenanceId: $provenanceId, ')
@@ -9842,6 +9954,7 @@ typedef $$PatternBackstitchesTableCreateCompanionBuilder =
       required String threadColor,
       Value<String?> threadConversionNotes,
       required String threadEvidence,
+      Value<int?> threadCount,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -9863,6 +9976,7 @@ typedef $$PatternBackstitchesTableUpdateCompanionBuilder =
       Value<String> threadColor,
       Value<String?> threadConversionNotes,
       Value<String> threadEvidence,
+      Value<int?> threadCount,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -9945,6 +10059,11 @@ class $$PatternBackstitchesTableFilterComposer
 
   ColumnFilters<String> get threadEvidence => $composableBuilder(
     column: $table.threadEvidence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10043,6 +10162,11 @@ class $$PatternBackstitchesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get confidence => $composableBuilder(
     column: $table.confidence,
     builder: (column) => ColumnOrderings(column),
@@ -10126,6 +10250,11 @@ class $$PatternBackstitchesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get confidence => $composableBuilder(
     column: $table.confidence,
     builder: (column) => column,
@@ -10199,6 +10328,7 @@ class $$PatternBackstitchesTableTableManager
                 Value<String> threadColor = const Value.absent(),
                 Value<String?> threadConversionNotes = const Value.absent(),
                 Value<String> threadEvidence = const Value.absent(),
+                Value<int?> threadCount = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10218,6 +10348,7 @@ class $$PatternBackstitchesTableTableManager
                 threadColor: threadColor,
                 threadConversionNotes: threadConversionNotes,
                 threadEvidence: threadEvidence,
+                threadCount: threadCount,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,
@@ -10239,6 +10370,7 @@ class $$PatternBackstitchesTableTableManager
                 required String threadColor,
                 Value<String?> threadConversionNotes = const Value.absent(),
                 required String threadEvidence,
+                Value<int?> threadCount = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10258,6 +10390,7 @@ class $$PatternBackstitchesTableTableManager
                 threadColor: threadColor,
                 threadConversionNotes: threadConversionNotes,
                 threadEvidence: threadEvidence,
+                threadCount: threadCount,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,
@@ -10311,6 +10444,7 @@ typedef $$PatternCellsTableCreateCompanionBuilder =
       required int gridColumn,
       required String symbolId,
       required String stitchType,
+      Value<int?> threadCount,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -10324,6 +10458,7 @@ typedef $$PatternCellsTableUpdateCompanionBuilder =
       Value<int> gridColumn,
       Value<String> symbolId,
       Value<String> stitchType,
+      Value<int?> threadCount,
       Value<double?> confidence,
       Value<bool> needsReview,
       Value<String?> provenanceId,
@@ -10366,6 +10501,11 @@ class $$PatternCellsTableFilterComposer
 
   ColumnFilters<String> get stitchType => $composableBuilder(
     column: $table.stitchType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -10424,6 +10564,11 @@ class $$PatternCellsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get confidence => $composableBuilder(
     column: $table.confidence,
     builder: (column) => ColumnOrderings(column),
@@ -10470,6 +10615,11 @@ class $$PatternCellsTableAnnotationComposer
 
   GeneratedColumn<String> get stitchType => $composableBuilder(
     column: $table.stitchType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get threadCount => $composableBuilder(
+    column: $table.threadCount,
     builder: (column) => column,
   );
 
@@ -10526,6 +10676,7 @@ class $$PatternCellsTableTableManager
                 Value<int> gridColumn = const Value.absent(),
                 Value<String> symbolId = const Value.absent(),
                 Value<String> stitchType = const Value.absent(),
+                Value<int?> threadCount = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10537,6 +10688,7 @@ class $$PatternCellsTableTableManager
                 gridColumn: gridColumn,
                 symbolId: symbolId,
                 stitchType: stitchType,
+                threadCount: threadCount,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,
@@ -10550,6 +10702,7 @@ class $$PatternCellsTableTableManager
                 required int gridColumn,
                 required String symbolId,
                 required String stitchType,
+                Value<int?> threadCount = const Value.absent(),
                 Value<double?> confidence = const Value.absent(),
                 Value<bool> needsReview = const Value.absent(),
                 Value<String?> provenanceId = const Value.absent(),
@@ -10561,6 +10714,7 @@ class $$PatternCellsTableTableManager
                 gridColumn: gridColumn,
                 symbolId: symbolId,
                 stitchType: stitchType,
+                threadCount: threadCount,
                 confidence: confidence,
                 needsReview: needsReview,
                 provenanceId: provenanceId,

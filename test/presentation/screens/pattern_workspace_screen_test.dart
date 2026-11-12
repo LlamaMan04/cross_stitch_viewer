@@ -440,6 +440,9 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('DMC 321'), findsWidgets);
+      expect(find.text('Stitch type: Full stitch'), findsOneWidget);
+      expect(find.text('Thread: DMC 321'), findsOneWidget);
+      expect(find.text('Number of strands: 2'), findsOneWidget);
 
       final originBeforePan = painter().camera.origin;
       await tester.dragFrom(
@@ -498,7 +501,12 @@ void main() {
     await tester.tap(backstitch);
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('selected-backstitch-details')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('selected-backstitch-details')),
+      findsOneWidget,
+    );
+    expect(find.text('Stitch type: Backstitch'), findsOneWidget);
+    expect(find.text('Number of strands: 2'), findsOneWidget);
     expect(find.textContaining('Endpoints:'), findsNothing);
   });
 }

@@ -46,6 +46,7 @@ class BackstitchSegment {
     required this.start,
     required this.end,
     required this.thread,
+    this.threadCount,
     this.confidence,
     this.needsReview = false,
     this.provenanceId,
@@ -62,6 +63,9 @@ class BackstitchSegment {
 
   /// Exact thread information that supplies this segment's rendered color.
   final ThreadDefinition thread;
+
+  /// Number of thread strands used for this segment when supplied by the pattern.
+  final int? threadCount;
 
   /// Parser confidence when the segment was imported.
   final Confidence? confidence;
@@ -87,6 +91,11 @@ class BackstitchSegment {
       );
     }
     thread.validate();
+    if (threadCount != null && threadCount! <= 0) {
+      throw const DocumentValidationException(
+        'Backstitch thread count must be greater than zero.',
+      );
+    }
     confidence?.validate();
   }
 }

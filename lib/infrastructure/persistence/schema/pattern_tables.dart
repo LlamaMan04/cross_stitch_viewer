@@ -208,6 +208,9 @@ class PatternBackstitches extends Table {
   /// Defines whether the segment thread color was explicit or inferred.
   TextColumn get threadEvidence => text()();
 
+  /// Defines the optional number of thread strands used for the segment.
+  IntColumn get threadCount => integer().nullable()();
+
   /// Defines the optional parser confidence for the segment.
   RealColumn get confidence => real().nullable()();
 
@@ -240,6 +243,7 @@ class PatternBackstitches extends Table {
     "CHECK (thread_color GLOB '#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]"
         "[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]')",
     "CHECK (thread_evidence IN ('explicit', 'inferred'))",
+    'CHECK (thread_count IS NULL OR thread_count > 0)',
     'CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))',
   ];
 }
@@ -323,6 +327,9 @@ class PatternCells extends Table {
   /// Defines the stitch technique using its portable enum name.
   TextColumn get stitchType => text()();
 
+  /// Defines the optional number of thread strands used for the stitch.
+  IntColumn get threadCount => integer().nullable()();
+
   /// Defines the optional normalized parser confidence.
   RealColumn get confidence => real().nullable()();
 
@@ -351,6 +358,7 @@ class PatternCells extends Table {
     'CHECK (grid_column >= 0)',
     "CHECK (stitch_type IN ('full', 'half', 'quarter', 'threeQuarter', "
         "'backstitch', 'frenchKnot', 'unknown'))",
+    'CHECK (thread_count IS NULL OR thread_count > 0)',
     'CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1))',
   ];
 }

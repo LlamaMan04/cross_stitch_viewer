@@ -83,6 +83,7 @@ abstract final class PatternMapper {
         gridColumn: value.grid.cells[index].coordinate.column,
         symbolId: value.grid.cells[index].symbolId,
         stitchType: value.grid.cells[index].stitchType.name,
+        threadCount: Value(value.grid.cells[index].threadCount),
         confidence: Value(value.grid.cells[index].confidence?.value),
         needsReview: Value(value.grid.cells[index].needsReview),
         provenanceId: Value(value.grid.cells[index].provenanceId),
@@ -113,6 +114,7 @@ abstract final class PatternMapper {
           value.backstitches[index].thread.conversionNotes,
         ),
         threadEvidence: value.backstitches[index].thread.evidence.name,
+        threadCount: Value(value.backstitches[index].threadCount),
         confidence: Value(value.backstitches[index].confidence?.value),
         needsReview: Value(value.backstitches[index].needsReview),
         provenanceId: Value(value.backstitches[index].provenanceId),
@@ -162,6 +164,7 @@ abstract final class PatternMapper {
               coordinate: GridCoordinate(row.gridRow, row.gridColumn),
               symbolId: row.symbolId,
               stitchType: StitchType.values.byName(row.stitchType),
+              threadCount: row.threadCount,
               confidence: row.confidence == null
                   ? null
                   : Confidence(row.confidence!),
@@ -207,6 +210,7 @@ abstract final class PatternMapper {
               conversionNotes: row.threadConversionNotes,
               evidence: ColorEvidence.values.byName(row.threadEvidence),
             ),
+            threadCount: row.threadCount,
             confidence: row.confidence == null
                 ? null
                 : Confidence(row.confidence!),

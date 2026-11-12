@@ -21,16 +21,19 @@ abstract final class SamplePatternFixture {
         StitchCell(
           coordinate: GridCoordinate(0, 0),
           symbolId: 'flower',
+          threadCount: 2,
           provenanceId: 'sample-grid',
         ),
         StitchCell(
           coordinate: GridCoordinate(1, 2),
           symbolId: 'leaf',
+          threadCount: 3,
           provenanceId: 'sample-grid',
         ),
         StitchCell(
           coordinate: GridCoordinate(3, 4),
           symbolId: 'flower',
+          threadCount: 2,
           confidence: Confidence(0.95),
           provenanceId: 'sample-grid',
         ),
@@ -76,6 +79,7 @@ abstract final class SamplePatternFixture {
           catalogNumber: '321',
           name: 'Red',
         ),
+        threadCount: 2,
         provenanceId: 'sample-grid',
       ),
       BackstitchSegment(

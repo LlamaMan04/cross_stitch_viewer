@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../domain/pattern_definitions.dart';
 import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_document.dart';
+import '../../domain/pattern_grid.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/repositories.dart';
 import '../../domain/value_objects.dart';
@@ -1207,7 +1208,13 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
               ],
             ),
           ),
-          if (selected != null) _SelectedSymbolDetails(symbol: selected),
+          if (selected != null)
+            _SelectedSymbolDetails(
+              symbol: selected,
+              stitches: document.grid.cells.where(
+                (cell) => cell.symbolId == selected.id,
+              ),
+            ),
           if (selectedBackstitchGroup != null)
             _SelectedBackstitchDetails(
               segment: selectedBackstitchGroup.representative,
@@ -1245,15 +1252,11 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
                     dense: true,
                     selected: group.colorKey == selection.backstitchColorKey,
                     onTap: () => onSelected(
-                      PatternRenderSelection().selectBackstitch(
-                        group.colorKey,
-                      ),
+                      PatternRenderSelection().selectBackstitch(group.colorKey),
                     ),
                     leading: _BackstitchSwatch(thread: group.thread),
                     title: Text(group.thread.name ?? group.thread.id),
-                    subtitle: Text(
-                      _threadSummary(group.thread)
-                    ),
+                    subtitle: Text(_threadSummary(group.thread)),
                   ),
               ],
             ),
@@ -1267,15 +1270,21 @@ class _PatternSymbolPalettePanel extends StatelessWidget {
 /// Detailed metadata for the currently selected symbol and thread.
 class _SelectedSymbolDetails extends StatelessWidget {
   /// Creates an inspector for [symbol].
-  const _SelectedSymbolDetails({required this.symbol});
+  const _SelectedSymbolDetails({required this.symbol, required this.stitches});
 
   /// Selected symbol whose thread metadata is displayed.
   final SymbolDefinition symbol;
+
+  /// Stitches using [symbol], used to show stitch-specific metadata.
+  final Iterable<StitchCell> stitches;
 
   /// Builds glyph, catalog, and conversion information.
   @override
   Widget build(BuildContext context) {
     final thread = symbol.thread;
+    final stitchMetadata = stitches.toList(growable: false);
+    final stitchType = _sharedStitchType(stitchMetadata);
+    final threadCount = _sharedThreadCount(stitchMetadata);
     return Padding(
       key: const ValueKey('selected-symbol-details'),
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -1301,6 +1310,9 @@ class _SelectedSymbolDetails extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
+          Text('Stitch type: ${_stitchTypeLabel(stitchType)}'),
+          Text('Thread: ${_threadSummary(thread)}'),
+          if (threadCount != null) Text('Number of strands: $threadCount'),
           if (thread.conversionNotes != null)
             Text('Conversion: ${thread.conversionNotes}'),
         ],
@@ -1356,6 +1368,10 @@ class _SelectedBackstitchDetails extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            const Text('Stitch type: Backstitch'),
+            Text('Thread: ${_threadSummary(thread)}'),
+            if (segment.threadCount != null)
+              Text('Number of strands: ${segment.threadCount}'),
             if (thread.conversionNotes != null)
               Text('Conversion: ${thread.conversionNotes}'),
           ],
@@ -1495,6 +1511,38 @@ String _threadSummary(ThreadDefinition thread) {
     if (thread.catalogNumber != null) thread.catalogNumber!,
   ];
   return parts.isEmpty ? thread.color : parts.join(' ');
+}
+
+/// Returns the shared stitch type, or null when the selected symbol varies.
+StitchType? _sharedStitchType(Iterable<StitchCell> stitches) {
+  final types = stitches.map((stitch) => stitch.stitchType).toSet();
+  return types.length == 1 ? types.single : null;
+}
+
+/// Returns the shared strand count, or null when it is absent or varies.
+int? _sharedThreadCount(Iterable<StitchCell> stitches) {
+  final counts = stitches.map((stitch) => stitch.threadCount).toSet();
+  return counts.length == 1 ? counts.single : null;
+}
+
+/// Produces a user-facing label for an optional [type].
+String _stitchTypeLabel(StitchType? type) {
+  switch (type) {
+    case StitchType.full:
+      return 'Full stitch';
+    case StitchType.half:
+      return 'Half stitch';
+    case StitchType.quarter:
+      return 'Quarter stitch';
+    case StitchType.threeQuarter:
+      return 'Three-quarter stitch';
+    case StitchType.frenchKnot:
+      return 'French knot';
+    case StitchType.unknown:
+      return 'Unknown';
+    case null:
+      return 'Multiple or not specified';
+  }
 }
 
 /// Converts a validated domain thread color to an opaque Flutter color.

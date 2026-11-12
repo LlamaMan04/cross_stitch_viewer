@@ -35,6 +35,7 @@ void main() {
       original.grid.cells.map((cell) => cell.coordinate),
     );
     expect(loaded.grid.cells.first.stitchType, StitchType.half);
+    expect(loaded.grid.cells.first.threadCount, 2);
     expect(loaded.grid.cells.first.confidence?.value, 0.4);
     expect(loaded.grid.cells.first.needsReview, isTrue);
     expect(loaded.grid.cells.first.provenanceId, 'page');
@@ -50,6 +51,7 @@ void main() {
       const BackstitchCoordinate(row: 1.5, column: 2),
     );
     expect(loaded.backstitches.single.thread.id, 'blue');
+    expect(loaded.backstitches.single.threadCount, 1);
     expect(loaded.backstitches.single.confidence?.value, 0.9);
     expect(loaded.backstitches.single.needsReview, isTrue);
     expect(loaded.backstitches.single.provenanceId, 'page');
@@ -242,6 +244,7 @@ PatternDocument _document() => PatternDocument(
         coordinate: GridCoordinate(0, 1),
         symbolId: 'unknown',
         stitchType: StitchType.half,
+        threadCount: 2,
         confidence: Confidence(0.4),
         needsReview: true,
         provenanceId: 'page',
@@ -281,6 +284,7 @@ PatternDocument _document() => PatternDocument(
         conversionNotes: 'approximate',
         evidence: ColorEvidence.inferred,
       ),
+      threadCount: 1,
       confidence: Confidence(0.9),
       needsReview: true,
       provenanceId: 'page',

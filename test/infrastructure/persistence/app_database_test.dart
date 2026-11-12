@@ -4,11 +4,11 @@ import '../../support/test_database.dart';
 
 /// Verifies the database boundary can create and configure the current schema.
 void main() {
-  test('creates the version 7 schema and enables foreign keys', () async {
+  test('creates the version 8 schema and enables foreign keys', () async {
     final database = openTestDatabase();
     addTearDown(database.close);
 
-    expect(database.schemaVersion, 7);
+    expect(database.schemaVersion, 8);
 
     final foreignKeys = await database
         .customSelect('PRAGMA foreign_keys')
@@ -18,7 +18,7 @@ void main() {
     final userVersion = await database
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(userVersion.data['user_version'], 7);
+    expect(userVersion.data['user_version'], 8);
   });
 
   test('creates every initial pattern and progress table', () async {
@@ -184,7 +184,7 @@ void main() {
     );
     expect(
       cells.map((row) => row.read<String>('name')),
-      contains('sort_order'),
+      containsAll({'sort_order', 'thread_count'}),
     );
     expect(
       cells.map((row) => row.read<String>('name')),
@@ -227,6 +227,7 @@ void main() {
         'end_column',
         'thread_id',
         'thread_color',
+        'thread_count',
         'confidence',
         'needs_review',
         'provenance_id',

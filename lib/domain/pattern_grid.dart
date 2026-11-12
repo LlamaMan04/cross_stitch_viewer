@@ -101,6 +101,7 @@ class StitchCell {
     required this.coordinate,
     required this.symbolId,
     this.stitchType = StitchType.full,
+    this.threadCount,
     this.confidence,
     this.needsReview = false,
     this.provenanceId,
@@ -114,6 +115,9 @@ class StitchCell {
 
   /// Technique used for this stitch.
   final StitchType stitchType;
+
+  /// Number of thread strands used for this stitch when supplied by the pattern.
+  final int? threadCount;
 
   /// Parser confidence when the cell was imported.
   final Confidence? confidence;
@@ -358,6 +362,11 @@ class PatternGrid {
       if (!seen.add(cell.coordinate)) {
         throw DocumentValidationException(
           'Duplicate cell coordinate ${cell.coordinate}.',
+        );
+      }
+      if (cell.threadCount != null && cell.threadCount! <= 0) {
+        throw const DocumentValidationException(
+          'Stitch cell thread count must be greater than zero.',
         );
       }
       cell.confidence?.validate();

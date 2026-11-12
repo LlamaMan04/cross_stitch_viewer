@@ -162,4 +162,20 @@ Future<void> migrateAppDatabase(
   if (from < 7 && to >= 7) {
     await migrator.createTable(database.patternBackstitches);
   }
+  if (from < 8 && to >= 8) {
+    await migrator.alterTable(
+      TableMigration(
+        database.patternCells,
+        newColumns: [database.patternCells.threadCount],
+      ),
+    );
+    if (from >= 7) {
+      await migrator.alterTable(
+        TableMigration(
+          database.patternBackstitches,
+          newColumns: [database.patternBackstitches.threadCount],
+        ),
+      );
+    }
+  }
 }

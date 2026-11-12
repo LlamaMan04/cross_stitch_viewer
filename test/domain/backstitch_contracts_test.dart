@@ -14,84 +14,124 @@ const ThreadDefinition _outlineThread = ThreadDefinition(
 
 /// Verifies the normalized domain contract for linear backstitch data.
 void main() {
-  test('preserves independent backstitch segments with fractional endpoints', () {
-    final document = _document(backstitches: const [
-      BackstitchSegment(
-        id: 'outline-a',
-        start: BackstitchCoordinate(row: 0, column: 0),
-        end: BackstitchCoordinate(row: 1.5, column: 2),
-        thread: _outlineThread,
-      ),
-    ]);
+  test(
+    'preserves independent backstitch segments with fractional endpoints',
+    () {
+      final document = _document(
+        backstitches: const [
+          BackstitchSegment(
+            id: 'outline-a',
+            start: BackstitchCoordinate(row: 0, column: 0),
+            end: BackstitchCoordinate(row: 1.5, column: 2),
+            thread: _outlineThread,
+          ),
+        ],
+      );
 
-    document.validate();
+      document.validate();
 
-    expect(document.grid.cells, isEmpty);
-    expect(document.symbols, isEmpty);
-    expect(document.backstitchById('outline-a')?.end.column, 2);
-  });
+      expect(document.grid.cells, isEmpty);
+      expect(document.symbols, isEmpty);
+      expect(document.backstitchById('outline-a')?.end.column, 2);
+    },
+  );
 
   test('accepts endpoints on the inclusive outer grid corners', () {
-    final document = _document(backstitches: const [
-      BackstitchSegment(
-        id: 'outer-edge',
-        start: BackstitchCoordinate(row: 0, column: 0),
-        end: BackstitchCoordinate(row: 3, column: 4),
-        thread: _outlineThread,
-      ),
-    ]);
+    final document = _document(
+      backstitches: const [
+        BackstitchSegment(
+          id: 'outer-edge',
+          start: BackstitchCoordinate(row: 0, column: 0),
+          end: BackstitchCoordinate(row: 3, column: 4),
+          thread: _outlineThread,
+        ),
+      ],
+    );
 
     expect(document.validate, returnsNormally);
   });
 
+  test('rejects nonpositive thread counts for stitches and backstitches', () {
+    final grid = PatternGrid(
+      dimensions: const PatternDimensions(1, 1),
+      cells: const [
+        StitchCell(
+          coordinate: GridCoordinate(0, 0),
+          symbolId: 'outline',
+          threadCount: 0,
+        ),
+      ],
+    );
+    const backstitch = BackstitchSegment(
+      id: 'invalid-count',
+      start: BackstitchCoordinate(row: 0, column: 0),
+      end: BackstitchCoordinate(row: 1, column: 1),
+      thread: _outlineThread,
+      threadCount: 0,
+    );
+
+    expect(grid.validate, throwsA(isA<DocumentValidationException>()));
+    expect(backstitch.validate, throwsA(isA<DocumentValidationException>()));
+  });
+
   test('rejects invalid backstitch geometry and thread data', () {
     final invalidDocuments = <PatternDocument>[
-      _document(backstitches: const [
-        BackstitchSegment(
-          id: 'outside',
-          start: BackstitchCoordinate(row: 0, column: 0),
-          end: BackstitchCoordinate(row: 3.1, column: 4),
-          thread: _outlineThread,
-        ),
-      ]),
-      _document(backstitches: const [
-        BackstitchSegment(
-          id: 'zero-length',
-          start: BackstitchCoordinate(row: 1, column: 1),
-          end: BackstitchCoordinate(row: 1, column: 1),
-          thread: _outlineThread,
-        ),
-      ]),
-      _document(backstitches: const [
-        BackstitchSegment(
-          id: 'non-finite',
-          start: BackstitchCoordinate(row: double.nan, column: 0),
-          end: BackstitchCoordinate(row: 1, column: 1),
-          thread: _outlineThread,
-        ),
-      ]),
-      _document(backstitches: const [
-        BackstitchSegment(
-          id: 'invalid-thread',
-          start: BackstitchCoordinate(row: 0, column: 0),
-          end: BackstitchCoordinate(row: 1, column: 1),
-          thread: ThreadDefinition(id: 'invalid', color: '#invalid'),
-        ),
-      ]),
-      _document(backstitches: const [
-        BackstitchSegment(
-          id: 'duplicate',
-          start: BackstitchCoordinate(row: 0, column: 0),
-          end: BackstitchCoordinate(row: 1, column: 1),
-          thread: _outlineThread,
-        ),
-        BackstitchSegment(
-          id: 'duplicate',
-          start: BackstitchCoordinate(row: 1, column: 1),
-          end: BackstitchCoordinate(row: 2, column: 2),
-          thread: _outlineThread,
-        ),
-      ]),
+      _document(
+        backstitches: const [
+          BackstitchSegment(
+            id: 'outside',
+            start: BackstitchCoordinate(row: 0, column: 0),
+            end: BackstitchCoordinate(row: 3.1, column: 4),
+            thread: _outlineThread,
+          ),
+        ],
+      ),
+      _document(
+        backstitches: const [
+          BackstitchSegment(
+            id: 'zero-length',
+            start: BackstitchCoordinate(row: 1, column: 1),
+            end: BackstitchCoordinate(row: 1, column: 1),
+            thread: _outlineThread,
+          ),
+        ],
+      ),
+      _document(
+        backstitches: const [
+          BackstitchSegment(
+            id: 'non-finite',
+            start: BackstitchCoordinate(row: double.nan, column: 0),
+            end: BackstitchCoordinate(row: 1, column: 1),
+            thread: _outlineThread,
+          ),
+        ],
+      ),
+      _document(
+        backstitches: const [
+          BackstitchSegment(
+            id: 'invalid-thread',
+            start: BackstitchCoordinate(row: 0, column: 0),
+            end: BackstitchCoordinate(row: 1, column: 1),
+            thread: ThreadDefinition(id: 'invalid', color: '#invalid'),
+          ),
+        ],
+      ),
+      _document(
+        backstitches: const [
+          BackstitchSegment(
+            id: 'duplicate',
+            start: BackstitchCoordinate(row: 0, column: 0),
+            end: BackstitchCoordinate(row: 1, column: 1),
+            thread: _outlineThread,
+          ),
+          BackstitchSegment(
+            id: 'duplicate',
+            start: BackstitchCoordinate(row: 1, column: 1),
+            end: BackstitchCoordinate(row: 2, column: 2),
+            thread: _outlineThread,
+          ),
+        ],
+      ),
     ];
 
     for (final document in invalidDocuments) {
@@ -107,10 +147,7 @@ PatternDocument _document({
   id: 'backstitch-contract',
   title: 'Backstitch contract',
   schemaVersion: 1,
-  grid: PatternGrid(
-    dimensions: const PatternDimensions(3, 4),
-    cells: const [],
-  ),
+  grid: PatternGrid(dimensions: const PatternDimensions(3, 4), cells: const []),
   symbols: const [],
   backstitches: backstitches,
 );
