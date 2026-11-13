@@ -2,294 +2,307 @@
 
 ## Objective
 
-Improve panning smoothness at the border of symbol rendering, especially on systems where a newly exposed tile causes a visible frame-time spike. Preserve the current rendering behavior while reducing work performed on the interactive path.
+Reduce frame-time spikes when panning across source-tile boundaries while preserving the current rendering behavior, selection semantics, visual styling, and normalized pattern model.
 
-The primary hypothesis is that the hitch occurs when panning crosses a 16×16 source-tile boundary. The viewport overscans by only one cell, cache writes are disabled during interaction, and a missing tile falls back to per-cell fill and glyph painting. The result is a burst of `TextPainter.paint`, path construction, and display-list work exactly when a new edge enters the viewport.
+The primary suspected cause is synchronous work for newly exposed 16×16 tiles: cell enumeration, per-cell glyph painting, display-list recording, dynamic overlay scans, and grid-path construction can all occur on the interactive paint path.
 
-## Scope and non-goals
+## Completed foundation
 
-This plan covers:
+The renderer already has bounded tile-picture caching with document, style, LOD, and quantized-scale keys; leased native-picture disposal; sparse tile-backed grid queries; overview summaries; visible-cell memoization; fill/grid path batching; glyph layout caching; and zoom-time tile-picture bypass. Renderer instrumentation and representative large-pattern fixtures also exist.
 
-- Static tile-picture reuse and prefetching.
-- Active pan versus continuous zoom rendering policies.
-- Symbol glyph picture caching.
-- Spatial indexing for dynamic overlays.
-- Grid geometry reuse.
-- Renderer instrumentation and performance validation.
+The remaining work below is not yet complete: measured baselines, tile prefetching, previous-frame pan reuse, glyph-picture caching, dynamic overlay indexes, grid geometry caching, parameter tuning, and end-to-end performance validation.
 
-It does not change the normalized pattern model, symbol interpretation, selection semantics, or visual styling unless a later benchmark demonstrates that a visual adjustment is required.
+## Implementation plan
 
-## Current rendering path
+### Phase 0 — Establish a reproducible baseline
 
-The relevant flow is:
+#### 0.1 Expand renderer metrics
 
-1. `PatternCamera.visibleBounds` computes the visible grid range with one-cell overscan.
-2. `ViewportPatternPainter._prepareStaticTileFrame` converts that range into 16×16 source tiles.
-3. Cached fill and glyph pictures are replayed when available.
-4. During cache misses, the painter enumerates tile cells and paints fills and glyphs directly.
-5. Dynamic completion and selected-symbol overlays scan visible cells separately.
-6. Grid paths are rebuilt for each paint.
+Extend `PatternRenderBatchMetrics` and its instrumentation output with:
 
-The important interaction policy is that cache writes are suspended during camera interaction. This is useful for zoom, where the scale changes continuously, but it also makes same-scale pan misses expensive because newly exposed tiles cannot be warmed while the gesture is active.
+- Direct cell-fill count and direct glyph-paint count.
+- Tile recordings started, completed, rejected, and queued.
+- Prefetch requests, prefetched tiles, cancelled requests, and stale requests.
+- Dynamic-overlay candidates visited and primitives painted.
+- Grid rules generated and grid paths recorded/replayed.
+- Per-frame pan/zoom state and whether the frame was interactive.
 
-## Phase 0 — Establish a reproducible baseline
+Keep cumulative cache counters separate from per-frame counters so a trace can distinguish current-frame work from lifetime totals.
 
-### Implementation
+#### 0.2 Add repeatable benchmark scenarios
 
-1. Enable the existing renderer instrumentation with `PATTERN_RENDER_INSTRUMENTATION`.
-2. Add a repeatable benchmark fixture containing:
-   - A large sparse pattern.
-   - A dense pattern with many repeated symbols.
-   - A pattern with many distinct symbols.
-   - Completed-cell and selected-symbol overlays enabled.
-3. Exercise these cases at detail level:
-   - Slow horizontal pan across a tile boundary.
-   - Slow vertical pan across a tile boundary.
-   - Diagonal pan across two tile boundaries.
-   - Repeated back-and-forth pan over the same boundary.
-   - Wheel and pinch zoom near the detail threshold.
-4. Record build time, raster time, tile hits/misses, cache bytes, evictions, visible cells, glyphs, and draw calls.
-5. Capture a performance trace on at least one fast desktop and one slower or mobile-class device.
+Create a renderer benchmark or diagnostic test harness using deterministic fixtures for:
 
-### Acceptance criteria
+1. A large sparse pattern.
+2. A dense pattern with a small repeated symbol set.
+3. A pattern with many distinct symbols and colors.
+4. Completed-cell and selected-symbol overlays enabled.
 
-The baseline should identify whether the hitch correlates primarily with:
+For each scenario, exercise:
 
-- Tile misses.
-- Cache evictions.
-- Direct glyph painting.
-- Dynamic overlay scans.
-- Grid-path construction.
-- Raster cost of replaying many pictures.
+- Slow horizontal, vertical, and diagonal pans across tile boundaries.
+- Repeated back-and-forth pans over the same boundary.
+- Wheel and pinch zoom near each LOD threshold.
+- Theme/style changes after the cache has warmed.
 
-Do not tune cache sizes or tile dimensions until this data is available.
+Capture build time, raster time, tile hits/misses, recordings, evictions, cache bytes, visible cells, glyph work, overlay candidates, grid work, and draw calls.
 
-## Phase 1 — Make panning tile-aware
+#### 0.3 Record baseline traces
 
-### 1. Expand the effective prefetch range
+Run the scenarios on at least one desktop and one slower/mobile-class target. Store the scenario description and summarized results in the repository, not brittle platform-specific absolute timing assertions. Use the baseline to identify the dominant cost before changing tile size or cache budgets.
 
-Add separate concepts for `paintBounds` and `prefetchBounds`.
+### Phase 1 — Make same-scale panning tile-aware
 
-- Keep `paintBounds` close to the viewport to avoid unnecessary draw work.
-- Expand `prefetchBounds` by at least one full source tile in every direction.
-- Clamp both ranges to document dimensions.
-- Use tile-aligned prefetch bounds so the cache can warm complete tiles rather than repeatedly preparing partial edge ranges.
+#### 1.1 Introduce paint and prefetch bounds
 
-The initial default should be one tile of prefetch in each direction. Make the value configurable for profiling.
+Add a viewport-owned bounds calculation with these separate concepts:
 
-### 2. Add a tile prefetch queue
+- `paintBounds`: the document-clamped range that is actually drawn.
+- `prefetchBounds`: a tile-aligned range expanded by a configurable number of source tiles in every direction.
 
-Create a small viewport-owned prefetch coordinator that:
+The initial prefetch distance should be one 16×16 tile. Keep the value configurable for profiling. Ensure negative camera positions, document edges, small documents, and empty ranges are handled without producing invalid tile coordinates.
 
-- Receives the current camera, render LOD, style, and prefetch bounds.
-- Prioritizes tiles nearest to the visible edge.
-- Avoids duplicate work for keys already cached or queued.
-- Limits the number of tiles recorded per frame.
-- Cancels or deprioritizes stale work after a large pan or zoom.
+The painter must use `paintBounds` for visible rendering and never expand actual draw work merely because prefetching is enabled.
 
-The queue should use the same `PatternTilePictureKey` and recording code as normal cache population. It must not mutate document data.
+#### 1.2 Extract shared tile recording
 
-### 3. Reuse the previous static frame during pan
+Move tile-key creation, tile-cell lookup, and static tile-picture recording behind a reusable service or viewport helper. Both normal cache population and prefetching must call the same implementation so they cannot diverge in style, LOD, scale, or invalidation behavior.
 
-Retain the previous frame's tile leases or pictures for the duration of an active same-scale pan.
+The helper should return a leased cache entry when possible and must safely dispose rejected or temporary pictures. It must not mutate `PatternDocument` or progress state.
 
-Suggested behavior:
+#### 1.3 Add a bounded prefetch coordinator
 
-1. At gesture start, retain the current static tile frame.
-2. During pan, translate and replay retained pictures using the camera delta.
-3. Paint only newly exposed strips or tiles that are already available.
-4. If a new tile is unavailable, leave the existing translated frame visible for that area or paint a cheap fallback, depending on visual requirements.
-5. On gesture end, render the exact current frame and release the old frame.
+Create a small coordinator owned by `PatternViewport` that receives:
 
-The fallback must avoid displaying stale content outside the document bounds. The document background and clip remain authoritative.
+- The current camera and render LOD.
+- Static tile-picture style.
+- Paint and prefetch bounds.
+- The current interaction generation or camera revision.
 
-### 4. Permit bounded writes during pure pan
+Implement the following behavior:
 
-Split interaction state into:
+1. Generate tile keys for the prefetch range.
+2. Remove keys already cached or already queued.
+3. Prioritize tiles closest to the visible edge, then tiles in the pan direction.
+4. Record at most a configurable number of tiles per frame.
+5. Schedule remaining work using post-frame callbacks or a controlled microtask/frame queue.
+6. Cancel or deprioritize work from an old camera revision after a large pan, zoom, document change, or style change.
+7. Request a repaint after useful work completes.
 
-- `isPanning`: same cell size, camera translation only.
-- `isZooming`: cell size changes.
+Do not let prefetch work run unbounded inside `paint`. It must be cooperative and observable through metrics.
 
-For panning:
+#### 1.4 Split pan and zoom policies
 
-- Keep cache reuse enabled.
-- Permit a bounded number of tile recordings per frame or queue them for the next frame.
-- Avoid recording more than the configured per-frame budget.
+Represent interaction state explicitly as either:
 
-For zooming:
+- Settled.
+- Same-scale panning.
+- Continuous zooming.
 
-- Continue bypassing exact-scale picture reuse while the scale is changing.
-- Resume cache population after the gesture settles.
+For same-scale panning:
 
-This preserves the current zoom optimization while removing the unnecessary restriction for same-scale movement.
+- Continue reusing matching cached pictures.
+- Permit only the configured number of synchronous tile recordings per frame.
+- Send additional misses to the prefetch coordinator.
 
-## Phase 2 — Reduce glyph recording cost
+For continuous zooming:
 
-### 1. Add a glyph picture cache
+- Continue bypassing exact-scale tile-picture reuse while the scale changes.
+- Avoid cache writes during the zoom gesture.
+- Resume cache population only after the gesture settles.
 
-Introduce a bounded cache keyed by:
+Ensure a small scale delta cannot accidentally switch a pure pan into zoom mode, and ensure wheel zoom uses the same policy as pinch zoom.
+
+#### 1.5 Reuse the previous static frame during active pan
+
+Retain the previous static tile frame or its leases at the start of a same-scale pan. During the gesture:
+
+1. Translate retained pictures by the camera delta.
+2. Clip to the document and viewport bounds.
+3. Paint newly exposed strips from already available tiles.
+4. Use direct fallback only for bounded newly exposed work when no picture is available.
+5. Do not show translated content outside document bounds; the document background and clip remain authoritative.
+6. At gesture end, render the exact camera position, release old leases, and schedule prefetch for the surrounding tiles.
+
+The frame-reuse implementation must be disabled or invalidated when scale, LOD, document identity, theme, font inputs, or static render settings change.
+
+#### 1.6 Add Phase 1 tests
+
+Cover:
+
+- Tile-aligned and clamped prefetch bounds.
+- Duplicate suppression and stale-request cancellation.
+- Per-frame recording limits.
+- Pure pan reuse versus zoom bypass.
+- Correct document-edge clipping during translated-frame reuse.
+- Lease safety when a retained frame is evicted or replaced.
+
+### Phase 2 — Reduce glyph recording cost
+
+#### 2.1 Add a bounded glyph-picture cache
+
+Create a cache of recorded glyph pictures keyed by every input that affects their appearance:
 
 - Display glyph.
 - Foreground color.
 - Quantized font-size bucket.
-- Any font or text configuration that affects layout.
+- Font family, weight, text direction, and any other relevant text configuration.
+- Renderer/font generation used for invalidation.
 
-Each cache entry should contain a `ui.Picture` recorded around a stable origin, plus its measured width and height. Use a lease or deferred-disposal mechanism similar to `PatternTilePictureCache` so eviction cannot dispose a picture currently being replayed.
+Each entry should contain the picture, measured width/height, estimated memory cost, and deferred-disposal state. Use the same lease pattern as tile pictures so eviction cannot dispose of a picture being replayed.
 
-### 2. Replace repeated `TextPainter.paint` calls during tile recording
+Use an entry or byte budget and expose hits, misses, evictions, and bytes in diagnostics.
 
-During `_paintGlyphsForCells`:
+#### 2.2 Replay glyph pictures while recording tiles
 
-- Resolve the glyph picture once for each distinct glyph/style combination in the tile.
-- Translate to the cell center.
-- Replay the picture instead of laying out and painting text per cell.
+Update `_paintGlyphsForCells` so it:
 
-Retain `PatternGlyphLayoutCache` for measurement and fallback behavior. The glyph picture cache is an optimization on top of layout caching, not a replacement for correctness checks.
+1. Resolves symbol metadata and contrast as it does today.
+2. Groups or resolves repeated glyph/style combinations once per tile.
+3. Replays the cached glyph picture translated to the cell center.
+4. Retains `PatternGlyphLayoutCache` for measurement, fallback, and correctness checks.
+5. Falls back to `TextPainter.paint` if a glyph cannot be safely cached.
 
-### 3. Define scale-bucket behavior
+The glyph picture cache is an optimization below tile-picture caching; it must not change glyph placement or fallback behavior.
 
-Use the same or a compatible scale quantization strategy as tile pictures. Validate that the maximum visual error from scaling a glyph picture is acceptable. If glyph scaling produces blurry output on a target platform, use narrower font-size buckets or record glyphs at a slightly higher representative size.
+#### 2.3 Validate scale buckets
 
-### Acceptance criteria
+Use compatible quantization with tile pictures and measure readability at detail-level scales. If scaling introduces blur on a target platform, narrow the bucket width or record at a slightly higher representative size. Add visual tests for symbols at tile edges and at LOD transitions.
 
-- New tile recording performs one glyph-picture lookup per distinct glyph/style combination rather than one text paint per cell.
-- Glyph readability matches the existing renderer at detail-level scales.
-- Cache growth remains bounded and does not cause frequent tile-picture evictions.
+### Phase 3 — Index and batch dynamic overlays
 
-## Phase 3 — Index dynamic overlays
+#### 3.1 Build completed-cell tile indexes
 
-Static tile pictures do not cover dynamic completion and selection overlays. These currently iterate over visible cells on every paint.
+Create an immutable or incrementally maintained index from `PatternTileCoordinate` to completed coordinates. Rebuild it only when the completed-cell set changes.
 
-### 1. Completed-cell spatial index
+During painting:
 
-Build an immutable or incrementally maintained map from `PatternTileCoordinate` to completed coordinates. During painting:
+1. Compute the tiles intersecting `paintBounds`.
+2. Visit completed coordinates only in those tiles.
+3. Filter to the exact visible bounds.
+4. Accumulate rectangles into paths grouped by overlay paint.
 
-- Determine intersecting tiles from `paintBounds`.
-- Visit only completed coordinates in those tiles.
-- Batch overlay rectangles into one or a small number of paths grouped by paint.
+Completion changes must update or replace the affected index without coupling it to imported pattern data.
 
-This preserves exact-cell overlays while avoiding a scan through all visible populated cells.
+#### 3.2 Build selected-symbol indexes
 
-### 2. Selected-symbol index
+Create a document-derived index from `threadId` or symbol identity to populated cells grouped by tile. Resolve the selected thread once, then inspect only matching tile groups intersecting `paintBounds`.
 
-Add a document-level or viewport-level index from `symbolId` to populated cells, preferably grouped by tile. When a symbol is selected:
+Selection changes must not rebuild the document index. Document replacement must create a new index. Preserve the existing rule that completed cells may be excluded from selection according to settings.
 
-- Resolve its tile groups once.
-- Intersect only those groups with the visible tile range.
-- Paint matching cells without testing every visible cell.
+#### 3.3 Batch dynamic rectangles
 
-Invalidate or rebuild this index only when the document changes. Selection changes should not rebuild the document index.
+Replace one canvas call per completed or selected cell with one or a small number of paths per paint/style group. Keep selected fills and outlines separate because they use different paint state. Preserve draw order relative to static fills, glyphs, grid, regions, and backstitches.
 
-### 3. Batch dynamic rectangles
+#### 3.4 Add overlay tests
 
-Replace one `drawRect` call per completed or selected cell with paths grouped by paint where practical. Keep separate paths for fills and outlines because they use different paint styles.
+Compare indexed rendering with the current cell-by-cell result for:
 
-## Phase 4 — Cache grid geometry
+- Empty, sparse, dense, and boundary-crossing tiles.
+- Completed cells at document edges.
+- Selected symbols with and without completed cells included.
+- Selection and completion changes without document changes.
 
-Grid paths are rebuilt for each frame even though their structure changes only when the camera scale bucket, visible tile range, or grid settings change.
+### Phase 4 — Cache grid geometry
 
-### Implementation
+#### 4.1 Define grid cache keys
 
-Create a bounded grid-picture cache keyed by:
+Create a bounded grid-geometry or grid-picture cache keyed by:
 
-- Visible tile-aligned range or a grid tile range.
+- Tile-aligned visible range or grid geometry tile range.
 - Quantized cell size.
-- Grid color and relevant settings.
+- Grid color and relevant grid settings.
 - Render LOD.
+- Document dimensions where document-edge rules are involved.
 
-Record minor, major, and outside rules into separate pictures or one picture with stable paint state. Replay the pictures translated to the current camera origin.
+Do not key on the exact camera origin. Camera translation must be applied during replay.
 
-If a full grid-picture cache is too expensive, first cache the line geometry and rebuild only the final screen-space transform.
+#### 4.2 Record and replay grid geometry
 
-### Caution
+Prefer tile-local line geometry or pictures. Keep minor, major, and outside rules in separate paths/pictures when that avoids paint-state changes. Replay the cached geometry translated to the current camera origin.
 
-Do not cache a picture at an exact camera origin if that causes cache churn for every pan offset. Cache grid geometry in tile-local coordinates and apply the camera translation during replay.
+Invalidate entries when grid color, visibility/settings, LOD, scale bucket, document dimensions, theme, or font/ruler inputs change.
 
-## Phase 5 — Revisit tile sizing and cache budgets
+If native grid pictures are not beneficial on a target platform, retain cached line geometry and only rebuild the screen-space transform.
 
-Only after Phases 1–4 are measured, evaluate these parameters:
+#### 4.3 Add grid-cache tests
 
-### Tile size
+Verify reuse across camera translations and invalidation after every key input changes. Check document edges, overview major-only rules, and scale-bucket changes.
 
-The current 16×16 tile is a compromise:
+### Phase 5 — Tune tile size, cache budgets, and quantization
 
-- Smaller tiles reduce the cost of an individual miss but increase picture count and replay calls.
-- Larger tiles reduce replay calls but make an edge miss more expensive.
+Only after Phases 1–4 are implemented and measured, benchmark:
 
-Benchmark 8×8, 16×16, and 32×32 using the same fixtures. Choose based on worst-frame raster time, not average frame time alone.
+- 8×8, 16×16, and 32×32 source tiles.
+- Multiple tile-picture byte budgets.
+- Separate glyph-heavy and fill-only budgets if useful.
+- Current quarter-pixel scale buckets versus coarser settled buckets.
+- Different prefetch distances and per-frame recording limits.
 
-### Cache budget
+Choose settings using worst-frame raster time and interaction smoothness, not average frame time alone. Record hit rate, evictions per second, recording time, native display-list memory, and worst boundary-crossing frame.
 
-Track:
+Keep platform-specific defaults only when the measurements demonstrate a meaningful difference and the configuration remains understandable.
 
-- Hit rate during repeated pans.
-- Evictions per second.
-- Native display-list memory.
-- Time spent recording tiles.
+### Phase 6 — Functional, performance, and visual validation
 
-Increase the default budget only if eviction is demonstrably causing the hitch and memory remains acceptable on target systems. Consider separate budgets for glyph-heavy detail pictures and cheaper fill-only pictures.
+#### 6.1 Functional validation
 
-### Scale quantization
+Run the full Flutter test suite and add focused tests for:
 
-The current quarter-pixel cell-size buckets can produce many cache variants during zoom. Keep exact-scale zoom bypass behavior, but consider coarser settled buckets if the visual quality remains acceptable.
+- Prefetch bounds and cancellation.
+- Pan frame reuse and lease disposal.
+- Zoom bypass and settled cache warming.
+- Glyph-picture cache keys, eviction, fallback, and disposal.
+- Completed and selected overlay indexes.
+- Grid-cache invalidation.
+- Theme, font, document, and renderer-setting invalidation.
 
-## Phase 6 — Validate behavior and regressions
+#### 6.2 Performance validation
 
-### Functional tests
+Use relative or platform-specific baselines rather than one brittle absolute timing threshold. Track:
 
-Add tests for:
-
-- Prefetch bounds being tile-aligned and clamped.
-- Prefetch cancellation after a camera jump.
-- Pan reuse preserving the correct translated content.
-- Zoom continuing to bypass stale scale-specific pictures.
-- Glyph picture cache eviction and active-frame disposal safety.
-- Completed and selected overlays matching the previous cell-by-cell output.
-- Grid cache invalidation when color, settings, LOD, or scale bucket changes.
-
-### Performance tests
-
-Add benchmark assertions or diagnostic thresholds for:
-
-- Maximum tile recordings per pan frame.
+- Maximum synchronous tile recordings per pan frame.
 - Maximum direct glyph paints per pan frame.
-- Cache hit rate after a repeated pan.
+- Cache hit rate after repeated pans.
+- Prefetch completion rate.
 - Evictions during a representative viewport sweep.
-- Worst raster frame time at tile boundaries.
+- Overlay candidates visited.
+- Worst raster frame at a tile boundary.
 
-Avoid brittle absolute timing thresholds across all platforms. Prefer relative comparisons against the current implementation and record platform-specific baselines where possible.
+#### 6.3 Visual validation
 
-### Visual validation
+Check symbols and overlays:
 
-Check:
+- At viewport edges and across tile boundaries.
+- At document edges and in empty cells.
+- During detail/grid/overview transitions.
+- During active pan and zoom.
+- After theme, font, and renderer-setting changes.
 
-- Symbols at the viewport edge.
-- Symbols crossing tile boundaries.
-- Document edges and empty cells.
-- Detail/grid/overview LOD transitions.
-- Selection and completion overlays during motion.
-- Theme and font changes, which must invalidate affected native pictures.
+Use golden or screenshot-based comparisons where practical, with targeted manual checks for native-picture scaling and text sharpness.
 
-## Suggested implementation order
+## Recommended delivery order
 
-1. Add targeted counters for direct glyph paints, tile recordings, prefetch work, overlay candidates, and grid rules.
-2. Split pan and zoom cache policies.
-3. Add tile-aligned prefetch with a strict per-frame recording budget.
-4. Add previous-frame static-layer reuse for active panning.
-5. Add spatial overlay indexes and path batching.
-6. Add the glyph picture cache.
+1. Expand instrumentation and add benchmark scenarios.
+2. Implement explicit interaction modes and bounded same-scale pan recording.
+3. Add tile-aligned prefetch and stale-work cancellation.
+4. Add previous-frame static-layer reuse.
+5. Add completed and selected overlay indexes with path batching.
+6. Add glyph-picture caching and scale-bucket validation.
 7. Add grid geometry caching.
-8. Benchmark tile sizes, cache budgets, and scale buckets.
+8. Tune tile size, cache budgets, prefetch distance, and scale quantization.
 9. Run functional, performance, and visual regression validation.
 
 ## Definition of done
 
 The optimization is complete when:
 
-- Crossing a tile boundary during a steady pan no longer causes a visible hitch on supported target systems.
-- Direct per-cell glyph painting is rare during pan and bounded during cache warm-up.
-- Repeated pans over the same region achieve a high tile-picture hit rate without excessive evictions.
-- Dynamic overlays remain correct and no longer require full visible-cell scans.
-- Zoom remains visually stable and does not replay incorrectly scaled pictures.
-- Theme, font, document, and renderer-setting changes invalidate all affected caches.
-- The result is verified with frame timing traces, renderer metrics, and visual regression tests.
+- Steady panning across a tile boundary has no visible hitch on supported targets.
+- Synchronous tile recordings and direct glyph paints are bounded during pan.
+- Prefetching warms likely next tiles without expanding actual paint work.
+- Repeated pans achieve a high tile-picture hit rate without excessive evictions.
+- Dynamic overlays no longer scan all visible populated cells.
+- Grid geometry is reused across camera translations.
+- Zoom does not replay incorrectly scaled pictures.
+- Theme, font, document, and renderer-setting changes invalidate affected caches.
+- Results are supported by renderer metrics, frame traces, functional tests, and visual validation.
