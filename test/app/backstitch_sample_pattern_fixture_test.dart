@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/test_patterns/backstitch_sample_pattern_fixture.dart';
+import 'package:stitch_scope/domain/pattern_backstitch.dart';
 
 /// Verifies that the backstitch rendering fixture covers the planned geometry.
 void main() {
@@ -12,8 +13,9 @@ void main() {
     );
     expect(document.backstitchDefinitions, hasLength(3));
     expect(
-      document.backstitchDefinitions
-          .where((definition) => definition.threadId == 'thread-red'),
+      document.backstitchDefinitions.where(
+        (definition) => definition.threadId == 'thread-red',
+      ),
       hasLength(BackstitchSamplePatternFixture.sameColorDefinitionCount),
     );
     expect(
