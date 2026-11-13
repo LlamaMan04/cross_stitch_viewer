@@ -17,14 +17,19 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
     final cellSizeBucket = PatternTilePictureCache.quantizeCellSize(
       camera.cellSize,
     );
-    final recordedCellSize = PatternTilePictureCache.cellSizeForBucket(
-      cellSizeBucket,
-    );
     final style = PatternTilePictureStyle(
       showCellColor: settings.showCellColor,
       cellColorOpacity: settings.cellColorOpacity,
       showSymbols: settings.showSymbols,
       surfaceColor: surfaceColor,
+    );
+    final recorder = PatternStaticTileRecorder(
+      document: document,
+      cache: cache,
+      renderLod: renderLod,
+      cellSizeBucket: cellSizeBucket,
+      style: style,
+      recordPictures: _recordStaticTilePictures,
     );
     final contents = <_StaticTileContent>[];
     var cacheHitCount = 0;
@@ -44,69 +49,19 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
         tileColumn++
       ) {
         final coordinate = PatternTileCoordinate(tileRow, tileColumn);
-        final key = PatternTilePictureKey(
-          documentIdentity: document,
-          coordinate: coordinate,
-          renderLod: renderLod,
-          cellSizeBucket: cellSizeBucket,
-          style: style,
-        );
-        final lease = cache.reuseEnabled ? cache.acquire(key) : null;
-        if (lease != null) {
-          cacheHitCount++;
-          contents.add(
-            _StaticTileContent.cached(
-              coordinate: coordinate,
-              recordedCellSize: recordedCellSize,
-              lease: lease,
-            ),
-          );
-          continue;
-        }
-
-        if (cache.reuseEnabled) {
-          cacheMissCount++;
-        } else {
-          cacheBypassCount++;
-        }
-        final tileBounds = _tileBounds(coordinate);
-        final tileCells = List<StitchCell>.unmodifiable(
-          document.grid.cellsIntersecting(tileBounds),
-        );
-        if (!cache.writesEnabled || !cache.reuseEnabled) {
-          contents.add(
-            _StaticTileContent.direct(
-              coordinate: coordinate,
-              recordedCellSize: recordedCellSize,
-              cells: tileCells,
-            ),
-          );
-          continue;
-        }
-
-        recordingsStarted++;
-        final pictures = _recordStaticTilePictures(
-          coordinate: coordinate,
-          recordedCellSize: recordedCellSize,
-          cells: tileCells,
-        );
-        recordingsCompleted++;
-        final insertedLease = cache.putAndAcquire(key, pictures);
-        if (insertedLease == null) {
-          recordingsRejected++;
-        }
+        final resolution = recorder.resolve(coordinate);
+        if (resolution.cacheHit) cacheHitCount++;
+        if (resolution.cacheMiss) cacheMissCount++;
+        if (resolution.cacheBypass) cacheBypassCount++;
+        if (resolution.recordingStarted) recordingsStarted++;
+        if (resolution.recordingCompleted) recordingsCompleted++;
+        if (resolution.recordingRejected) recordingsRejected++;
         contents.add(
-          insertedLease == null
-              ? _StaticTileContent.ephemeral(
-                  coordinate: coordinate,
-                  recordedCellSize: recordedCellSize,
-                  pictures: pictures,
-                )
-              : _StaticTileContent.cached(
-                  coordinate: coordinate,
-                  recordedCellSize: recordedCellSize,
-                  lease: insertedLease,
-                ),
+          _StaticTileContent.resolved(
+            coordinate: coordinate,
+            recordedCellSize: recorder.recordedCellSize,
+            resolution: resolution,
+          ),
         );
       }
     }
@@ -118,24 +73,6 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
       recordingsStarted: recordingsStarted,
       recordingsCompleted: recordingsCompleted,
       recordingsRejected: recordingsRejected,
-    );
-  }
-
-  /// Calculates document-clamped source bounds for one fixed spatial tile.
-  GridBounds _tileBounds(PatternTileCoordinate coordinate) {
-    final startRow = coordinate.row * PatternGrid.tileSize;
-    final startColumn = coordinate.column * PatternGrid.tileSize;
-    return GridBounds(
-      startRow: startRow,
-      endRow: math.min(
-        startRow + PatternGrid.tileSize,
-        document.grid.dimensions.rows,
-      ),
-      startColumn: startColumn,
-      endColumn: math.min(
-        startColumn + PatternGrid.tileSize,
-        document.grid.dimensions.columns,
-      ),
     );
   }
 
@@ -391,30 +328,12 @@ class _StaticTileFrame {
 
 /// One visible tile represented by a lease, ephemeral pictures, or cells.
 class _StaticTileContent {
-  /// Creates tile content protected by a cache [lease].
-  const _StaticTileContent.cached({
+  /// Creates tile content whose resolution owns every native resource.
+  const _StaticTileContent.resolved({
     required this.coordinate,
     required this.recordedCellSize,
-    required this._lease,
-  }) : _ephemeralPictures = null,
-       cells = null;
-
-  /// Creates over-budget tile content disposed after this frame.
-  const _StaticTileContent.ephemeral({
-    required this.coordinate,
-    required this.recordedCellSize,
-    required PatternTilePictures pictures,
-  }) : _lease = null,
-       _ephemeralPictures = pictures,
-       cells = null;
-
-  /// Creates uncached tile content painted directly during camera activity.
-  const _StaticTileContent.direct({
-    required this.coordinate,
-    required this.recordedCellSize,
-    required this.cells,
-  }) : _lease = null,
-       _ephemeralPictures = null;
+    required this.resolution,
+  });
 
   /// Source tile coordinate used to place tile-local pictures.
   final PatternTileCoordinate coordinate;
@@ -422,21 +341,17 @@ class _StaticTileContent {
   /// Quantized logical cell size used while recording tile-local pictures.
   final double recordedCellSize;
 
-  /// Retained cache entry used by this frame, if available.
-  final PatternTilePictureLease? _lease;
-
-  /// Rejected over-budget pictures owned only by this frame.
-  final PatternTilePictures? _ephemeralPictures;
+  /// Result supplying cached pictures, temporary pictures, or source cells.
+  final PatternStaticTileResolution resolution;
 
   /// Source cells used when cache writes are suspended during interaction.
-  final List<StitchCell>? cells;
+  List<StitchCell>? get cells => resolution.cells;
 
   /// Recorded pictures represented by this content, if any.
-  PatternTilePictures? get pictures => _lease?.pictures ?? _ephemeralPictures;
+  PatternTilePictures? get pictures => resolution.pictures;
 
   /// Releases retained or ephemeral native resources after painting.
   void release() {
-    _lease?.release();
-    _ephemeralPictures?.dispose();
+    resolution.release();
   }
 }

@@ -13,6 +13,7 @@ import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
+import 'pattern_static_tile_recorder.dart';
 import 'pattern_tile_picture_cache.dart';
 import 'pattern_viewport_controller.dart';
 import 'pattern_viewport_bounds.dart';
