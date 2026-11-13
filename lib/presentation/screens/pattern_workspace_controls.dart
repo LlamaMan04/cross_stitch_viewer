@@ -216,9 +216,9 @@ class CompletionActionBar extends StatelessWidget {
                         child: Text(
                           undoMessage!,
                           style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onInverseSurface,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onInverseSurface,
                           ),
                         ),
                       ),

@@ -30,6 +30,9 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
     var cacheHitCount = 0;
     var cacheMissCount = 0;
     var cacheBypassCount = 0;
+    var recordingsStarted = 0;
+    var recordingsCompleted = 0;
+    var recordingsRejected = 0;
     final firstTileRow = query.startRow ~/ PatternGrid.tileSize;
     final lastTileRow = (query.endRow - 1) ~/ PatternGrid.tileSize;
     final firstTileColumn = query.startColumn ~/ PatternGrid.tileSize;
@@ -81,12 +84,17 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
           continue;
         }
 
+        recordingsStarted++;
         final pictures = _recordStaticTilePictures(
           coordinate: coordinate,
           recordedCellSize: recordedCellSize,
           cells: tileCells,
         );
+        recordingsCompleted++;
         final insertedLease = cache.putAndAcquire(key, pictures);
+        if (insertedLease == null) {
+          recordingsRejected++;
+        }
         contents.add(
           insertedLease == null
               ? _StaticTileContent.ephemeral(
@@ -107,6 +115,9 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
       cacheHitCount: cacheHitCount,
       cacheMissCount: cacheMissCount,
       cacheBypassCount: cacheBypassCount,
+      recordingsStarted: recordingsStarted,
+      recordingsCompleted: recordingsCompleted,
+      recordingsRejected: recordingsRejected,
     );
   }
 
@@ -227,6 +238,9 @@ class _StaticTileFrame {
     this.cacheHitCount = 0,
     this.cacheMissCount = 0,
     this.cacheBypassCount = 0,
+    this.recordingsStarted = 0,
+    this.recordingsCompleted = 0,
+    this.recordingsRejected = 0,
   });
 
   /// Visible tile content retained for the duration of this paint frame.
@@ -240,6 +254,39 @@ class _StaticTileFrame {
 
   /// Number of visible tiles intentionally painted directly during zoom.
   final int cacheBypassCount;
+
+  /// Number of static-tile recordings started during this frame.
+  final int recordingsStarted;
+
+  /// Number of recordings that reached a completed display list this frame.
+  final int recordingsCompleted;
+
+  /// Number of recordings rejected by the cache during this frame.
+  final int recordingsRejected;
+
+  /// Counts direct fill primitives submitted for the supplied [painter].
+  int directCellFillCountFor(ViewportPatternPainter painter) {
+    if (!painter.settings.showCellColor ||
+        painter.renderLod == RenderLod.overview) {
+      return 0;
+    }
+    return contents.fold(
+      0,
+      (count, content) => count + (content.cells?.length ?? 0),
+    );
+  }
+
+  /// Counts direct glyph primitives submitted for the supplied [painter].
+  int directGlyphPaintCountFor(ViewportPatternPainter painter) {
+    if (!painter.settings.showSymbols ||
+        painter.renderLod != RenderLod.detail) {
+      return 0;
+    }
+    return contents.fold(
+      0,
+      (count, content) => count + (content.cells?.length ?? 0),
+    );
+  }
 
   /// Number of populated cells represented by this frame's visible tiles.
   int get visibleCellCount => contents.fold(

@@ -23,4 +23,34 @@ void main() {
     controller.requestRepaint();
     expect(notifications, 2);
   });
+
+  test('reports explicit settled, pan, and zoom interaction states', () {
+    final controller = PatternViewportController(
+      camera: const PatternCamera(cellSize: 10, origin: Offset.zero),
+    );
+    addTearDown(controller.dispose);
+
+    expect(
+      controller.interactionState,
+      PatternViewportInteractionState.settled,
+    );
+
+    controller.beginPanning();
+    expect(
+      controller.interactionState,
+      PatternViewportInteractionState.panning,
+    );
+
+    controller.beginZooming();
+    expect(
+      controller.interactionState,
+      PatternViewportInteractionState.zooming,
+    );
+
+    controller.settleInteraction();
+    expect(
+      controller.interactionState,
+      PatternViewportInteractionState.settled,
+    );
+  });
 }

@@ -65,12 +65,14 @@ extension _ViewportPatternPainterOverlays on ViewportPatternPainter {
     final overlayPaint = Paint()..color = completionSelectionOverlayColor;
     var count = 0;
     for (final coordinate in completionSelection) {
+      _dynamicOverlayCandidatesVisited++;
       if (!visibleBounds.contains(coordinate)) continue;
       final cell = document.grid.cellAt(coordinate);
       if (cell == null) continue;
       canvas.drawRect(_cellRect(cell), overlayPaint);
       count++;
     }
+    _dynamicOverlayPrimitivesPainted += count;
     return count;
   }
 
@@ -95,6 +97,7 @@ extension _ViewportPatternPainterOverlays on ViewportPatternPainter {
       );
       count++;
     }
+    _dynamicOverlayPrimitivesPainted += count * 2;
     return count;
   }
 
@@ -106,6 +109,7 @@ extension _ViewportPatternPainterOverlays on ViewportPatternPainter {
       canvas.drawRect(_cellRect(cell), _completedOverlayPaint);
       count++;
     }
+    _dynamicOverlayPrimitivesPainted += count;
     return count;
   }
 

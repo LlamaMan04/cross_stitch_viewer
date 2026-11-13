@@ -4,6 +4,7 @@ import '../../domain/repositories.dart';
 import '../../app/test_patterns/extra_large_sample_pattern_fixture.dart';
 import '../../app/test_patterns/large_sample_pattern_fixture.dart';
 import '../../app/test_patterns/sample_pattern_fixture.dart';
+import '../../app/test_patterns/sparse_sample_pattern_fixture.dart';
 
 /// Basic application settings and product information screen.
 class SettingsScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       for (final document in [
         SamplePatternFixture.create(),
+        SparseSamplePatternFixture.create(),
         LargeSamplePatternFixture.create(),
         ExtraLargeSamplePatternFixture.create(),
       ]) {

@@ -11,9 +11,7 @@ void main() {
     final repository = InMemoryPatternDocumentRepository();
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: SettingsScreen(patternDocuments: repository),
-      ),
+      MaterialApp(home: SettingsScreen(patternDocuments: repository)),
     );
     await tester.pumpAndSettle();
 
@@ -22,7 +20,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('load-sample-patterns')));
     await tester.pumpAndSettle();
 
-    expect(await repository.listSummaries(), hasLength(3));
+    expect(await repository.listSummaries(), hasLength(4));
     expect(find.text('Sample patterns loaded.'), findsOneWidget);
   });
 }

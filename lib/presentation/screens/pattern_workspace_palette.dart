@@ -63,8 +63,7 @@ class PatternSymbolPalettePanel extends StatelessWidget {
                 if (selection.hasSelection)
                   TextButton(
                     key: const ValueKey('clear-symbol-selection'),
-                    onPressed: () =>
-                        onSelected(const PatternRenderSelection()),
+                    onPressed: () => onSelected(const PatternRenderSelection()),
                     child: const Text('Clear'),
                   ),
                 IconButton(

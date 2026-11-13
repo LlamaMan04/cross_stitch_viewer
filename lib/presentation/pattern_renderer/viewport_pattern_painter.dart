@@ -165,6 +165,12 @@ class ViewportPatternPainter extends CustomPainter {
   /// Populated cells cached for all layers in the current visible range.
   List<StitchCell>? _cachedVisibleCells;
 
+  /// Dynamic-overlay candidates inspected while painting the current frame.
+  int _dynamicOverlayCandidatesVisited = 0;
+
+  /// Dynamic-overlay primitives submitted while painting the current frame.
+  int _dynamicOverlayPrimitivesPainted = 0;
+
   /// Visible cells materialized once and refreshed only when bounds change.
   List<StitchCell> get _visibleCells {
     final currentBounds = visibleBounds;
@@ -210,6 +216,7 @@ class ViewportPatternPainter extends CustomPainter {
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
     for (final cell in _visibleCells) {
+      _dynamicOverlayCandidatesVisited++;
       if (completedCells.contains(cell.coordinate)) yield cell;
     }
   }
@@ -222,6 +229,7 @@ class ViewportPatternPainter extends CustomPainter {
         : null;
     if (selectedThreadId == null) return;
     for (final cell in _visibleCells) {
+      _dynamicOverlayCandidatesVisited++;
       final isExcludedCompletedCell =
           !settings.includeCompletedCellsInSelection &&
           completedCells.contains(cell.coordinate);
@@ -235,6 +243,8 @@ class ViewportPatternPainter extends CustomPainter {
   /// Paints the visible document background, cells, glyphs, and grid rules.
   @override
   void paint(Canvas canvas, Size size) {
+    _dynamicOverlayCandidatesVisited = 0;
+    _dynamicOverlayPrimitivesPainted = 0;
     canvas.drawRect(Offset.zero & size, Paint()..color = surfaceColor);
     canvas.save();
     canvas.clipRect(Offset.zero & size);
@@ -297,6 +307,25 @@ class ViewportPatternPainter extends CustomPainter {
           tilePictureCacheBytes: tilePictureCache?.estimatedBytes ?? 0,
           tilePictureEvictions: tilePictureCache?.evictionCount ?? 0,
           tilePictureBypasses: staticTileFrame?.cacheBypassCount ?? 0,
+          directCellFillCount:
+              staticTileFrame?.directCellFillCountFor(this) ??
+              fillMetrics.primitiveCount,
+          directGlyphPaintCount:
+              staticTileFrame?.directGlyphPaintCountFor(this) ??
+              glyphMetrics.primitiveCount,
+          tileRecordingsStarted: staticTileFrame?.recordingsStarted ?? 0,
+          tileRecordingsCompleted: staticTileFrame?.recordingsCompleted ?? 0,
+          tileRecordingsRejected: staticTileFrame?.recordingsRejected ?? 0,
+          dynamicOverlayCandidatesVisited: _dynamicOverlayCandidatesVisited,
+          dynamicOverlayPrimitivesPainted: _dynamicOverlayPrimitivesPainted,
+          gridPathsRecorded: gridMetrics.drawCallCount,
+          cameraOriginX: camera.origin.dx,
+          cameraOriginY: camera.origin.dy,
+          cameraCellSize: camera.cellSize,
+          renderLod: renderLod,
+          interactionState:
+              cameraController?.interactionState ??
+              PatternViewportInteractionState.settled,
         ),
       );
     } finally {

@@ -227,10 +227,20 @@ void main() {
 
     expect(metrics?.cellFillCount, 3);
     expect(metrics?.cellFillDrawCalls, 2);
+    expect(metrics?.directCellFillCount, 3);
     expect(metrics?.gridRuleCount, 11);
     expect(metrics?.gridDrawCalls, 2);
+    expect(metrics?.gridPathsRecorded, 2);
     expect(metrics?.visibleCellCount, 3);
     expect(metrics?.glyphCount, 0);
+    expect(metrics?.directGlyphPaintCount, 0);
+    expect(metrics?.tileRecordingsStarted, 0);
+    expect(metrics?.tileRecordingsCompleted, 0);
+    expect(metrics?.tileRecordingsRejected, 0);
+    expect(metrics?.prefetchRequests, 0);
+    expect(metrics?.dynamicOverlayCandidatesVisited, 0);
+    expect(metrics?.dynamicOverlayPrimitivesPainted, 0);
+    expect(metrics?.isInteractive, isFalse);
     expect(metrics?.drawCallCount, greaterThanOrEqualTo(4));
   });
 

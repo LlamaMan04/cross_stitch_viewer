@@ -753,11 +753,13 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Starts a camera interaction while retaining cache access for panning.
   void _beginCameraInteraction({bool bypassTilePictures = false}) {
     _wheelInteractionTimer?.cancel();
+    _cameraController?.beginPanning();
     if (bypassTilePictures) _bypassTilePicturesForZoom();
   }
 
   /// Disables tile-picture reads and writes as soon as an interaction zooms.
   void _bypassTilePicturesForZoom() {
+    _cameraController?.beginZooming();
     if (!_tilePictureCache.reuseEnabled) return;
     _tilePictureCache.suspendWrites();
     _tilePictureCache.suspendReuse();
@@ -776,6 +778,7 @@ class _PatternViewportState extends State<PatternViewport> {
     _wheelInteractionTimer = null;
     _tilePictureCache.resumeWrites();
     _tilePictureCache.resumeReuse();
+    _cameraController?.settleInteraction();
     _cameraController?.requestRepaint();
     _reportSettledViewport();
   }
