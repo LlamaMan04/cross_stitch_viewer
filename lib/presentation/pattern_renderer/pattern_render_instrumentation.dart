@@ -4,9 +4,9 @@ import 'package:flutter/widgets.dart';
 
 import 'viewport_pattern_painter.dart';
 
-/// Enables renderer profiling only when explicitly requested in a debug build.
+/// Enables opt-in renderer profiling in debug and profile builds only.
 const bool patternRenderInstrumentationEnabled =
-    kDebugMode &&
+    !kReleaseMode &&
     bool.fromEnvironment('PATTERN_RENDER_INSTRUMENTATION', defaultValue: false);
 
 /// Controls how often debug renderer frame metrics are printed.
@@ -28,6 +28,12 @@ class PatternRenderInstrumentation {
     if (!patternRenderInstrumentationEnabled) return null;
     return PatternRenderInstrumentation();
   }
+
+  /// Receives every debug instrumentation sample for integration diagnostics.
+  ///
+  /// The production console remains governed by [logInterval]; this hook lets
+  /// a target-device integration test collect every engine timing sample.
+  static ValueChanged<PatternRenderFrameMetrics>? debugMetricsListener;
 
   /// Number of painted renderer frames between debug log messages.
   final int logInterval;
@@ -65,6 +71,13 @@ class PatternRenderInstrumentation {
   void recordPaint(PatternRenderBatchMetrics metrics) {
     _paintFrameCount++;
     _latestPaintMetrics = metrics;
+    debugMetricsListener?.call(
+      PatternRenderFrameMetrics(
+        paintFrame: _paintFrameCount,
+        timingFrame: _timingFrameCount,
+        paint: metrics,
+      ),
+    );
     if (_paintFrameCount % logInterval == 0) {
       _emitMetrics(
         PatternRenderFrameMetrics(
@@ -81,16 +94,16 @@ class PatternRenderInstrumentation {
     for (final timing in timings) {
       _timingFrameCount++;
       final paint = _latestPaintMetrics;
-      if (paint == null || _timingFrameCount % logInterval != 0) continue;
-      _emitMetrics(
-        PatternRenderFrameMetrics(
-          paintFrame: _paintFrameCount,
-          timingFrame: _timingFrameCount,
-          paint: paint,
-          buildDuration: timing.buildDuration,
-          rasterDuration: timing.rasterDuration,
-        ),
+      if (paint == null) continue;
+      final metrics = PatternRenderFrameMetrics(
+        paintFrame: _paintFrameCount,
+        timingFrame: _timingFrameCount,
+        paint: paint,
+        buildDuration: timing.buildDuration,
+        rasterDuration: timing.rasterDuration,
       );
+      debugMetricsListener?.call(metrics);
+      if (_timingFrameCount % logInterval == 0) _emitMetrics(metrics);
     }
   }
 

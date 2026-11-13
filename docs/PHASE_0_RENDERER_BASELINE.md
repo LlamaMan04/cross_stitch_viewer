@@ -14,6 +14,18 @@ flutter run -d windows --profile --dart-define=PATTERN_RENDER_INSTRUMENTATION=tr
 
 Use `flutter devices` to substitute an attached Android or iOS target. Each `PatternRenderFrameMetrics` line records camera/LOD/interaction state, build and raster time, tile counters, direct work, tile recordings, prefetch counters, overlay work, grid work, and draw calls.
 
+## Automated target-device recording
+
+The executable suite at [`integration_test/renderer_performance_test.dart`](../integration_test/renderer_performance_test.dart) is the automated form of every scenario below. It embeds this document's repository path (`docs/PHASE_0_RENDERER_BASELINE.md`) in its `IntegrationTestWidgetsFlutterBinding.reportData` and emits a `RENDER_PERFORMANCE_RESULT` JSON line. That JSON includes actual Flutter-engine build and raster timing samples plus renderer instrumentation counters from the selected target.
+
+Run it in profile mode with a device identifier from `flutter devices`:
+
+```powershell
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/renderer_performance_test.dart -d windows --profile --dart-define=PATTERN_RENDER_INSTRUMENTATION=true
+```
+
+Save the emitted JSON as a dated artifact alongside the hardware and OS details for the baseline row below. The integration suite deliberately reports measurements without pass/fail timing thresholds so device-specific regressions can be compared without flaking on unrelated target differences.
+
 ## Deterministic scenarios
 
 | Scenario | Fixture and setup | Gesture sequence |
