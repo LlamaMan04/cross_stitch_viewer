@@ -15,6 +15,7 @@ import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'pattern_tile_picture_cache.dart';
 import 'pattern_viewport_controller.dart';
+import 'pattern_viewport_bounds.dart';
 import 'render_lod.dart';
 
 part 'viewport_pattern_painter_cells.dart';
@@ -74,17 +75,21 @@ class ViewportPatternPainter extends CustomPainter {
   PatternCamera get camera =>
       cameraController?.camera ?? _staticGeometry.camera;
 
-  /// Current half-open grid range derived from the active camera.
-  GridBounds get visibleBounds {
+  /// Current document-clamped grid range that this painter may draw.
+  GridBounds get paintBounds {
     final dynamicViewportSize = viewportSize;
     if (cameraController == null || dynamicViewportSize == null) {
       return _staticGeometry.visibleBounds;
     }
-    return camera.visibleBounds(
+    return PatternViewportBounds.calculate(
+      camera: camera,
       viewportSize: dynamicViewportSize,
       dimensions: document.grid.dimensions,
-    );
+    ).paintBounds;
   }
+
+  /// Current paint range retained for existing renderer consumers.
+  GridBounds get visibleBounds => paintBounds;
 
   /// Persisted visual switches and colors for this paint pass.
   final PatternRenderSettings settings;

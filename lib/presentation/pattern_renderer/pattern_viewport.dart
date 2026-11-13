@@ -16,6 +16,7 @@ import 'pattern_render_instrumentation.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'pattern_tile_picture_cache.dart';
+import 'pattern_viewport_bounds.dart';
 import 'pattern_viewport_controller.dart';
 import 'render_lod.dart';
 import 'viewport_pattern_painter.dart';
@@ -39,8 +40,9 @@ class PatternViewport extends StatefulWidget {
     this.onInteraction,
     this.initialViewport,
     this.onViewportSettled,
+    this.prefetchTileDistance = PatternViewportBounds.defaultPrefetchTileDistance,
     super.key,
-  });
+  }) : assert(prefetchTileDistance >= 0);
 
   /// Pattern document displayed by the viewport.
   final PatternDocument document;
@@ -83,6 +85,9 @@ class PatternViewport extends StatefulWidget {
 
   /// Reports a stable camera snapshot after pan or zoom input settles.
   final ValueChanged<ViewportState>? onViewportSettled;
+
+  /// Number of source tiles expanded around paint bounds for cache warming.
+  final int prefetchTileDistance;
 
   /// Creates the mutable camera state for this viewport.
   @override
@@ -242,9 +247,11 @@ class _PatternViewportState extends State<PatternViewport> {
         // Camera and bounds are immutable inputs for this paint pass.
         final cameraController = _cameraController!;
         final camera = cameraController.camera;
-        final visibleBounds = camera.visibleBounds(
+        final viewportBounds = PatternViewportBounds.calculate(
+          camera: camera,
           viewportSize: viewportSize,
           dimensions: widget.document.grid.dimensions,
+          prefetchTileDistance: widget.prefetchTileDistance,
         );
         return Stack(
           fit: StackFit.expand,
@@ -295,7 +302,7 @@ class _PatternViewportState extends State<PatternViewport> {
                       painter: ViewportPatternPainter(
                         document: widget.document,
                         camera: camera,
-                        visibleBounds: visibleBounds,
+                        visibleBounds: viewportBounds.paintBounds,
                         settings: widget.settings,
                         selection: widget.selection,
                         completedCells: widget.completedCells,
