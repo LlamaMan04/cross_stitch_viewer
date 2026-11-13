@@ -3,27 +3,18 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../domain/pattern_definitions.dart';
-import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/repositories.dart';
 import '../../domain/value_objects.dart';
 import '../pattern_renderer/pattern_interaction.dart';
-import '../pattern_renderer/pattern_viewport.dart';
 import '../pattern_renderer/pattern_render_selection.dart';
+import '../pattern_renderer/pattern_render_view.dart';
+import 'pattern_workspace_controls.dart';
+import 'pattern_workspace_palette.dart';
+import 'pattern_workspace_settings_panel.dart';
 
-/// Mutually exclusive workspace surface activated from the floating menu.
-enum _WorkspaceMenuOption {
-  /// Opens renderer-specific visual settings.
-  rendererSettings,
-
-  /// Opens the symbol palette and thread inspector.
-  symbolPalette,
-
-  /// Enables exact-cell completion selection and its action surface.
-  completionSelection,
-}
+export '../pattern_renderer/pattern_render_view.dart';
 
 /// Loads a persisted pattern and its independent viewport render settings.
 class PatternWorkspaceScreen extends StatefulWidget {
@@ -70,22 +61,22 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   bool _isFloatingMenuExpanded = false;
 
   /// The only active workspace surface, or null when none is selected.
-  _WorkspaceMenuOption? _activeMenuOption;
+  WorkspaceMenuOption? _activeMenuOption;
 
   /// Current ephemeral symbol selection, intentionally not persisted.
   PatternRenderSelection _selection = const PatternRenderSelection();
 
   /// Whether the renderer settings surface is the active menu choice.
   bool get _showSettings =>
-      _activeMenuOption == _WorkspaceMenuOption.rendererSettings;
+      _activeMenuOption == WorkspaceMenuOption.rendererSettings;
 
   /// Whether the symbol palette surface is the active menu choice.
   bool get _showSymbolPalette =>
-      _activeMenuOption == _WorkspaceMenuOption.symbolPalette;
+      _activeMenuOption == WorkspaceMenuOption.symbolPalette;
 
   /// Derives tap behavior from the currently active mutually exclusive choice.
   PatternInteractionMode get _interactionMode =>
-      _activeMenuOption == _WorkspaceMenuOption.completionSelection
+      _activeMenuOption == WorkspaceMenuOption.completionSelection
       ? PatternInteractionMode.editCompletion
       : PatternInteractionMode.browse;
 
@@ -94,7 +85,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       CompletionCellSelection.empty();
 
   /// Inline Undo notice shown without covering workspace controls.
-  _CompletionUndoNotice? _completionUndoNotice;
+  CompletionUndoNotice? _completionUndoNotice;
 
   /// Timer that makes the completion Undo notice eligible for dismissal.
   Timer? _completionUndoTimer;
@@ -238,7 +229,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   bottom: 72,
                   key: const ValueKey('renderer-settings-panel'),
                   width: panelWidth,
-                  child: _PatternRenderSettingsPanel(
+                  child: PatternRenderSettingsPanel(
                     settings: _settings,
                     onChanged: _applySettings,
                     onOpacityChanged: _previewOpacity,
@@ -255,7 +246,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   bottom: 72,
                   key: const ValueKey('symbol-palette-panel'),
                   width: paletteWidth,
-                  child: _PatternSymbolPalettePanel(
+                  child: PatternSymbolPalettePanel(
                     document: document,
                     selection: _selection,
                     onSelected: _selectSelection,
@@ -269,7 +260,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
                   bottom: 12,
                   child: Align(
                     alignment: Alignment.bottomCenter,
-                    child: _CompletionActionBar(
+                    child: CompletionActionBar(
                       selectionCount: _completionSelection.length,
                       undoMessage: _completionUndoNotice?.message,
                       onUndo: _completionUndoNotice == null
@@ -287,7 +278,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
               Positioned(
                 right: 12,
                 bottom: 12,
-                child: _WorkspaceFloatingMenu(
+                child: WorkspaceFloatingMenu(
                   isExpanded: _isFloatingMenuExpanded,
                   activeOption: _activeMenuOption,
                   onToggle: _toggleFloatingMenu,
@@ -333,11 +324,11 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   }
 
   /// Activates one menu choice while closing every other workspace surface.
-  void _selectMenuOption(_WorkspaceMenuOption option) {
+  void _selectMenuOption(WorkspaceMenuOption option) {
     _dismissCompletionUndo();
     final enablesCompletedOverlay =
-        option == _WorkspaceMenuOption.completionSelection &&
-        _activeMenuOption != _WorkspaceMenuOption.completionSelection &&
+        option == WorkspaceMenuOption.completionSelection &&
+        _activeMenuOption != WorkspaceMenuOption.completionSelection &&
         !_settings.showCompletedCellOverlay;
     final updatedSettings = enablesCompletedOverlay
         ? _settings.copyWith(showCompletedCellOverlay: true)
@@ -348,10 +339,10 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
       } else {
         _activeMenuOption = option;
       }
-      if (_activeMenuOption != _WorkspaceMenuOption.completionSelection) {
+      if (_activeMenuOption != WorkspaceMenuOption.completionSelection) {
         _completionSelection = _completionSelection.clear();
       }
-      if (_activeMenuOption == _WorkspaceMenuOption.completionSelection) {
+      if (_activeMenuOption == WorkspaceMenuOption.completionSelection) {
         _selection = _selection.clear();
       }
       if (updatedSettings != null) {
@@ -368,7 +359,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
   void _closeActiveMenuOption() {
     _dismissCompletionUndo();
     setState(() {
-      if (_activeMenuOption == _WorkspaceMenuOption.completionSelection) {
+      if (_activeMenuOption == WorkspaceMenuOption.completionSelection) {
         _completionSelection = _completionSelection.clear();
       }
       _activeMenuOption = null;
@@ -435,7 +426,7 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
     _completionUndoTimer?.cancel();
     _completionUndoCanDismiss = false;
     setState(() {
-      _completionUndoNotice = _CompletionUndoNotice(
+      _completionUndoNotice = CompletionUndoNotice(
         message: message,
         previousCells: previousCells,
       );
@@ -624,960 +615,5 @@ class _PatternWorkspaceScreenState extends State<PatternWorkspaceScreen> {
           const SnackBar(content: Text('Unable to save pattern progress.')),
         );
     }
-  }
-}
-
-/// Snapshot and message backing the transient inline completion Undo notice.
-class _CompletionUndoNotice {
-  /// Creates an immutable notice for one completed-cell change.
-  _CompletionUndoNotice({
-    required this.message,
-    required Set<GridCoordinate> previousCells,
-  }) : previousCells = Set<GridCoordinate>.unmodifiable(previousCells);
-
-  /// Human-readable description of the completion change.
-  final String message;
-
-  /// Completion snapshot restored when Undo is selected.
-  final Set<GridCoordinate> previousCells;
-}
-
-/// Collapsible bottom-right menu for mutually exclusive workspace surfaces.
-class _WorkspaceFloatingMenu extends StatelessWidget {
-  /// Creates the menu from its expansion and active-selection state.
-  const _WorkspaceFloatingMenu({
-    required this.isExpanded,
-    required this.activeOption,
-    required this.onToggle,
-    required this.onSelected,
-  });
-
-  /// Whether the three workspace choices are currently visible.
-  final bool isExpanded;
-
-  /// The only currently active workspace choice, if any.
-  final _WorkspaceMenuOption? activeOption;
-
-  /// Opens or closes the three-choice floating menu.
-  final VoidCallback onToggle;
-
-  /// Activates or clears one workspace choice.
-  final ValueChanged<_WorkspaceMenuOption> onSelected;
-
-  /// Builds vertically stacked floating choices above the menu trigger.
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (isExpanded) ...[
-          _WorkspaceMenuButton(
-            key: const ValueKey('floating-menu-completion-selection'),
-            tooltip: 'Completion selection',
-            icon: Icons.check_box_outlined,
-            isSelected:
-                activeOption == _WorkspaceMenuOption.completionSelection,
-            selectedColor: colors.secondaryContainer,
-            onPressed: () =>
-                onSelected(_WorkspaceMenuOption.completionSelection),
-          ),
-          const SizedBox(height: 8),
-          _WorkspaceMenuButton(
-            key: const ValueKey('floating-menu-symbol-palette'),
-            tooltip: 'Symbol palette',
-            icon: Icons.palette_outlined,
-            isSelected: activeOption == _WorkspaceMenuOption.symbolPalette,
-            selectedColor: colors.secondaryContainer,
-            onPressed: () => onSelected(_WorkspaceMenuOption.symbolPalette),
-          ),
-          const SizedBox(height: 8),
-          _WorkspaceMenuButton(
-            key: const ValueKey('floating-menu-renderer-settings'),
-            tooltip: 'Renderer settings',
-            icon: Icons.tune,
-            isSelected: activeOption == _WorkspaceMenuOption.rendererSettings,
-            selectedColor: colors.secondaryContainer,
-            onPressed: () => onSelected(_WorkspaceMenuOption.rendererSettings),
-          ),
-          const SizedBox(height: 8),
-        ],
-        FloatingActionButton.small(
-          key: const ValueKey('floating-menu-toggle'),
-          heroTag: 'workspace-floating-menu',
-          tooltip: isExpanded ? 'Close workspace menu' : 'Open workspace menu',
-          onPressed: onToggle,
-          child: Icon(isExpanded ? Icons.close : Icons.menu),
-        ),
-      ],
-    );
-  }
-}
-
-/// One visible choice in the workspace floating menu.
-class _WorkspaceMenuButton extends StatelessWidget {
-  /// Creates one small floating button representing a workspace surface.
-  const _WorkspaceMenuButton({
-    required super.key,
-    required this.tooltip,
-    required this.icon,
-    required this.isSelected,
-    required this.selectedColor,
-    required this.onPressed,
-  });
-
-  /// Accessible label explaining the menu choice.
-  final String tooltip;
-
-  /// Icon representing the menu choice.
-  final IconData icon;
-
-  /// Whether this choice is the currently active workspace surface.
-  final bool isSelected;
-
-  /// Highlight color used for the active choice.
-  final Color selectedColor;
-
-  /// Activates or clears this menu choice.
-  final VoidCallback onPressed;
-
-  /// Builds a colored small floating-action button for the choice.
-  @override
-  Widget build(BuildContext context) => FloatingActionButton.small(
-    heroTag: tooltip,
-    tooltip: tooltip,
-    backgroundColor: isSelected ? selectedColor : null,
-    onPressed: onPressed,
-    child: Icon(icon),
-  );
-}
-
-/// Floating controls for applying completion state to exact selected cells.
-class _CompletionActionBar extends StatelessWidget {
-  /// Creates completion controls for the current transient cell selection.
-  const _CompletionActionBar({
-    required this.selectionCount,
-    required this.undoMessage,
-    required this.onUndo,
-    required this.onMarkCompleted,
-    required this.onMarkIncomplete,
-    required this.onClearSelection,
-    required this.onClose,
-  });
-
-  /// Number of exact cells awaiting a completion action.
-  final int selectionCount;
-
-  /// Completion result announced inline without covering workspace controls.
-  final String? undoMessage;
-
-  /// Restores the completion snapshot associated with [undoMessage].
-  final VoidCallback? onUndo;
-
-  /// Marks every selected coordinate complete.
-  final VoidCallback onMarkCompleted;
-
-  /// Marks every selected coordinate incomplete.
-  final VoidCallback onMarkIncomplete;
-
-  /// Clears selection without changing completion state.
-  final VoidCallback onClearSelection;
-
-  /// Closes completion selection without reopening the floating menu.
-  final VoidCallback onClose;
-
-  /// Builds a compact action surface that can wrap on narrow viewports.
-  @override
-  Widget build(BuildContext context) {
-    final hasSelection = selectionCount > 0;
-    return Material(
-      key: const ValueKey('completion-action-bar'),
-      elevation: 4,
-      borderRadius: BorderRadius.circular(16),
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          alignment: WrapAlignment.center,
-          children: [
-            if (undoMessage == null)
-              Text(
-                hasSelection
-                    ? '$selectionCount selected'
-                    : 'Tap stitches to select',
-              )
-            else
-              Container(
-                key: const ValueKey('completion-undo-snackbar'),
-                constraints: const BoxConstraints(maxWidth: 320),
-                padding: const EdgeInsets.only(left: 12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.inverseSurface,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          undoMessage!,
-                          style: TextStyle(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onInverseSurface,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        key: const ValueKey('undo-completion-action'),
-                        onPressed: onUndo,
-                        child: const Text('Undo'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            FilledButton.icon(
-              key: const ValueKey('mark-completed'),
-              onPressed: hasSelection ? onMarkCompleted : null,
-              icon: const Icon(Icons.check),
-              label: const Text('Complete'),
-            ),
-            OutlinedButton.icon(
-              key: const ValueKey('mark-incomplete'),
-              onPressed: hasSelection ? onMarkIncomplete : null,
-              icon: const Icon(Icons.remove_done),
-              label: const Text('Incomplete'),
-            ),
-            TextButton(
-              key: const ValueKey('clear-completion-selection'),
-              onPressed: hasSelection ? onClearSelection : null,
-              child: const Text('Clear selection'),
-            ),
-            IconButton(
-              key: const ValueKey('close-completion-selection'),
-              tooltip: 'Close completion selection',
-              onPressed: onClose,
-              icon: const Icon(Icons.close),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Compact controls for the visual layers supported by the current renderer.
-class _PatternRenderSettingsPanel extends StatelessWidget {
-  /// Creates controls for [settings].
-  const _PatternRenderSettingsPanel({
-    required this.settings,
-    required this.onChanged,
-    required this.onOpacityChanged,
-    required this.onOpacityChangeEnd,
-    required this.onCompletedOpacityChanged,
-    required this.onCompletedOpacityChangeEnd,
-    required this.onClose,
-  });
-
-  /// Current immutable renderer settings.
-  final PatternRenderSettings settings;
-
-  /// Callback for discrete switch and preset changes.
-  final ValueChanged<PatternRenderSettings> onChanged;
-
-  /// Callback for live opacity previews.
-  final ValueChanged<double> onOpacityChanged;
-
-  /// Callback for persisting a settled opacity value.
-  final ValueChanged<double> onOpacityChangeEnd;
-
-  /// Callback for live completed-cell opacity previews.
-  final ValueChanged<double> onCompletedOpacityChanged;
-
-  /// Callback for persisting a settled completed-cell opacity value.
-  final ValueChanged<double> onCompletedOpacityChangeEnd;
-
-  /// Closes renderer settings without reopening the floating menu.
-  final VoidCallback onClose;
-
-  /// Builds scrollable controls that fit desktop and compact-height layouts.
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Renderer Settings',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                IconButton(
-                  key: const ValueKey('close-renderer-settings'),
-                  tooltip: 'Close renderer settings',
-                  onPressed: onClose,
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-          _buildSectionHeader(context, 'Cell display'),
-          SwitchListTile(
-            key: const ValueKey('show-symbols-setting'),
-            dense: true,
-            title: const Text('Symbols'),
-            value: settings.showSymbols,
-            onChanged: (value) =>
-                onChanged(settings.copyWith(showSymbols: value)),
-          ),
-          SwitchListTile(
-            key: const ValueKey('show-cell-color-setting'),
-            dense: true,
-            title: const Text('Cell colors'),
-            value: settings.showCellColor,
-            onChanged: (value) =>
-                onChanged(settings.copyWith(showCellColor: value)),
-          ),
-          if (settings.showCellColor) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  const Expanded(child: Text('Color opacity')),
-                  Text('${(settings.cellColorOpacity * 100).round()}%'),
-                ],
-              ),
-            ),
-            Slider(
-              key: const ValueKey('cell-color-opacity-setting'),
-              value: settings.cellColorOpacity,
-              onChanged: onOpacityChanged,
-              onChangeEnd: onOpacityChangeEnd,
-            ),
-          ],
-          const Divider(height: 24),
-          _buildSectionHeader(context, 'Guides and selection'),
-          SwitchListTile(
-            key: const ValueKey('show-grid-setting'),
-            dense: true,
-            title: const Text('Grid'),
-            value: settings.showGrid,
-            onChanged: (value) => onChanged(settings.copyWith(showGrid: value)),
-          ),
-          if (settings.showGrid)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: DropdownButtonFormField<GridColorPreset>(
-                key: const ValueKey('grid-color-setting'),
-                initialValue: settings.gridColor,
-                decoration: const InputDecoration(
-                  labelText: 'Grid color',
-                  isDense: true,
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: GridColorPreset.black,
-                    child: Text('Black'),
-                  ),
-                  DropdownMenuItem(
-                    value: GridColorPreset.darkGray,
-                    child: Text('Dark gray'),
-                  ),
-                  DropdownMenuItem(
-                    value: GridColorPreset.lightGray,
-                    child: Text('Light gray'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    onChanged(settings.copyWith(gridColor: value));
-                  }
-                },
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: DropdownButtonFormField<SelectionHighlightColorPreset>(
-              key: const ValueKey('selection-highlight-color-setting'),
-              initialValue: settings.selectionHighlightColor,
-              decoration: const InputDecoration(
-                labelText: 'Selection highlight',
-                isDense: true,
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: SelectionHighlightColorPreset.amber,
-                  child: Text('Amber'),
-                ),
-                DropdownMenuItem(
-                  value: SelectionHighlightColorPreset.teal,
-                  child: Text('Teal'),
-                ),
-                DropdownMenuItem(
-                  value: SelectionHighlightColorPreset.magenta,
-                  child: Text('Magenta'),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  onChanged(settings.copyWith(selectionHighlightColor: value));
-                }
-              },
-            ),
-          ),
-          SwitchListTile(
-            key: const ValueKey('show-top-ruler-setting'),
-            dense: true,
-            title: const Text('Top ruler'),
-            value: settings.showTopRuler,
-            onChanged: (value) =>
-                onChanged(settings.copyWith(showTopRuler: value)),
-          ),
-          SwitchListTile(
-            key: const ValueKey('show-left-ruler-setting'),
-            dense: true,
-            title: const Text('Left ruler'),
-            value: settings.showLeftRuler,
-            onChanged: (value) =>
-                onChanged(settings.copyWith(showLeftRuler: value)),
-          ),
-          SwitchListTile(
-            key: const ValueKey('show-regions-setting'),
-            dense: true,
-            title: const Text('Source regions'),
-            value: settings.showRegions,
-            onChanged: (value) =>
-                onChanged(settings.copyWith(showRegions: value)),
-          ),
-          const Divider(height: 24),
-          _buildSectionHeader(context, 'Completion tracking'),
-          SwitchListTile(
-            key: const ValueKey('show-completed-overlay-setting'),
-            dense: true,
-            title: const Text('Completed-cell overlay'),
-            value: settings.showCompletedCellOverlay,
-            onChanged: (value) => onChanged(
-              settings.copyWith(
-                showCompletedCellOverlay: value,
-                includeCompletedCellsInSelection: value
-                    ? settings.includeCompletedCellsInSelection
-                    : true,
-              ),
-            ),
-          ),
-          if (settings.showCompletedCellOverlay) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: DropdownButtonFormField<CompletedCellColorPreset>(
-                key: const ValueKey('completed-cell-color-setting'),
-                initialValue: settings.completedCellColor,
-                decoration: const InputDecoration(
-                  labelText: 'Completed-cell color',
-                  isDense: true,
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: CompletedCellColorPreset.neutralGray,
-                    child: Text('Neutral gray'),
-                  ),
-                  DropdownMenuItem(
-                    value: CompletedCellColorPreset.darkGray,
-                    child: Text('Dark gray'),
-                  ),
-                  DropdownMenuItem(
-                    value: CompletedCellColorPreset.lightGray,
-                    child: Text('Light gray'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    onChanged(settings.copyWith(completedCellColor: value));
-                  }
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  const Expanded(child: Text('Completed opacity')),
-                  Text('${(settings.completedCellOpacity * 100).round()}%'),
-                ],
-              ),
-            ),
-            Slider(
-              key: const ValueKey('completed-cell-opacity-setting'),
-              value: settings.completedCellOpacity,
-              onChanged: onCompletedOpacityChanged,
-              onChangeEnd: onCompletedOpacityChangeEnd,
-            ),
-            SwitchListTile(
-              key: const ValueKey('include-completed-in-selection-setting'),
-              dense: true,
-              title: const Text('Select completed cells'),
-              subtitle: const Text(
-                'Include completed cells in symbol highlighting',
-              ),
-              value: settings.includeCompletedCellsInSelection,
-              onChanged: (value) => onChanged(
-                settings.copyWith(includeCompletedCellsInSelection: value),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// Builds a label that introduces one related renderer-settings region.
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Text(title, style: Theme.of(context).textTheme.labelLarge),
-    );
-  }
-}
-
-/// Floating symbol palette and selected-thread inspector.
-class _PatternSymbolPalettePanel extends StatelessWidget {
-  /// Creates a palette over one immutable pattern document.
-  const _PatternSymbolPalettePanel({
-    required this.document,
-    required this.selection,
-    required this.onSelected,
-    required this.onClose,
-  });
-
-  /// Document supplying symbols and complete thread definitions.
-  final PatternDocument document;
-
-  /// Current ephemeral symbol selection.
-  final PatternRenderSelection selection;
-
-  /// Callback used to select or clear an item in the palette.
-  final ValueChanged<PatternRenderSelection> onSelected;
-
-  /// Closes the palette without reopening the floating menu.
-  final VoidCallback onClose;
-
-  /// Builds a fixed selected-details header above every selectable document symbol.
-  @override
-  Widget build(BuildContext context) {
-    final selectedSymbol = selection.selectedSymbolId == null
-        ? null
-        : document.symbolById(selection.selectedSymbolId!);
-    final selectedBackstitchDefinition =
-        selection.selectedBackstitchDefinitionId == null
-        ? null
-        : document.backstitchDefinitionById(
-            selection.selectedBackstitchDefinitionId!,
-          );
-    final selectedThread = selection.threadId == null
-        ? null
-        : document.threadById(selection.threadId!);
-    return Material(
-      elevation: 8,
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(12),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Symbols',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                if (selection.hasSelection)
-                  TextButton(
-                    key: const ValueKey('clear-symbol-selection'),
-                    onPressed: () => onSelected(const PatternRenderSelection()),
-                    child: const Text('Clear'),
-                  ),
-                IconButton(
-                  key: const ValueKey('close-symbol-palette'),
-                  tooltip: 'Close symbol palette',
-                  onPressed: onClose,
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-          if (selectedThread != null) ...[
-            _SelectedThreadDetails(
-              thread: selectedThread,
-              symbol: selectedSymbol,
-              backstitchDefinition: selectedBackstitchDefinition,
-            ),
-            const Divider(height: 1),
-          ],
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 8),
-              children: [
-                for (final symbol in document.symbols)
-                  Builder(
-                    builder: (context) {
-                      final thread = document.threadForSymbol(symbol)!;
-                      return ListTile(
-                        key: ValueKey('symbol-palette-${symbol.id}'),
-                        dense: true,
-                        selected:
-                            selection.selectedSymbolId != null &&
-                            thread.id == selection.threadId,
-                        onTap: () => onSelected(
-                          PatternRenderSelection().selectSymbol(
-                            symbol.id,
-                            thread.id,
-                          ),
-                        ),
-                        leading: _SymbolSwatch(symbol: symbol, thread: thread),
-                        title: Text(thread.name ?? symbol.id),
-                        subtitle: Text(_threadSummary(thread)),
-                        trailing: Text(
-                          symbol.displayGlyph,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      );
-                    },
-                  ),
-                if (document.backstitchDefinitions.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Text('Backstitches'),
-                  ),
-                for (final definition in document.backstitchDefinitions)
-                  Builder(
-                    builder: (context) {
-                      final thread = document.threadForBackstitch(definition)!;
-                      return ListTile(
-                        key: ValueKey('backstitch-palette-${definition.id}'),
-                        dense: true,
-                        selected:
-                            selection.hasBackstitchSelection &&
-                            thread.id == selection.threadId,
-                        onTap: () => onSelected(
-                          PatternRenderSelection().selectBackstitch(
-                            definition.id,
-                            thread.id,
-                          ),
-                        ),
-                        leading: _BackstitchSwatch(thread: thread),
-                        title: Text(thread.name ?? thread.id),
-                        subtitle: Text(_threadSummary(thread)),
-                      );
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Concise metadata for the currently selected stitch and thread.
-class _SelectedThreadDetails extends StatelessWidget {
-  /// Creates an inspector for one selected symbol or backstitch definition.
-  const _SelectedThreadDetails({
-    required this.thread,
-    required this.symbol,
-    required this.backstitchDefinition,
-  });
-
-  /// Complete reusable thread record displayed by the inspector.
-  final ThreadDefinition thread;
-
-  /// Symbol that originated selection, when a cell or symbol was selected.
-  final SymbolDefinition? symbol;
-
-  /// Definition that originated selection, when linework was selected.
-  final BackstitchDefinition? backstitchDefinition;
-
-  /// Builds the selected stitch's type, optional strands, and thread catalog ID.
-  @override
-  Widget build(BuildContext context) {
-    final selectedSymbol = symbol;
-    final selectedBackstitch = backstitchDefinition;
-    return Semantics(
-      label: selectedBackstitch == null
-          ? 'Selected symbol thread ${thread.id}'
-          : 'Selected backstitch thread ${thread.id}',
-      child: Padding(
-        key: ValueKey(
-          selectedBackstitch == null
-              ? 'selected-symbol-details'
-              : 'selected-backstitch-details',
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (selectedSymbol != null)
-                  _SymbolSwatch(
-                    symbol: selectedSymbol,
-                    thread: thread,
-                    size: 48,
-                  )
-                else
-                  _BackstitchSwatch(thread: thread, size: 48),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (selectedSymbol != null) ...[
-                        Text(
-                          'Stitch type: '
-                          '${_stitchTypeLabel(selectedSymbol.stitchType)}',
-                        ),
-                        if (selectedSymbol.threadCount != null)
-                          Text(
-                            'Number of strands: ${selectedSymbol.threadCount}',
-                          ),
-                      ],
-                      if (selectedBackstitch != null) ...[
-                        const Text('Stitch type: Backstitch'),
-                        if (selectedBackstitch.threadCount != null)
-                          Text(
-                            'Number of strands: '
-                            '${selectedBackstitch.threadCount}',
-                          ),
-                      ],
-                      Text(_threadSummary(thread)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Colored glyph swatch shared by palette rows and selected details.
-class _SymbolSwatch extends StatelessWidget {
-  /// Creates a square swatch for [symbol].
-  const _SymbolSwatch({
-    required this.symbol,
-    required this.thread,
-    this.size = 36,
-  });
-
-  /// Symbol whose glyph and thread color are represented.
-  final SymbolDefinition symbol;
-
-  /// Separately stored thread whose color fills the swatch.
-  final ThreadDefinition thread;
-
-  /// Logical width and height of the square swatch.
-  final double size;
-
-  /// Builds a contrast-aware glyph over the imported thread color.
-  @override
-  Widget build(BuildContext context) {
-    final color = _parseThreadColor(thread.color);
-    final foreground = color.computeLuminance() > 0.45
-        ? Colors.black87
-        : Colors.white;
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        symbol.displayGlyph,
-        style: TextStyle(
-          color: foreground,
-          fontSize: size * 0.5,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-/// Colored line swatch used for palette backstitch entries and details.
-class _BackstitchSwatch extends StatelessWidget {
-  /// Creates a line swatch for one backstitch [thread].
-  const _BackstitchSwatch({required this.thread, this.size = 36});
-
-  /// Thread whose color is represented by the swatch.
-  final ThreadDefinition thread;
-
-  /// Logical width and height of the swatch.
-  final double size;
-
-  /// Builds a thread-colored line over a neutral rounded surface.
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: Container(
-      width: size * 0.68,
-      height: 5,
-      decoration: BoxDecoration(
-        color: _parseThreadColor(thread.color),
-        borderRadius: BorderRadius.circular(3),
-      ),
-    ),
-  );
-}
-
-/// Produces a compact manufacturer and catalog label for [thread].
-String _threadSummary(ThreadDefinition thread) {
-  final parts = <String>[
-    if (thread.brand != null) thread.brand!,
-    if (thread.catalogNumber != null) thread.catalogNumber!,
-  ];
-  return parts.isEmpty ? thread.color : parts.join(' ');
-}
-
-/// Produces a user-facing label for an optional [type].
-String _stitchTypeLabel(StitchType? type) {
-  switch (type) {
-    case StitchType.full:
-      return 'Full stitch';
-    case StitchType.half:
-      return 'Half stitch';
-    case StitchType.quarter:
-      return 'Quarter stitch';
-    case StitchType.threeQuarter:
-      return 'Three-quarter stitch';
-    case StitchType.frenchKnot:
-      return 'French knot';
-    case StitchType.unknown:
-      return 'Unknown';
-    case null:
-      return 'Multiple or not specified';
-  }
-}
-
-/// Converts a validated domain thread color to an opaque Flutter color.
-Color _parseThreadColor(String value) =>
-    Color(int.parse('FF${value.substring(1)}', radix: 16));
-
-/// Places a normalized pattern document in the viewport rendering engine.
-class PatternRenderView extends StatelessWidget {
-  /// Creates a read-only viewport for [document].
-  const PatternRenderView({
-    required this.document,
-    this.settings = const PatternRenderSettings(),
-    this.selection = const PatternRenderSelection(),
-    this.completedCells = const <GridCoordinate>{},
-    this.interactionMode = PatternInteractionMode.browse,
-    CompletionCellSelection? completionSelection,
-    this.onSymbolSelected,
-    this.onBackstitchSelected,
-    this.onCompletionCellSelected,
-    this.onCompletionCellAdded,
-    this.onCompletionEditUnavailable,
-    this.onInteraction,
-    this.initialViewport,
-    this.onViewportSettled,
-    super.key,
-  }) : completionSelection =
-           completionSelection ?? const CompletionCellSelection.empty();
-
-  /// Pattern data rendered by the viewport.
-  final PatternDocument document;
-
-  /// Visual settings applied without changing viewport camera state.
-  final PatternRenderSettings settings;
-
-  /// Ephemeral symbol selection highlighted across matching visible cells.
-  final PatternRenderSelection selection;
-
-  /// Completed coordinates used by progress-aware renderer overlays.
-  final Set<GridCoordinate> completedCells;
-
-  /// Active interpretation of taps inside the viewport.
-  final PatternInteractionMode interactionMode;
-
-  /// Exact coordinates selected for pending completion changes.
-  final CompletionCellSelection completionSelection;
-
-  /// Reports direct pattern-cell selection changes.
-  final ValueChanged<String?>? onSymbolSelected;
-
-  /// Reports a backstitch selection made directly on the viewport.
-  final ValueChanged<PatternRenderSelection>? onBackstitchSelected;
-
-  /// Reports exact-cell selection changes in completion-edit mode.
-  final ValueChanged<GridCoordinate>? onCompletionCellSelected;
-
-  /// Reports cells crossed by an additive completion-selection drag.
-  final ValueChanged<GridCoordinate>? onCompletionCellAdded;
-
-  /// Reports completion taps attempted below the legible zoom threshold.
-  final VoidCallback? onCompletionEditUnavailable;
-
-  /// Reports viewport interaction so transient completion feedback can clear.
-  final VoidCallback? onInteraction;
-
-  /// Persisted camera snapshot restored by the viewport after it is laid out.
-  final ViewportState? initialViewport;
-
-  /// Reports a stable camera snapshot for debounced progress persistence.
-  final ValueChanged<ViewportState>? onViewportSettled;
-
-  /// Builds a bounded surface whose camera maps grid coordinates to pixels.
-  @override
-  Widget build(BuildContext context) {
-    // The viewport surface follows the active application theme.
-    final colors = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLowest,
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: PatternViewport(
-        document: document,
-        settings: settings,
-        selection: selection,
-        completedCells: completedCells,
-        interactionMode: interactionMode,
-        completionSelection: completionSelection,
-        onSymbolSelected: onSymbolSelected,
-        onBackstitchSelected: onBackstitchSelected,
-        onCompletionCellSelected: onCompletionCellSelected,
-        onCompletionCellAdded: onCompletionCellAdded,
-        onCompletionEditUnavailable: onCompletionEditUnavailable,
-        onInteraction: onInteraction,
-        initialViewport: initialViewport,
-        onViewportSettled: onViewportSettled,
-      ),
-    );
   }
 }

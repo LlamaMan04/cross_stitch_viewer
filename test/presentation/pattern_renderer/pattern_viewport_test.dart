@@ -9,9 +9,9 @@ import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_view.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
-import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
 
 /// Covers navigation and completion-selection interactions in the viewport.
 void main() {
