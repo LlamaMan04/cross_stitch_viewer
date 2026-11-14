@@ -32,6 +32,9 @@ class PatternViewportController extends ChangeNotifier {
   PatternViewportInteractionState _interactionState =
       PatternViewportInteractionState.settled;
 
+  /// Monotonically increasing identity for camera-derived prefetch work.
+  int _cameraRevision = 0;
+
   /// Current immutable camera value.
   PatternCamera get camera => _camera;
 
@@ -40,6 +43,9 @@ class PatternViewportController extends ChangeNotifier {
 
   /// Activity associated with the current renderer frame.
   PatternViewportInteractionState get interactionState => _interactionState;
+
+  /// Revision used to cancel queued cache work for an obsolete camera.
+  int get cameraRevision => _cameraRevision;
 
   /// Marks upcoming camera updates as same-scale panning work.
   void beginPanning() =>
@@ -57,6 +63,7 @@ class PatternViewportController extends ChangeNotifier {
   void updateCamera(PatternCamera camera) {
     if (camera == _camera) return;
     _camera = camera;
+    _cameraRevision++;
     _renderLod = resolveRenderLod(
       cellSize: camera.cellSize,
       previous: _renderLod,
@@ -68,6 +75,7 @@ class PatternViewportController extends ChangeNotifier {
   void replaceCameraForLayout(PatternCamera camera) {
     if (camera == _camera) return;
     _camera = camera;
+    _cameraRevision++;
     _renderLod = resolveRenderLod(
       cellSize: camera.cellSize,
       previous: _renderLod,

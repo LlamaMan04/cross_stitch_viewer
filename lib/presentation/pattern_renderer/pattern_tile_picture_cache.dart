@@ -231,6 +231,9 @@ class PatternTilePictureCache {
   /// Whether paint frames may reuse retained pictures during the current frame.
   bool get reuseEnabled => _reuseEnabled;
 
+  /// Whether [key] is retained without affecting LRU order or diagnostics.
+  bool contains(PatternTilePictureKey key) => _entries.containsKey(key);
+
   /// Converts a positive logical cell size into a quarter-pixel cache bucket.
   static int quantizeCellSize(double cellSize) {
     assert(cellSize > 0 && cellSize.isFinite);

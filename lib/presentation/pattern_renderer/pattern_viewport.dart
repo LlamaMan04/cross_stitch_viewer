@@ -16,6 +16,7 @@ import 'pattern_render_instrumentation.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'pattern_tile_picture_cache.dart';
+import 'pattern_tile_prefetch_coordinator.dart';
 import 'pattern_viewport_bounds.dart';
 import 'pattern_viewport_controller.dart';
 import 'render_lod.dart';
@@ -40,7 +41,8 @@ class PatternViewport extends StatefulWidget {
     this.onInteraction,
     this.initialViewport,
     this.onViewportSettled,
-    this.prefetchTileDistance = PatternViewportBounds.defaultPrefetchTileDistance,
+    this.prefetchTileDistance =
+        PatternViewportBounds.defaultPrefetchTileDistance,
     super.key,
   }) : assert(prefetchTileDistance >= 0);
 
@@ -101,6 +103,10 @@ class _PatternViewportState extends State<PatternViewport> {
 
   /// Static tile display lists shared by every painter for this viewport.
   final PatternTilePictureCache _tilePictureCache = PatternTilePictureCache();
+
+  /// Cooperative warmer for source tiles just beyond the visible viewport.
+  final PatternTilePrefetchCoordinator _tilePrefetchCoordinator =
+      PatternTilePrefetchCoordinator();
 
   /// Parsed symbol colors and fill paints shared across viewport painters.
   late PatternSymbolRenderCache _symbolRenderCache;
@@ -175,6 +181,7 @@ class _PatternViewportState extends State<PatternViewport> {
     _instrumentation?.dispose();
     _cameraController?.dispose();
     _tilePictureCache.dispose();
+    _tilePrefetchCoordinator.dispose();
     _glyphLayoutCache.dispose();
     super.dispose();
   }
@@ -186,6 +193,7 @@ class _PatternViewportState extends State<PatternViewport> {
     if (_dependenciesInitialized) {
       _tilePictureCache.clear();
       _glyphLayoutCache.clear();
+      _tilePrefetchCoordinator.invalidate();
     }
     _dependenciesInitialized = true;
   }
@@ -200,9 +208,11 @@ class _PatternViewportState extends State<PatternViewport> {
       _gestureStartCamera = null;
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
       _tilePictureCache.clear();
+      _tilePrefetchCoordinator.invalidate();
     } else if (_staticTilePictureSettingsChanged(oldWidget.settings)) {
       // Only static fills and glyph contrast require picture invalidation.
       _tilePictureCache.clear();
+      _tilePrefetchCoordinator.invalidate();
     }
     if (oldWidget.document != widget.document ||
         !identical(oldWidget.completedCells, widget.completedCells)) {
@@ -314,6 +324,7 @@ class _PatternViewportState extends State<PatternViewport> {
                         glyphLayoutCache: _glyphLayoutCache,
                         symbolRenderCache: _symbolRenderCache,
                         tilePictureCache: _tilePictureCache,
+                        tilePrefetchCoordinator: _tilePrefetchCoordinator,
                         renderLod: cameraController.renderLod,
                         completedOverviewCoordinates:
                             _completedOverviewCoordinates,

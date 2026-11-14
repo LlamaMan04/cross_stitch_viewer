@@ -4,33 +4,13 @@ part of 'viewport_pattern_painter.dart';
 extension _ViewportPatternPainterTiles on ViewportPatternPainter {
   /// Resolves cached or direct static content for every visible source tile.
   _StaticTileFrame _prepareStaticTileFrame() {
-    final cache = tilePictureCache!;
-    final hasFillLayer =
-        settings.showCellColor && renderLod != RenderLod.overview;
-    final hasGlyphLayer = settings.showSymbols && renderLod == RenderLod.detail;
-    if ((!hasFillLayer && !hasGlyphLayer) || visibleBounds.isEmpty) {
+    final recorder = createStaticTileRecorder();
+    if (recorder == null || visibleBounds.isEmpty) {
       return const _StaticTileFrame();
     }
     final query = visibleBounds.clampTo(document.grid.dimensions);
     if (query.isEmpty) return const _StaticTileFrame();
 
-    final cellSizeBucket = PatternTilePictureCache.quantizeCellSize(
-      camera.cellSize,
-    );
-    final style = PatternTilePictureStyle(
-      showCellColor: settings.showCellColor,
-      cellColorOpacity: settings.cellColorOpacity,
-      showSymbols: settings.showSymbols,
-      surfaceColor: surfaceColor,
-    );
-    final recorder = PatternStaticTileRecorder(
-      document: document,
-      cache: cache,
-      renderLod: renderLod,
-      cellSizeBucket: cellSizeBucket,
-      style: style,
-      recordPictures: _recordStaticTilePictures,
-    );
     final contents = <_StaticTileContent>[];
     var cacheHitCount = 0;
     var cacheMissCount = 0;
@@ -73,6 +53,28 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
       recordingsStarted: recordingsStarted,
       recordingsCompleted: recordingsCompleted,
       recordingsRejected: recordingsRejected,
+    );
+  }
+
+  /// Creates the shared normal-paint and prefetch recorder for this painter.
+  PatternStaticTileRecorder? createStaticTileRecorder() {
+    final cache = tilePictureCache;
+    final hasFillLayer =
+        settings.showCellColor && renderLod != RenderLod.overview;
+    final hasGlyphLayer = settings.showSymbols && renderLod == RenderLod.detail;
+    if (cache == null || (!hasFillLayer && !hasGlyphLayer)) return null;
+    return PatternStaticTileRecorder(
+      document: document,
+      cache: cache,
+      renderLod: renderLod,
+      cellSizeBucket: PatternTilePictureCache.quantizeCellSize(camera.cellSize),
+      style: PatternTilePictureStyle(
+        showCellColor: settings.showCellColor,
+        cellColorOpacity: settings.cellColorOpacity,
+        showSymbols: settings.showSymbols,
+        surfaceColor: surfaceColor,
+      ),
+      recordPictures: _recordStaticTilePictures,
     );
   }
 

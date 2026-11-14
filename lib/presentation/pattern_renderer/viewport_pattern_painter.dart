@@ -14,6 +14,7 @@ import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'pattern_static_tile_recorder.dart';
+import 'pattern_tile_prefetch_coordinator.dart';
 import 'pattern_tile_picture_cache.dart';
 import 'pattern_viewport_controller.dart';
 import 'pattern_viewport_bounds.dart';
@@ -47,6 +48,7 @@ class ViewportPatternPainter extends CustomPainter {
     this.pendingOverviewCoordinates,
     this.onBatchMetrics,
     this.tilePictureCache,
+    this.tilePrefetchCoordinator,
     this.cameraController,
     this.viewportSize,
   }) : _staticGeometry = _StaticPaintGeometry(
@@ -121,6 +123,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Shared bounded cache that survives short-lived painter delegates.
   final PatternTilePictureCache? tilePictureCache;
+
+  /// Viewport-owned coordinator that warms nearby static tile pictures.
+  final PatternTilePrefetchCoordinator? tilePrefetchCoordinator;
 
   /// Detail level retained by the camera controller across paint frames.
   RenderLod get renderLod =>
@@ -293,6 +298,7 @@ class ViewportPatternPainter extends CustomPainter {
         drawCallCount += _paintRegions(canvas);
       }
       drawCallCount += _paintBackstitches(canvas);
+      _submitTilePrefetch();
       canvas.restore();
       onBatchMetrics?.call(
         PatternRenderBatchMetrics(
@@ -322,6 +328,14 @@ class ViewportPatternPainter extends CustomPainter {
           tileRecordingsStarted: staticTileFrame?.recordingsStarted ?? 0,
           tileRecordingsCompleted: staticTileFrame?.recordingsCompleted ?? 0,
           tileRecordingsRejected: staticTileFrame?.recordingsRejected ?? 0,
+          tileRecordingsQueued:
+              tilePrefetchCoordinator?.queuedRequestCount ?? 0,
+          prefetchRequests: tilePrefetchCoordinator?.requestCount ?? 0,
+          prefetchedTiles: tilePrefetchCoordinator?.prefetchedTileCount ?? 0,
+          cancelledPrefetchRequests:
+              tilePrefetchCoordinator?.cancelledRequestCount ?? 0,
+          stalePrefetchRequests:
+              tilePrefetchCoordinator?.staleRequestCount ?? 0,
           dynamicOverlayCandidatesVisited: _dynamicOverlayCandidatesVisited,
           dynamicOverlayPrimitivesPainted: _dynamicOverlayPrimitivesPainted,
           gridPathsRecorded: gridMetrics.drawCallCount,
@@ -348,6 +362,34 @@ class ViewportPatternPainter extends CustomPainter {
   /// Converts a validated domain `#RRGGBB` value into an opaque Flutter color.
   Color _parseColor(String value) =>
       Color(int.parse('FF${value.substring(1)}', radix: 16));
+
+  /// Defers nearby static tile recordings until after this frame is complete.
+  void _submitTilePrefetch() {
+    final coordinator = tilePrefetchCoordinator;
+    final cache = tilePictureCache;
+    final controller = cameraController;
+    final size = viewportSize;
+    final recorder = createStaticTileRecorder();
+    if (coordinator == null ||
+        cache == null ||
+        controller == null ||
+        size == null ||
+        recorder == null) {
+      return;
+    }
+    coordinator.submit(
+      camera: camera,
+      renderLod: renderLod,
+      bounds: PatternViewportBounds.calculate(
+        camera: camera,
+        viewportSize: size,
+        dimensions: document.grid.dimensions,
+      ),
+      revision: controller.cameraRevision,
+      recorder: recorder,
+      requestRepaint: controller.requestRepaint,
+    );
+  }
 
   /// Repaints when any visible rendering input changes.
   @override

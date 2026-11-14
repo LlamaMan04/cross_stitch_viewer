@@ -148,6 +148,18 @@ class PatternStaticTileRecorder {
         document.grid.cellsIntersecting(tileBoundsFor(coordinate)),
       );
 
+  /// Records [coordinate] into the cache and releases any temporary ownership.
+  ///
+  /// Returns true only when this call made a newly recorded picture available
+  /// for a later paint frame.
+  bool warm(PatternTileCoordinate coordinate) {
+    final resolution = resolve(coordinate);
+    final wasRecorded =
+        resolution.recordingCompleted && !resolution.recordingRejected;
+    resolution.release();
+    return wasRecorded;
+  }
+
   /// Returns cached, direct, or temporary tile content with safe ownership.
   PatternStaticTileResolution resolve(PatternTileCoordinate coordinate) {
     final key = keyFor(coordinate);
