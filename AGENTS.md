@@ -1,14 +1,5 @@
 # Repository Guidelines
 
-## Mandatory Workspace Rules
-
-These rules apply to all source and test code in this Flutter/Dart repository:
-
-- All functions, types, variables, and complex logic must have brief explanatory comments describing their purpose or reasoning. Keep comments accurate as the implementation changes.
-- No single code file may contain more than 800 lines of code. Split a growing file before it reaches this limit.
-- Each code file must be tailored to exactly one specific purpose. Keep unrelated responsibilities in separate, focused files; this applies to application, domain, platform, and test code.
-- Run every `dart` and `flutter` command with elevated permissions. This repository requires elevation for these commands to prevent them from hanging.
-
 ## Project Structure
 
 This is a Flutter application written in Dart. App startup is in `lib/main.dart`; app configuration and screens are under `lib/app/` and `lib/presentation/`. Platform-independent contracts live in `lib/domain/`: pattern models, progress models, value objects, JSON serialization, errors, and repository interfaces. Keep mutable user progress separate from imported pattern data. Tests are under `test/`, with domain fixtures in `test/domain/fixtures/`. Platform runner projects are in `android/`, `ios/`, `windows/`, `macos/`, and `linux/`.
@@ -21,9 +12,11 @@ This is a Flutter application written in Dart. App startup is in `lib/main.dart`
 - `flutter test` runs all unit and widget tests; use `flutter test test/domain` for domain contracts.
 - `flutter build <platform>` builds a target, for example `flutter build windows` or `flutter build apk`.
 
+All `flutter` and `dart` cli commands must be run with elevated permissions. Failing to do so will cause the environment to hang. 
+
 ## Coding Style and Naming
 
-Format Dart changes with `dart format .` and follow `analysis_options.yaml` (`flutter_lints`). Use two-space indentation, `lower_snake_case.dart` filenames, `UpperCamelCase` types, and `lowerCamelCase` members. Prefer focused files organized by domain responsibility. Keep domain code free of Flutter, persistence, filesystem, and plugin dependencies. Preserve stable JSON field names and validate decoded data at model or codec boundaries. Ensure every type, member, function, and variable have a comment describing the purpose of that element.
+Format Dart changes with `dart format .` and follow `analysis_options.yaml` (`flutter_lints`). Use two-space indentation, `lower_snake_case.dart` filenames, `UpperCamelCase` types, and `lowerCamelCase` members. Enfoce focused files organized by domain responsibility with a maximum length around 800 lines. Keep domain code free of Flutter, persistence, filesystem, and plugin dependencies. Preserve stable JSON field names and validate decoded data at model or codec boundaries. Ensure every type, member, function, variable, and section of complex code logic have a comment describing the purpose of that element.
 
 ## Testing
 
