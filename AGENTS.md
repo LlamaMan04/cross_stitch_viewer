@@ -1,5 +1,14 @@
 # Repository Guidelines
 
+## Mandatory Workspace Rules
+
+These rules apply to all source and test code in this Flutter/Dart repository:
+
+- All functions, types, variables, and complex logic must have brief explanatory comments describing their purpose or reasoning. Keep comments accurate as the implementation changes.
+- No single code file may contain more than 800 lines of code. Split a growing file before it reaches this limit.
+- Each code file must be tailored to exactly one specific purpose. Keep unrelated responsibilities in separate, focused files; this applies to application, domain, platform, and test code.
+- Run every `dart` and `flutter` command with elevated permissions. This repository requires elevation for these commands to prevent them from hanging.
+
 ## Project Structure
 
 This is a Flutter application written in Dart. App startup is in `lib/main.dart`; app configuration and screens are under `lib/app/` and `lib/presentation/`. Platform-independent contracts live in `lib/domain/`: pattern models, progress models, value objects, JSON serialization, errors, and repository interfaces. Keep mutable user progress separate from imported pattern data. Tests are under `test/`, with domain fixtures in `test/domain/fixtures/`. Platform runner projects are in `android/`, `ios/`, `windows/`, `macos/`, and `linux/`.
