@@ -7,6 +7,7 @@ import '../domain/pattern_document.dart';
 import '../domain/pattern_grid.dart';
 import '../domain/pattern_provenance.dart';
 import '../domain/value_objects.dart';
+import 'pattern_document_json_constants.dart';
 
 /// Decodes a portable JSON string into a validated [PatternDocument].
 PatternDocument decodePatternDocumentJson(String source) {
@@ -25,7 +26,7 @@ PatternDocument decodePatternDocumentJson(String source) {
 PatternDocument patternDocumentFromJson(Object? source) {
   final root = _object(source, r'$');
   final version = _integer(root, 'formatVersion', r'$');
-  if (version != formatVersion) {
+  if (version != patternDocumentJsonFormatVersion) {
     throw FormatException(
       'Unsupported format version $version.',
       r'$.formatVersion',
@@ -180,8 +181,40 @@ Map<String, Object?> _metadata(Map<String, Object?> root) {
   final metadata = _object(value, r'$.sourceMetadata');
   return <String, Object?>{
     for (final entry in metadata.entries)
-      entry.key: _jsonValue(entry.value, r'$.sourceMetadata'),
+      entry.key: _jsonValue(entry.value, r'$.sourceMetadata.${entry.key}'),
   };
+}
+
+/// Validates and copies a recursively nested JSON-compatible metadata value.
+Object? _jsonValue(Object? value, String path) {
+  if (value == null || value is String || value is bool) return value;
+  if (value is num) {
+    if (!value.isFinite) {
+      throw FormatException('Number must be finite.', path);
+    }
+    return value;
+  }
+  if (value is List) {
+    return value
+        .asMap()
+        .entries
+        .map((entry) => _jsonValue(entry.value, '$path[${entry.key}]'))
+        .toList(growable: false);
+  }
+  if (value is Map) {
+    final result = <String, Object?>{};
+    for (final entry in value.entries) {
+      if (entry.key is! String) {
+        throw FormatException('Object keys must be strings.', path);
+      }
+      result[entry.key as String] = _jsonValue(
+        entry.value,
+        '$path.${entry.key}',
+      );
+    }
+    return result;
+  }
+  throw FormatException('Unsupported value.', path);
 }
 
 List<T> _decodeList<T>(

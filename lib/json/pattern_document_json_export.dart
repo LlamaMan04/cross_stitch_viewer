@@ -1,46 +1,45 @@
 import 'dart:convert';
 
-import '../domain/domain_error.dart';
 import '../domain/pattern_backstitch.dart';
 import '../domain/pattern_definitions.dart';
 import '../domain/pattern_document.dart';
 import '../domain/pattern_grid.dart';
 import '../domain/pattern_provenance.dart';
-import '../domain/value_objects.dart';
-
+import 'pattern_document_json_constants.dart';
 
 /// Encodes [document] as a portable JSON string.
-String encodePatternDocumentJson(PatternDocument document) => jsonEncode(patternDocumentToJson(document));
+String encodePatternDocumentJson(PatternDocument document) =>
+    jsonEncode(patternDocumentToJson(document));
 
 /// Converts [document] into JSON-compatible values.
 Map<String, Object?> patternDocumentToJson(PatternDocument document) {
-    document.validate();
-    return <String, Object?>{
-      'formatVersion': formatVersion,
-      'id': document.id,
-      'title': document.title,
-      'schemaVersion': document.schemaVersion,
-      'grid': <String, Object?>{
-        'rows': document.grid.dimensions.rows,
-        'columns': document.grid.dimensions.columns,
-        'cells': document.grid.cells.map(_cellToJson).toList(growable: false),
-      },
-      'threads': document.threads.map(_threadToJson).toList(growable: false),
-      'symbols': document.symbols.map(_symbolToJson).toList(growable: false),
-      'backstitchDefinitions': document.backstitchDefinitions
-          .map(_backstitchDefinitionToJson)
-          .toList(growable: false),
-      'backstitches': document.backstitches
-          .map(_backstitchToJson)
-          .toList(growable: false),
-      'regions': document.regions.map(_regionToJson).toList(growable: false),
-      'sourceMetadata': _jsonValue(document.sourceMetadata, 'sourceMetadata'),
-      'sourceChecksum': document.sourceChecksum,
-      'diagnostics': document.diagnostics
-          .map(_diagnosticToJson)
-          .toList(growable: false),
-    };
-  }
+  document.validate();
+  return <String, Object?>{
+    'formatVersion': patternDocumentJsonFormatVersion,
+    'id': document.id,
+    'title': document.title,
+    'schemaVersion': document.schemaVersion,
+    'grid': <String, Object?>{
+      'rows': document.grid.dimensions.rows,
+      'columns': document.grid.dimensions.columns,
+      'cells': document.grid.cells.map(_cellToJson).toList(growable: false),
+    },
+    'threads': document.threads.map(_threadToJson).toList(growable: false),
+    'symbols': document.symbols.map(_symbolToJson).toList(growable: false),
+    'backstitchDefinitions': document.backstitchDefinitions
+        .map(_backstitchDefinitionToJson)
+        .toList(growable: false),
+    'backstitches': document.backstitches
+        .map(_backstitchToJson)
+        .toList(growable: false),
+    'regions': document.regions.map(_regionToJson).toList(growable: false),
+    'sourceMetadata': _jsonValue(document.sourceMetadata, 'sourceMetadata'),
+    'sourceChecksum': document.sourceChecksum,
+    'diagnostics': document.diagnostics
+        .map(_diagnosticToJson)
+        .toList(growable: false),
+  };
+}
 
 Map<String, Object?> _cellToJson(StitchCell cell) => <String, Object?>{
   'row': cell.coordinate.row,
@@ -49,7 +48,7 @@ Map<String, Object?> _cellToJson(StitchCell cell) => <String, Object?>{
   'confidence': cell.confidence?.value,
   'needsReview': cell.needsReview,
   'provenanceId': cell.provenanceId,
-}
+};
 
 Map<String, Object?> _threadToJson(ThreadDefinition thread) =>
     <String, Object?>{
@@ -60,7 +59,7 @@ Map<String, Object?> _threadToJson(ThreadDefinition thread) =>
       'name': thread.name,
       'conversionNotes': thread.conversionNotes,
       'evidence': thread.evidence.name,
-    }
+    };
 
 Map<String, Object?> _symbolToJson(SymbolDefinition symbol) =>
     <String, Object?>{
@@ -72,14 +71,14 @@ Map<String, Object?> _symbolToJson(SymbolDefinition symbol) =>
       'stitchType': symbol.stitchType.name,
       'threadCount': symbol.threadCount,
       'legendEvidence': symbol.legendEvidence,
-    }
+    };
 
 Map<String, Object?> _backstitchDefinitionToJson(BackstitchDefinition value) =>
     <String, Object?>{
       'id': value.id,
       'threadId': value.threadId,
       'threadCount': value.threadCount,
-    }
+    };
 
 Map<String, Object?> _backstitchToJson(BackstitchSegment value) =>
     <String, Object?>{
@@ -90,10 +89,10 @@ Map<String, Object?> _backstitchToJson(BackstitchSegment value) =>
       'confidence': value.confidence?.value,
       'needsReview': value.needsReview,
       'provenanceId': value.provenanceId,
-    }
+    };
 
 Map<String, Object?> _backstitchCoordinateToJson(BackstitchCoordinate value) =>
-    <String, Object?>{'row': value.row, 'column': value.column}
+    <String, Object?>{'row': value.row, 'column': value.column};
 
 Map<String, Object?> _regionToJson(PatternRegion value) => <String, Object?>{
   'id': value.id,
@@ -103,7 +102,7 @@ Map<String, Object?> _regionToJson(PatternRegion value) => <String, Object?>{
   'rows': value.rows,
   'columns': value.columns,
   'label': value.label,
-}
+};
 
 Map<String, Object?> _diagnosticToJson(ParserDiagnostic value) =>
     <String, Object?>{
@@ -120,7 +119,7 @@ Map<String, Object?> _diagnosticToJson(ParserDiagnostic value) =>
       'regionId': value.regionId,
       'confidence': value.confidence?.value,
       'suggestedCorrection': value.suggestedCorrection,
-    }
+    };
 
 Object? _jsonValue(Object? value, String path) {
   if (value == null || value is String || value is bool) return value;
@@ -152,4 +151,3 @@ Object? _jsonValue(Object? value, String path) {
   }
   throw FormatException('Value is not JSON-compatible.', path);
 }
-
