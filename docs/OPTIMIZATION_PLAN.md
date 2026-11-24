@@ -8,15 +8,17 @@ The primary suspected cause is synchronous work for newly exposed 16×16 tiles: 
 
 ## Completed foundation
 
-The renderer already has bounded tile-picture caching with document, style, LOD, and quantized-scale keys; leased native-picture disposal; sparse tile-backed grid queries; overview summaries; visible-cell memoization; fill/grid path batching; glyph layout caching; and zoom-time tile-picture bypass. Renderer instrumentation and representative large-pattern fixtures also exist.
+The renderer already has bounded tile-picture caching with document, style, LOD, and quantized-scale keys; leased native-picture disposal; sparse tile-backed grid queries; overview summaries; visible-cell memoization; fill/grid path batching; glyph layout caching; zoom-time tile-picture bypass; explicit interaction states; tile-aligned paint/prefetch bounds; shared tile recording; cooperative tile prefetching; and stale-request invalidation. Renderer instrumentation, unit/widget tests, and representative large-pattern fixtures also exist.
 
-The remaining work below is not yet complete: measured baselines, tile prefetching, previous-frame pan reuse, glyph-picture caching, dynamic overlay indexes, grid geometry caching, parameter tuning, and end-to-end performance validation.
+The remaining work below is not yet complete: captured target-device baselines, previous-frame pan reuse, a strict synchronous-recording limit during pans, glyph-picture caching below the tile level, dynamic overlay indexes, grid geometry caching, parameter tuning, and end-to-end performance validation. The status labels below describe the repository as it exists today.
+
+**Status legend:** **Complete** means implemented and covered by focused tests where applicable; **Partial** means the supporting mechanism exists but the planned behavior or diagnostics are incomplete; **Open** means the work has not been implemented.
 
 ## Implementation plan
 
 ### Phase 0 — Establish a reproducible baseline
 
-#### 0.1 Expand renderer metrics
+#### 0.1 Expand renderer metrics — **Partial**
 
 Extend `PatternRenderBatchMetrics` and its instrumentation output with:
 
@@ -29,7 +31,9 @@ Extend `PatternRenderBatchMetrics` and its instrumentation output with:
 
 Keep cumulative cache counters separate from per-frame counters so a trace can distinguish current-frame work from lifetime totals.
 
-#### 0.2 Add repeatable benchmark scenarios
+The requested fields and instrumentation output now exist. The remaining diagnostic cleanup is to separate lifetime counters from per-frame deltas consistently: cache evictions and prefetch counters are currently exposed from their long-lived owners, while queued recordings represent the current queue length rather than newly queued work. Grid-path replay is also reserved in the metrics model but is not yet populated.
+
+#### 0.2 Add repeatable benchmark scenarios — **Complete**
 
 Create a renderer benchmark or diagnostic test harness using deterministic fixtures for:
 
@@ -47,13 +51,13 @@ For each scenario, exercise:
 
 Capture build time, raster time, tile hits/misses, recordings, evictions, cache bytes, visible cells, glyph work, overlay candidates, grid work, and draw calls.
 
-#### 0.3 Record baseline traces
+#### 0.3 Record baseline traces — **Open**
 
 Run the scenarios on at least one desktop and one slower/mobile-class target. Store the scenario description and summarized results in the repository, not brittle platform-specific absolute timing assertions. Use the baseline to identify the dominant cost before changing tile size or cache budgets.
 
 ### Phase 1 — Make same-scale panning tile-aware
 
-#### 1.1 Introduce paint and prefetch bounds
+#### 1.1 Introduce paint and prefetch bounds — **Complete**
 
 Add a viewport-owned bounds calculation with these separate concepts:
 
@@ -64,13 +68,13 @@ The initial prefetch distance should be one 16×16 tile. Keep the value configur
 
 The painter must use `paintBounds` for visible rendering and never expand actual draw work merely because prefetching is enabled.
 
-#### 1.2 Extract shared tile recording
+#### 1.2 Extract shared tile recording — **Complete**
 
 Move tile-key creation, tile-cell lookup, and static tile-picture recording behind a reusable service or viewport helper. Both normal cache population and prefetching must call the same implementation so they cannot diverge in style, LOD, scale, or invalidation behavior.
 
 The helper should return a leased cache entry when possible and must safely dispose rejected or temporary pictures. It must not mutate `PatternDocument` or progress state.
 
-#### 1.3 Add a bounded prefetch coordinator
+#### 1.3 Add a bounded prefetch coordinator — **Complete**
 
 Create a small coordinator owned by `PatternViewport` that receives:
 
@@ -91,7 +95,7 @@ Implement the following behavior:
 
 Do not let prefetch work run unbounded inside `paint`. It must be cooperative and observable through metrics.
 
-#### 1.4 Split pan and zoom policies
+#### 1.4 Split pan and zoom policies — **Partial**
 
 Represent interaction state explicitly as either:
 
@@ -102,7 +106,7 @@ Represent interaction state explicitly as either:
 For same-scale panning:
 
 - Continue reusing matching cached pictures.
-- Permit only the configured number of synchronous tile recordings per frame.
+- The planned strict cap on synchronous tile recordings per frame is still open; visible misses can currently record during paint.
 - Send additional misses to the prefetch coordinator.
 
 For continuous zooming:
@@ -113,7 +117,7 @@ For continuous zooming:
 
 Ensure a small scale delta cannot accidentally switch a pure pan into zoom mode, and ensure wheel zoom uses the same policy as pinch zoom.
 
-#### 1.5 Reuse the previous static frame during active pan
+#### 1.5 Reuse the previous static frame during active pan — **Open**
 
 Retain the previous static tile frame or its leases at the start of a same-scale pan. During the gesture:
 
@@ -126,7 +130,7 @@ Retain the previous static tile frame or its leases at the start of a same-scale
 
 The frame-reuse implementation must be disabled or invalidated when scale, LOD, document identity, theme, font inputs, or static render settings change.
 
-#### 1.6 Add Phase 1 tests
+#### 1.6 Add Phase 1 tests — **Partial**
 
 Cover:
 
@@ -137,7 +141,9 @@ Cover:
 - Correct document-edge clipping during translated-frame reuse.
 - Lease safety when a retained frame is evicted or replaced.
 
-### Phase 2 — Reduce glyph recording cost
+Bounds, coordinator, cancellation, and basic cache behavior have focused tests. Tests for translated-frame reuse, strict synchronous recording limits, and retained-frame lease safety remain to be added.
+
+### Phase 2 — Reduce glyph recording cost — **Open**
 
 #### 2.1 Add a bounded glyph-picture cache
 
@@ -169,7 +175,7 @@ The glyph picture cache is an optimization below tile-picture caching; it must n
 
 Use compatible quantization with tile pictures and measure readability at detail-level scales. If scaling introduces blur on a target platform, narrow the bucket width or record at a slightly higher representative size. Add visual tests for symbols at tile edges and at LOD transitions.
 
-### Phase 3 — Index and batch dynamic overlays
+### Phase 3 — Index and batch dynamic overlays — **Open**
 
 #### 3.1 Build completed-cell tile indexes
 
@@ -203,7 +209,7 @@ Compare indexed rendering with the current cell-by-cell result for:
 - Selected symbols with and without completed cells included.
 - Selection and completion changes without document changes.
 
-### Phase 4 — Cache grid geometry
+### Phase 4 — Cache grid geometry — **Open**
 
 #### 4.1 Define grid cache keys
 
@@ -229,7 +235,7 @@ If native grid pictures are not beneficial on a target platform, retain cached l
 
 Verify reuse across camera translations and invalidation after every key input changes. Check document edges, overview major-only rules, and scale-bucket changes.
 
-### Phase 5 — Tune tile size, cache budgets, and quantization
+### Phase 5 — Tune tile size, cache budgets, and quantization — **Open; blocked on measured baselines**
 
 Only after Phases 1–4 are implemented and measured, benchmark:
 
@@ -243,7 +249,7 @@ Choose settings using worst-frame raster time and interaction smoothness, not av
 
 Keep platform-specific defaults only when the measurements demonstrate a meaningful difference and the configuration remains understandable.
 
-### Phase 6 — Functional, performance, and visual validation
+### Phase 6 — Functional, performance, and visual validation — **Partial; final validation remains open**
 
 #### 6.1 Functional validation
 
@@ -283,9 +289,9 @@ Use golden or screenshot-based comparisons where practical, with targeted manual
 
 ## Recommended delivery order
 
-1. Expand instrumentation and add benchmark scenarios.
-2. Implement explicit interaction modes and bounded same-scale pan recording.
-3. Add tile-aligned prefetch and stale-work cancellation.
+1. Finalize instrumentation accounting and preserve the benchmark scenarios.
+2. Capture the desktop and mobile-class Phase 0 traces.
+3. Finish the strict synchronous-recording limit for same-scale pans.
 4. Add previous-frame static-layer reuse.
 5. Add completed and selected overlay indexes with path batching.
 6. Add glyph-picture caching and scale-bucket validation.
