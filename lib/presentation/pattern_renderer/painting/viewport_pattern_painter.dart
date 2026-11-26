@@ -19,6 +19,7 @@ import '../tiles/pattern_tile_prefetch_coordinator.dart';
 import '../viewport/pattern_camera.dart';
 import '../viewport/completed_cell_tile_index.dart';
 import '../viewport/pattern_render_selection.dart';
+import '../viewport/selected_symbol_tile_index.dart';
 import '../viewport/pattern_viewport_bounds.dart';
 import '../viewport/pattern_viewport_controller.dart';
 import '../viewport/render_lod.dart';
@@ -41,6 +42,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.selection,
     required this.completedCells,
     CompletedCellTileIndex? completedCellTileIndex,
+    SelectedSymbolTileIndex? selectedSymbolTileIndex,
     required this.completionSelection,
     required this.surfaceColor,
     required this.regionColor,
@@ -63,6 +65,8 @@ class ViewportPatternPainter extends CustomPainter {
     this.staticFrameReuse,
   }) : completedCellTileIndex =
            completedCellTileIndex ?? CompletedCellTileIndex(completedCells),
+       selectedSymbolTileIndex =
+           selectedSymbolTileIndex ?? SelectedSymbolTileIndex(document),
        _staticGeometry = _StaticPaintGeometry(
          camera: camera,
          visibleBounds: visibleBounds,
@@ -131,6 +135,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Tile-local completed coordinates used to avoid scanning visible stitches.
   final CompletedCellTileIndex completedCellTileIndex;
+
+  /// Document-derived matching cells grouped by thread and source tile.
+  final SelectedSymbolTileIndex selectedSymbolTileIndex;
 
   /// Exact coordinates selected for a pending completion action.
   final Set<GridCoordinate> completionSelection;
@@ -277,13 +284,15 @@ class ViewportPatternPainter extends CustomPainter {
         ? selection.threadId
         : null;
     if (selectedThreadId == null) return;
-    for (final cell in _visibleCells) {
+    for (final cell in selectedSymbolTileIndex.cellsForThreadIntersecting(
+      selectedThreadId,
+      visibleBounds,
+    )) {
       _dynamicOverlayCandidatesVisited++;
       final isExcludedCompletedCell =
           !settings.includeCompletedCellsInSelection &&
           completedCells.contains(cell.coordinate);
-      final metadata = symbolRenderCache.metadataFor(cell.symbolId);
-      if (metadata?.threadId == selectedThreadId && !isExcludedCompletedCell) {
+      if (!isExcludedCompletedCell) {
         yield cell;
       }
     }

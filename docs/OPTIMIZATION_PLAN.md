@@ -171,11 +171,18 @@ completion snapshot. Detail/grid painting visits only index buckets intersecting
 as one path for the shared overlay paint. Focused tests cover tile boundaries,
 source-set mutation isolation, visible-tile filtering, and batched submission.
 
-#### 3.2 Build selected-symbol indexes
+#### 3.2 Build selected-symbol indexes — **Complete**
 
 Create a document-derived index from `threadId` or symbol identity to populated cells grouped by tile. Resolve the selected thread once, then inspect only matching tile groups intersecting `paintBounds`.
 
 Selection changes must not rebuild the document index. Document replacement must create a new index. Preserve the existing rule that completed cells may be excluded from selection according to settings.
+
+Implemented with a viewport-owned immutable thread-and-source-tile index built
+from the document. Selection painting visits only matching thread buckets in
+`paintBounds`; selection changes reuse the index, document replacement rebuilds
+it, and the completed-cell exclusion setting remains in the paint path. Focused
+tests cover visible matching cells, exact tile-edge filtering, and unknown
+thread identities.
 
 #### 3.3 Batch dynamic rectangles
 

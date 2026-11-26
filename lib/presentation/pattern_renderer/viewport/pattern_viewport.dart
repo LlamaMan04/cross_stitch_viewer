@@ -11,6 +11,7 @@ import '../../../domain/progress_models.dart';
 import '../../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 import 'completed_cell_tile_index.dart';
+import 'selected_symbol_tile_index.dart';
 import '../cache/pattern_glyph_layout_cache.dart';
 import '../cache/pattern_glyph_picture_cache.dart';
 import '../cache/pattern_symbol_render_cache.dart';
@@ -144,6 +145,9 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Immutable source-tile index rebuilt only after completed coordinates change.
   late CompletedCellTileIndex _completedCellTileIndex;
 
+  /// Immutable document index queried by transient selected-symbol overlays.
+  late SelectedSymbolTileIndex _selectedSymbolTileIndex;
+
   /// Defensive completed-coordinate snapshot used to detect in-place mutation.
   late Set<GridCoordinate> _indexedCompletedCells;
 
@@ -195,6 +199,7 @@ class _PatternViewportState extends State<PatternViewport> {
   void initState() {
     super.initState();
     _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+    _selectedSymbolTileIndex = SelectedSymbolTileIndex(widget.document);
     _instrumentation = PatternRenderInstrumentation.createIfEnabled();
     _instrumentation?.attach();
     _replaceCompletedCellIndexes(widget.completedCells);
@@ -241,6 +246,7 @@ class _PatternViewportState extends State<PatternViewport> {
       _cameraController = null;
       _gestureStartCamera = null;
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+      _selectedSymbolTileIndex = SelectedSymbolTileIndex(widget.document);
       _staticFrameReuse.clear();
       _tilePictureCache.clear();
       _glyphPictureCache.clear();
@@ -353,6 +359,7 @@ class _PatternViewportState extends State<PatternViewport> {
                         selection: widget.selection,
                         completedCells: widget.completedCells,
                         completedCellTileIndex: _completedCellTileIndex,
+                        selectedSymbolTileIndex: _selectedSymbolTileIndex,
                         completionSelection:
                             widget.completionSelection.coordinates,
                         surfaceColor: colors.surfaceContainerLowest,
