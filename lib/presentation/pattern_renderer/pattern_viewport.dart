@@ -43,8 +43,10 @@ class PatternViewport extends StatefulWidget {
     this.onViewportSettled,
     this.prefetchTileDistance =
         PatternViewportBounds.defaultPrefetchTileDistance,
+    this.maximumSynchronousTileRecordingsDuringPan = 1,
     super.key,
-  }) : assert(prefetchTileDistance >= 0);
+  }) : assert(prefetchTileDistance >= 0),
+       assert(maximumSynchronousTileRecordingsDuringPan >= 0);
 
   /// Pattern document displayed by the viewport.
   final PatternDocument document;
@@ -90,6 +92,9 @@ class PatternViewport extends StatefulWidget {
 
   /// Number of source tiles expanded around paint bounds for cache warming.
   final int prefetchTileDistance;
+
+  /// Maximum visible tile pictures recorded synchronously during a pan frame.
+  final int maximumSynchronousTileRecordingsDuringPan;
 
   /// Creates the mutable camera state for this viewport.
   @override
@@ -331,6 +336,8 @@ class _PatternViewportState extends State<PatternViewport> {
                         pendingOverviewCoordinates: _pendingOverviewCoordinates,
                         cameraController: cameraController,
                         viewportSize: viewportSize,
+                        maximumSynchronousTileRecordingsDuringPan:
+                            widget.maximumSynchronousTileRecordingsDuringPan,
                         onBatchMetrics: _instrumentation?.recordPaint,
                       ),
                       child: const SizedBox.expand(),

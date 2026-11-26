@@ -67,8 +67,8 @@ Represent interaction state explicitly as either:
 For same-scale panning:
 
 - Continue reusing matching cached pictures.
-- The planned strict cap on synchronous tile recordings per frame is still open; visible misses can currently record during paint.
-- Send additional misses to the prefetch coordinator.
+- Record at most a configurable number of visible tile pictures synchronously per frame (default: one).
+- Paint additional visible misses directly and send them to the prefetch coordinator.
 
 For continuous zooming:
 
@@ -102,7 +102,7 @@ Cover:
 - Correct document-edge clipping during translated-frame reuse.
 - Lease safety when a retained frame is evicted or replaced.
 
-Bounds, coordinator, cancellation, and basic cache behavior have focused tests. Tests for translated-frame reuse, strict synchronous recording limits, and retained-frame lease safety remain to be added.
+Bounds, coordinator, cancellation, basic cache behavior, and strict synchronous-recording limits have focused tests. Tests for translated-frame reuse and retained-frame lease safety remain to be added.
 
 ### Phase 2 — Reduce glyph recording cost — **Open**
 
@@ -250,13 +250,12 @@ Use golden or screenshot-based comparisons where practical, with targeted manual
 
 ## Recommended delivery order
 
-1. Finish the strict synchronous-recording limit for same-scale pans.
-2. Add previous-frame static-layer reuse.
-3. Add completed and selected overlay indexes with path batching.
-4. Add glyph-picture caching and scale-bucket validation.
-5. Add grid geometry caching.
-6. Tune tile size, cache budgets, prefetch distance, and scale quantization.
-7. Run functional, performance, and visual regression validation.
+1. Add previous-frame static-layer reuse.
+2. Add completed and selected overlay indexes with path batching.
+3. Add glyph-picture caching and scale-bucket validation.
+4. Add grid geometry caching.
+5. Tune tile size, cache budgets, prefetch distance, and scale quantization.
+6. Run functional, performance, and visual regression validation.
 
 ## Definition of done
 

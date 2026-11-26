@@ -161,7 +161,14 @@ class PatternStaticTileRecorder {
   }
 
   /// Returns cached, direct, or temporary tile content with safe ownership.
-  PatternStaticTileResolution resolve(PatternTileCoordinate coordinate) {
+  ///
+  /// When [allowRecording] is false, an uncached tile returns its source cells
+  /// directly without creating a display list. Callers use this to bound
+  /// synchronous recording work during an active pan.
+  PatternStaticTileResolution resolve(
+    PatternTileCoordinate coordinate, {
+    bool allowRecording = true,
+  }) {
     final key = keyFor(coordinate);
     final lease = cache.reuseEnabled ? cache.acquire(key) : null;
     if (lease != null) {
@@ -178,7 +185,7 @@ class PatternStaticTileRecorder {
     }
 
     final cells = cellsFor(coordinate);
-    if (!cache.writesEnabled || !cache.reuseEnabled) {
+    if (!allowRecording || !cache.writesEnabled || !cache.reuseEnabled) {
       return PatternStaticTileResolution._(
         source: PatternStaticTileResolutionSource.direct,
         cells: cells,

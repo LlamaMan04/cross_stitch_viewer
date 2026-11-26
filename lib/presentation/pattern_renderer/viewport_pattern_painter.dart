@@ -51,6 +51,7 @@ class ViewportPatternPainter extends CustomPainter {
     this.tilePrefetchCoordinator,
     this.cameraController,
     this.viewportSize,
+    this.maximumSynchronousTileRecordingsDuringPan = 1,
   }) : _staticGeometry = _StaticPaintGeometry(
          camera: camera,
          visibleBounds: visibleBounds,
@@ -60,6 +61,7 @@ class ViewportPatternPainter extends CustomPainter {
          (cameraController == null) == (viewportSize == null),
          'A notifier-driven painter requires its viewport size.',
        ),
+       assert(maximumSynchronousTileRecordingsDuringPan >= 0),
        super(repaint: cameraController);
 
   /// Normalized source document rendered by this painter.
@@ -73,6 +75,11 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Fixed paint-surface size used for notifier-driven visible bounds.
   final Size? viewportSize;
+
+  /// Maximum visible tile pictures recorded synchronously in one pan frame.
+  ///
+  /// Additional cache misses paint directly and are warmed after the frame.
+  final int maximumSynchronousTileRecordingsDuringPan;
 
   /// Camera used for the current interaction or direct painter invocation.
   PatternCamera get camera =>

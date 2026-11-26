@@ -18,6 +18,9 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
     var recordingsStarted = 0;
     var recordingsCompleted = 0;
     var recordingsRejected = 0;
+    final isPanning =
+        cameraController?.interactionState ==
+        PatternViewportInteractionState.panning;
     final firstTileRow = query.startRow ~/ PatternGrid.tileSize;
     final lastTileRow = (query.endRow - 1) ~/ PatternGrid.tileSize;
     final firstTileColumn = query.startColumn ~/ PatternGrid.tileSize;
@@ -29,7 +32,15 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
         tileColumn++
       ) {
         final coordinate = PatternTileCoordinate(tileRow, tileColumn);
-        final resolution = recorder.resolve(coordinate);
+        // Cache hits remain available during panning; only new recordings are
+        // limited so a tile boundary cannot monopolize the paint callback.
+        final mayRecordSynchronously =
+            !isPanning ||
+            recordingsStarted < maximumSynchronousTileRecordingsDuringPan;
+        final resolution = recorder.resolve(
+          coordinate,
+          allowRecording: mayRecordSynchronously,
+        );
         if (resolution.cacheHit) cacheHitCount++;
         if (resolution.cacheMiss) cacheMissCount++;
         if (resolution.cacheBypass) cacheBypassCount++;

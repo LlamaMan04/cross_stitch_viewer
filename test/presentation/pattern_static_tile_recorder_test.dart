@@ -89,6 +89,45 @@ void main() {
     result.release();
   });
 
+  test(
+    'uses a direct source-cell result when synchronous recording is capped',
+    () {
+      final document = SamplePatternFixture.create();
+      final cache = PatternTilePictureCache();
+      addTearDown(cache.dispose);
+      var recordingCount = 0;
+      final recorder = PatternStaticTileRecorder(
+        document: document,
+        cache: cache,
+        renderLod: RenderLod.detail,
+        cellSizeBucket: 80,
+        style: const PatternTilePictureStyle(
+          showCellColor: true,
+          cellColorOpacity: 0.22,
+          showSymbols: true,
+          surfaceColor: Colors.white,
+        ),
+        recordPictures:
+            ({required coordinate, required recordedCellSize, required cells}) {
+              recordingCount++;
+              return _pictures();
+            },
+      );
+
+      final result = recorder.resolve(
+        const PatternTileCoordinate(0, 0),
+        allowRecording: false,
+      );
+
+      expect(result.source, PatternStaticTileResolutionSource.direct);
+      expect(result.cacheMiss, isTrue);
+      expect(result.cacheBypass, isFalse);
+      expect(recordingCount, 0);
+      expect(cache.entryCount, 0);
+      result.release();
+    },
+  );
+
   test('returns a releasable temporary picture when the cache rejects it', () {
     final document = SamplePatternFixture.create();
     final cache = PatternTilePictureCache(maximumEstimatedBytes: 1);

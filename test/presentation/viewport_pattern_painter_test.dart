@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/test_patterns/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
@@ -12,7 +13,9 @@ import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_layout_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_symbol_render_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_prefetch_coordinator.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_picture_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_viewport_controller.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
 
@@ -270,6 +273,71 @@ void main() {
     expect(tilePictureCache.entryCount, 1);
     expect(secondMetrics?.tilePictureHits, 1);
     expect(secondMetrics?.tilePictureMisses, 0);
+  });
+
+  test('caps synchronous recordings during a pan and queues direct misses', () {
+    final document = LargeSamplePatternFixture.create();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    final tilePictureCache = PatternTilePictureCache();
+    final callbacks = <FrameCallback>[];
+    final tilePrefetchCoordinator = PatternTilePrefetchCoordinator(
+      maximumTilesPerFrame: 1,
+      scheduleFrame: callbacks.add,
+    );
+    final cameraController = PatternViewportController(
+      camera: const PatternCamera(cellSize: 20, origin: Offset(-20, -20)),
+    )..beginPanning();
+    addTearDown(glyphLayoutCache.dispose);
+    addTearDown(tilePictureCache.dispose);
+    addTearDown(tilePrefetchCoordinator.dispose);
+    addTearDown(cameraController.dispose);
+    PatternRenderBatchMetrics? metrics;
+    final painter = ViewportPatternPainter(
+      document: document,
+      camera: cameraController.camera,
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: LargeSamplePatternFixture.rows,
+        startColumn: 0,
+        endColumn: LargeSamplePatternFixture.columns,
+      ),
+      settings: const PatternRenderSettings(
+        showCellColor: true,
+        showGrid: false,
+      ),
+      selection: const PatternRenderSelection(),
+      completedCells: const <GridCoordinate>{},
+      completionSelection: const <GridCoordinate>{},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(document),
+      tilePictureCache: tilePictureCache,
+      tilePrefetchCoordinator: tilePrefetchCoordinator,
+      cameraController: cameraController,
+      viewportSize: const Size(700, 400),
+      maximumSynchronousTileRecordingsDuringPan: 1,
+      renderLod: RenderLod.detail,
+      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{},
+      onBatchMetrics: (value) => metrics = value,
+    );
+    final pictureRecorder = PictureRecorder();
+
+    painter.paint(Canvas(pictureRecorder), const Size(700, 400));
+    pictureRecorder.endRecording().dispose();
+
+    expect(metrics?.interactionState, PatternViewportInteractionState.panning);
+    expect(metrics?.tileRecordingsStarted, 1);
+    expect(metrics?.directCellFillCount, greaterThan(0));
+    expect(tilePictureCache.entryCount, 1);
+    expect(tilePrefetchCoordinator.queuedRequestCount, greaterThan(0));
+    expect(callbacks, isNotEmpty);
+
+    callbacks.removeAt(0)(Duration.zero);
+
+    expect(tilePrefetchCoordinator.prefetchedTileCount, 1);
+    expect(tilePictureCache.entryCount, 2);
   });
 
   test(
