@@ -11,6 +11,7 @@ import '../../domain/progress_models.dart';
 import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
+import 'pattern_glyph_picture_cache.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_static_frame_reuse.dart';
 import 'pattern_symbol_render_cache.dart';
@@ -43,6 +44,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.regionColor,
     required this.completionSelectionColor,
     required this.glyphLayoutCache,
+    this.glyphPictureCache,
     required this.symbolRenderCache,
     required RenderLod renderLod,
     required this.completedOverviewCoordinates,
@@ -136,6 +138,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Shared glyph layouts retained across otherwise short-lived painters.
   final PatternGlyphLayoutCache glyphLayoutCache;
+
+  /// Shared cache that owns recorded glyph display lists for Phase 2 replay.
+  final PatternGlyphPictureCache? glyphPictureCache;
 
   /// Parsed symbol colors and fill paints shared across viewport painters.
   final PatternSymbolRenderCache symbolRenderCache;
@@ -367,6 +372,11 @@ class ViewportPatternPainter extends CustomPainter {
           tilePictureCacheEntries: tilePictureCache?.entryCount ?? 0,
           tilePictureCacheBytes: tilePictureCache?.estimatedBytes ?? 0,
           tilePictureEvictions: tilePictureCache?.evictionCount ?? 0,
+          glyphPictureCacheEntries: glyphPictureCache?.entryCount ?? 0,
+          glyphPictureCacheBytes: glyphPictureCache?.estimatedBytes ?? 0,
+          glyphPictureCacheHits: glyphPictureCache?.hitCount ?? 0,
+          glyphPictureCacheMisses: glyphPictureCache?.missCount ?? 0,
+          glyphPictureCacheEvictions: glyphPictureCache?.evictionCount ?? 0,
           tilePictureBypasses: staticTileFrame?.cacheBypassCount ?? 0,
           directCellFillCount:
               staticTileFrame?.directCellFillCountFor(this) ??

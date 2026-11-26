@@ -16,6 +16,11 @@ class PatternRenderBatchMetrics {
     this.tilePictureCacheEntries = 0,
     this.tilePictureCacheBytes = 0,
     this.tilePictureEvictions = 0,
+    this.glyphPictureCacheEntries = 0,
+    this.glyphPictureCacheBytes = 0,
+    this.glyphPictureCacheHits = 0,
+    this.glyphPictureCacheMisses = 0,
+    this.glyphPictureCacheEvictions = 0,
     this.tilePictureBypasses = 0,
     this.directCellFillCount = 0,
     this.directGlyphPaintCount = 0,
@@ -73,6 +78,21 @@ class PatternRenderBatchMetrics {
 
   /// Number of budget-driven tile evictions over the cache lifetime.
   final int tilePictureEvictions;
+
+  /// Number of glyph-picture entries retained after this paint frame.
+  final int glyphPictureCacheEntries;
+
+  /// Estimated native display-list bytes retained by glyph pictures.
+  final int glyphPictureCacheBytes;
+
+  /// Total successful glyph-picture cache lookups.
+  final int glyphPictureCacheHits;
+
+  /// Total unsuccessful glyph-picture cache lookups.
+  final int glyphPictureCacheMisses;
+
+  /// Total budget-driven glyph-picture cache evictions.
+  final int glyphPictureCacheEvictions;
 
   /// Number of tiles painted directly because zoom temporarily bypassed reuse.
   final int tilePictureBypasses;

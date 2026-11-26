@@ -104,9 +104,9 @@ Cover:
 
 Focused tests cover every listed scenario, including configurable prefetch bounds, strict synchronous-recording limits, pan reuse versus pinch and wheel zoom bypass, translated-frame document-edge clipping, static-input invalidation, and retained-frame lease safety.
 
-### Phase 2 — Reduce glyph recording cost — **Open**
+### Phase 2 — Reduce glyph recording cost — **Partial**
 
-#### 2.1 Add a bounded glyph-picture cache
+#### 2.1 Add a bounded glyph-picture cache — **Complete**
 
 Create a cache of recorded glyph pictures keyed by every input that affects their appearance:
 
@@ -119,6 +119,11 @@ Create a cache of recorded glyph pictures keyed by every input that affects thei
 Each entry should contain the picture, measured width/height, estimated memory cost, and deferred-disposal state. Use the same lease pattern as tile pictures so eviction cannot dispose of a picture being replayed.
 
 Use an entry or byte budget and expose hits, misses, evictions, and bytes in diagnostics.
+
+Implemented with a viewport-owned LRU cache bounded by both entry count and
+estimated bytes. Keys contain every glyph appearance input, entries retain
+measured dimensions and use leased deferred disposal, and focused tests cover
+key separation, budget eviction, and active-lease safety.
 
 #### 2.2 Replay glyph pictures while recording tiles
 

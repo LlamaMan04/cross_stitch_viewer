@@ -11,6 +11,7 @@ import '../../domain/progress_models.dart';
 import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
+import 'pattern_glyph_picture_cache.dart';
 import 'pattern_interaction.dart';
 import 'pattern_render_instrumentation.dart';
 import 'pattern_render_selection.dart';
@@ -107,6 +108,10 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Glyph layouts shared by every painter created for this viewport.
   final PatternGlyphLayoutCache _glyphLayoutCache = PatternGlyphLayoutCache();
 
+  /// Recorded glyph display lists shared by short-lived viewport painters.
+  final PatternGlyphPictureCache _glyphPictureCache =
+      PatternGlyphPictureCache();
+
   /// Static tile display lists shared by every painter for this viewport.
   final PatternTilePictureCache _tilePictureCache = PatternTilePictureCache();
 
@@ -200,6 +205,7 @@ class _PatternViewportState extends State<PatternViewport> {
     _tilePictureCache.dispose();
     _tilePrefetchCoordinator.dispose();
     _glyphLayoutCache.dispose();
+    _glyphPictureCache.dispose();
     super.dispose();
   }
 
@@ -211,6 +217,7 @@ class _PatternViewportState extends State<PatternViewport> {
       _tilePictureCache.clear();
       _staticFrameReuse.clear();
       _glyphLayoutCache.clear();
+      _glyphPictureCache.clear();
       _tilePrefetchCoordinator.invalidate();
     }
     _dependenciesInitialized = true;
@@ -227,11 +234,13 @@ class _PatternViewportState extends State<PatternViewport> {
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
       _staticFrameReuse.clear();
       _tilePictureCache.clear();
+      _glyphPictureCache.clear();
       _tilePrefetchCoordinator.invalidate();
     } else if (_staticTilePictureSettingsChanged(oldWidget.settings)) {
       // Only static fills and glyph contrast require picture invalidation.
       _staticFrameReuse.clear();
       _tilePictureCache.clear();
+      _glyphPictureCache.clear();
       _tilePrefetchCoordinator.invalidate();
     }
     if (oldWidget.document != widget.document ||
@@ -342,6 +351,7 @@ class _PatternViewportState extends State<PatternViewport> {
                         regionColor: colors.primary,
                         completionSelectionColor: colors.primary,
                         glyphLayoutCache: _glyphLayoutCache,
+                        glyphPictureCache: _glyphPictureCache,
                         symbolRenderCache: _symbolRenderCache,
                         tilePictureCache: _tilePictureCache,
                         tilePrefetchCoordinator: _tilePrefetchCoordinator,
