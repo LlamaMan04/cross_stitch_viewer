@@ -11,6 +11,7 @@ import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_layout_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_picture_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_symbol_render_cache.dart';
 import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_prefetch_coordinator.dart';
@@ -274,6 +275,97 @@ void main() {
     expect(secondMetrics?.tilePictureHits, 1);
     expect(secondMetrics?.tilePictureMisses, 0);
   });
+
+  test('replays glyph pictures for direct detail tile misses', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    final glyphPictureCache = PatternGlyphPictureCache();
+    final tilePictureCache = PatternTilePictureCache()..suspendWrites();
+    addTearDown(glyphLayoutCache.dispose);
+    addTearDown(glyphPictureCache.dispose);
+    addTearDown(tilePictureCache.dispose);
+    PatternRenderBatchMetrics? secondMetrics;
+
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      glyphPictureCache: glyphPictureCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 40, origin: Offset.zero),
+      renderLod: RenderLod.detail,
+    );
+    final missesAfterFirstPaint = glyphPictureCache.missCount;
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      glyphPictureCache: glyphPictureCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 40, origin: Offset.zero),
+      renderLod: RenderLod.detail,
+      onBatchMetrics: (value) => secondMetrics = value,
+    );
+
+    expect(glyphPictureCache.entryCount, greaterThan(0));
+    expect(missesAfterFirstPaint, greaterThan(0));
+    expect(glyphPictureCache.hitCount, greaterThan(0));
+    expect(
+      secondMetrics?.glyphPictureCacheEntries,
+      glyphPictureCache.entryCount,
+    );
+    expect(secondMetrics?.glyphPictureCacheHits, glyphPictureCache.hitCount);
+  });
+
+  test('records static tile glyphs by replaying cached glyph pictures', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    final glyphPictureCache = PatternGlyphPictureCache();
+    final tilePictureCache = PatternTilePictureCache();
+    addTearDown(glyphLayoutCache.dispose);
+    addTearDown(glyphPictureCache.dispose);
+    addTearDown(tilePictureCache.dispose);
+
+    _paintCachedFixture(
+      fixture: fixture,
+      glyphLayoutCache: glyphLayoutCache,
+      glyphPictureCache: glyphPictureCache,
+      tilePictureCache: tilePictureCache,
+      camera: const PatternCamera(cellSize: 40, origin: Offset.zero),
+      renderLod: RenderLod.detail,
+    );
+
+    expect(tilePictureCache.entryCount, 1);
+    expect(glyphPictureCache.entryCount, greaterThan(0));
+    expect(glyphPictureCache.hitCount, greaterThan(0));
+  });
+
+  test(
+    'falls back to TextPainter when glyph pictures exceed their byte budget',
+    () {
+      final fixture = _createCountingDocument();
+      final glyphLayoutCache = PatternGlyphLayoutCache();
+      final glyphPictureCache = PatternGlyphPictureCache(
+        maximumEstimatedBytes: 1,
+      );
+      final tilePictureCache = PatternTilePictureCache()..suspendWrites();
+      PatternRenderBatchMetrics? metrics;
+      addTearDown(glyphLayoutCache.dispose);
+      addTearDown(glyphPictureCache.dispose);
+      addTearDown(tilePictureCache.dispose);
+
+      _paintCachedFixture(
+        fixture: fixture,
+        glyphLayoutCache: glyphLayoutCache,
+        glyphPictureCache: glyphPictureCache,
+        tilePictureCache: tilePictureCache,
+        camera: const PatternCamera(cellSize: 40, origin: Offset.zero),
+        renderLod: RenderLod.detail,
+        onBatchMetrics: (value) => metrics = value,
+      );
+
+      expect(glyphPictureCache.entryCount, 0);
+      expect(metrics?.glyphCount, greaterThan(0));
+    },
+  );
 
   test('caps synchronous recordings during a pan and queues direct misses', () {
     final document = LargeSamplePatternFixture.create();
@@ -570,6 +662,7 @@ void main() {
 void _paintCachedFixture({
   required ({PatternDocument document, _CountingPatternGrid grid}) fixture,
   required PatternGlyphLayoutCache glyphLayoutCache,
+  PatternGlyphPictureCache? glyphPictureCache,
   required PatternTilePictureCache tilePictureCache,
   required PatternCamera camera,
   PatternRenderSettings settings = const PatternRenderSettings(
@@ -596,6 +689,7 @@ void _paintCachedFixture({
     regionColor: Colors.blue,
     completionSelectionColor: Colors.teal,
     glyphLayoutCache: glyphLayoutCache,
+    glyphPictureCache: glyphPictureCache,
     symbolRenderCache: PatternSymbolRenderCache(fixture.document),
     tilePictureCache: tilePictureCache,
     renderLod: renderLod,

@@ -125,7 +125,7 @@ estimated bytes. Keys contain every glyph appearance input, entries retain
 measured dimensions and use leased deferred disposal, and focused tests cover
 key separation, budget eviction, and active-lease safety.
 
-#### 2.2 Replay glyph pictures while recording tiles
+#### 2.2 Replay glyph pictures while recording tiles — **Complete**
 
 Update `_paintGlyphsForCells` so it:
 
@@ -136,6 +136,10 @@ Update `_paintGlyphsForCells` so it:
 5. Falls back to `TextPainter.paint` if a glyph cannot be safely cached.
 
 The glyph picture cache is an optimization below tile-picture caching; it must not change glyph placement or fallback behavior.
+
+Implemented for direct detail painting and static tile recording. Replays are
+centered using cached layout measurements, while byte-budget rejections retain
+the `TextPainter.paint` fallback.
 
 #### 2.3 Validate scale buckets
 

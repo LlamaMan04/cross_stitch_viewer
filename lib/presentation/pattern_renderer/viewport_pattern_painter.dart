@@ -45,6 +45,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.completionSelectionColor,
     required this.glyphLayoutCache,
     this.glyphPictureCache,
+    this.glyphRendererGeneration = 0,
     required this.symbolRenderCache,
     required RenderLod renderLod,
     required this.completedOverviewCoordinates,
@@ -141,6 +142,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Shared cache that owns recorded glyph display lists for Phase 2 replay.
   final PatternGlyphPictureCache? glyphPictureCache;
+
+  /// Generation that distinguishes pictures recorded before a font change.
+  final int glyphRendererGeneration;
 
   /// Parsed symbol colors and fill paints shared across viewport painters.
   final PatternSymbolRenderCache symbolRenderCache;
@@ -474,7 +478,8 @@ class ViewportPatternPainter extends CustomPainter {
       oldDelegate.renderLod != renderLod ||
       oldDelegate.surfaceColor != surfaceColor ||
       oldDelegate.regionColor != regionColor ||
-      oldDelegate.completionSelectionColor != completionSelectionColor;
+      oldDelegate.completionSelectionColor != completionSelectionColor ||
+      oldDelegate.glyphRendererGeneration != glyphRendererGeneration;
 }
 
 /// Groups fixed geometry for direct, non-notifier painter use.

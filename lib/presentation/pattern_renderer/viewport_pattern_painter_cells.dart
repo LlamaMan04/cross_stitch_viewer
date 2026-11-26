@@ -107,11 +107,99 @@ extension _ViewportPatternPainterCells on ViewportPatternPainter {
     final foreground = backgroundColor.computeLuminance() > 0.45
         ? Colors.black87
         : Colors.white;
-    // Text metrics are cached because many cells share the same symbol style.
-    final textPainter = glyphLayoutCache.layoutFor(
+    final requestedFontSize = (cellSize * 0.58).clamp(12.0, 32.0);
+    final glyphPictureCache = this.glyphPictureCache;
+    if (glyphPictureCache == null) {
+      _paintGlyphLayout(
+        canvas,
+        rect,
+        symbol.displayGlyph,
+        foreground,
+        requestedFontSize,
+      );
+      return;
+    }
+    final fontSizeBucket = PatternGlyphPictureCache.quantizeFontSize(
+      requestedFontSize,
+    );
+    final key = PatternGlyphPictureKey(
       glyph: symbol.displayGlyph,
       foreground: foreground,
-      fontSize: (cellSize * 0.58).clamp(12, 32),
+      fontSizeBucket: fontSizeBucket,
+      fontFamily: PatternGlyphLayoutCache.fontFamily,
+      fontWeight: PatternGlyphLayoutCache.fontWeight.value,
+      textDirection: PatternGlyphLayoutCache.textDirection,
+      rendererGeneration: glyphRendererGeneration,
+    );
+    var lease = glyphPictureCache.acquire(key);
+    lease ??= _recordGlyphPicture(
+      cache: glyphPictureCache,
+      key: key,
+      fontSize: PatternGlyphPictureCache.fontSizeForBucket(fontSizeBucket),
+    );
+    if (lease == null) {
+      _paintGlyphLayout(
+        canvas,
+        rect,
+        symbol.displayGlyph,
+        foreground,
+        requestedFontSize,
+      );
+      return;
+    }
+    try {
+      final glyphPicture = lease.glyphPicture;
+      canvas.save();
+      canvas.translate(
+        rect.center.dx - glyphPicture.width / 2,
+        rect.center.dy - glyphPicture.height / 2,
+      );
+      canvas.drawPicture(glyphPicture.picture);
+      canvas.restore();
+    } finally {
+      lease.release();
+    }
+  }
+
+  /// Records a layout into a reusable picture or disposes a rejected recording.
+  PatternGlyphPictureLease? _recordGlyphPicture({
+    required PatternGlyphPictureCache cache,
+    required PatternGlyphPictureKey key,
+    required double fontSize,
+  }) {
+    final textPainter = glyphLayoutCache.layoutFor(
+      glyph: key.glyph,
+      foreground: key.foreground,
+      fontSize: fontSize,
+    );
+    final recorder = ui.PictureRecorder();
+    final recordingCanvas = Canvas(recorder);
+    textPainter.paint(recordingCanvas, Offset.zero);
+    final picture = recorder.endRecording();
+    final glyphPicture = PatternGlyphPicture(
+      picture: picture,
+      width: textPainter.width,
+      height: textPainter.height,
+      estimatedByteSize: 64 + picture.approximateBytesUsed,
+    );
+    final lease = cache.putAndAcquire(key, glyphPicture);
+    if (lease == null) glyphPicture.dispose();
+    return lease;
+  }
+
+  /// Paints an uncached layout when recording is unavailable or rejected.
+  void _paintGlyphLayout(
+    Canvas canvas,
+    Rect rect,
+    String glyph,
+    Color foreground,
+    double fontSize,
+  ) {
+    // Text metrics remain cached for direct fallback and cache recording.
+    final textPainter = glyphLayoutCache.layoutFor(
+      glyph: glyph,
+      foreground: foreground,
+      fontSize: fontSize,
     );
     textPainter.paint(
       canvas,

@@ -4,6 +4,15 @@ import 'package:flutter/material.dart';
 
 /// Reuses bounded glyph layouts across renderer paint passes.
 class PatternGlyphLayoutCache {
+  /// Font family used by the renderer's immutable symbol glyph style.
+  static const String? fontFamily = null;
+
+  /// Font weight used by the renderer's immutable symbol glyph style.
+  static const FontWeight fontWeight = FontWeight.w600;
+
+  /// Text direction used by the renderer's immutable symbol glyph style.
+  static const TextDirection textDirection = TextDirection.ltr;
+
   /// Creates a least-recently-used cache capped at [maximumEntries].
   PatternGlyphLayoutCache({this.maximumEntries = 128})
     : assert(maximumEntries > 0);
@@ -38,10 +47,11 @@ class PatternGlyphLayoutCache {
         style: TextStyle(
           color: foreground,
           fontSize: fontSize,
-          fontWeight: FontWeight.w600,
+          fontFamily: fontFamily,
+          fontWeight: fontWeight,
         ),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: textDirection,
     )..layout();
     _layouts[key] = layout;
     if (_layouts.length > maximumEntries) {

@@ -112,6 +112,9 @@ class _PatternViewportState extends State<PatternViewport> {
   final PatternGlyphPictureCache _glyphPictureCache =
       PatternGlyphPictureCache();
 
+  /// Increments whenever inherited font or renderer inputs invalidate glyphs.
+  int _glyphRendererGeneration = 0;
+
   /// Static tile display lists shared by every painter for this viewport.
   final PatternTilePictureCache _tilePictureCache = PatternTilePictureCache();
 
@@ -218,6 +221,7 @@ class _PatternViewportState extends State<PatternViewport> {
       _staticFrameReuse.clear();
       _glyphLayoutCache.clear();
       _glyphPictureCache.clear();
+      _glyphRendererGeneration++;
       _tilePrefetchCoordinator.invalidate();
     }
     _dependenciesInitialized = true;
@@ -352,6 +356,7 @@ class _PatternViewportState extends State<PatternViewport> {
                         completionSelectionColor: colors.primary,
                         glyphLayoutCache: _glyphLayoutCache,
                         glyphPictureCache: _glyphPictureCache,
+                        glyphRendererGeneration: _glyphRendererGeneration,
                         symbolRenderCache: _symbolRenderCache,
                         tilePictureCache: _tilePictureCache,
                         tilePrefetchCoordinator: _tilePrefetchCoordinator,
