@@ -52,6 +52,8 @@ class ViewportPatternPainter extends CustomPainter {
     this.tilePrefetchCoordinator,
     this.cameraController,
     this.viewportSize,
+    this.prefetchTileDistance =
+        PatternViewportBounds.defaultPrefetchTileDistance,
     this.maximumSynchronousTileRecordingsDuringPan = 1,
     this.staticFrameReuse,
   }) : _staticGeometry = _StaticPaintGeometry(
@@ -63,6 +65,7 @@ class ViewportPatternPainter extends CustomPainter {
          (cameraController == null) == (viewportSize == null),
          'A notifier-driven painter requires its viewport size.',
        ),
+       assert(prefetchTileDistance >= 0),
        assert(maximumSynchronousTileRecordingsDuringPan >= 0),
        super(repaint: cameraController);
 
@@ -77,6 +80,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Fixed paint-surface size used for notifier-driven visible bounds.
   final Size? viewportSize;
+
+  /// Number of source tiles expanded around the paint range for cache warming.
+  final int prefetchTileDistance;
 
   /// Maximum visible tile pictures recorded synchronously in one pan frame.
   ///
@@ -100,6 +106,7 @@ class ViewportPatternPainter extends CustomPainter {
       camera: camera,
       viewportSize: dynamicViewportSize,
       dimensions: document.grid.dimensions,
+      prefetchTileDistance: prefetchTileDistance,
     ).paintBounds;
   }
 
@@ -435,6 +442,7 @@ class ViewportPatternPainter extends CustomPainter {
         camera: camera,
         viewportSize: size,
         dimensions: document.grid.dimensions,
+        prefetchTileDistance: prefetchTileDistance,
       ),
       revision: controller.cameraRevision,
       recorder: recorder,

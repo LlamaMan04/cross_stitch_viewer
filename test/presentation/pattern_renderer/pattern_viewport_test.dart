@@ -325,6 +325,9 @@ void main() {
     await firstPointer.moveBy(const Offset(-20, 0));
     await secondPointer.moveBy(const Offset(20, 0));
     await tester.pump();
+    final cacheDuringPinch = _painter(tester, canvasFinder).tilePictureCache!;
+    expect(cacheDuringPinch.reuseEnabled, isFalse);
+    expect(cacheDuringPinch.writesEnabled, isFalse);
     await firstPointer.up();
     await secondPointer.up();
     await tester.pump(const Duration(milliseconds: 150));
@@ -357,12 +360,47 @@ void main() {
     await tester.pump();
 
     final after = _painter(tester, canvasFinder).camera;
+    final cacheDuringWheel = _painter(tester, canvasFinder).tilePictureCache!;
     expect(after.cellSize, greaterThan(before.cellSize));
+    expect(cacheDuringWheel.reuseEnabled, isFalse);
+    expect(cacheDuringWheel.writesEnabled, isFalse);
     expect(
       after.screenToGrid(localFocalPoint),
       closeToOffset(before.screenToGrid(localFocalPoint)),
     );
     await tester.pump(const Duration(milliseconds: 150));
+  });
+
+  testWidgets('keeps cached pictures enabled for scale noise during a pan', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_viewportApp(LargeSamplePatternFixture.create()));
+    await tester.pump();
+
+    final canvasFinder = find.byKey(const ValueKey('pattern-grid-canvas'));
+    final viewport = find.byKey(const ValueKey('pattern-viewport'));
+    final center = tester.getCenter(viewport);
+    final firstPointer = await tester.startGesture(
+      center - const Offset(50, 0),
+      pointer: 1,
+    );
+    final secondPointer = await tester.startGesture(
+      center + const Offset(50, 0),
+      pointer: 2,
+    );
+
+    // A 0.2% scale drift is recognizer noise, not an intentional zoom.
+    await firstPointer.moveBy(const Offset(-0.1, 0));
+    await secondPointer.moveBy(const Offset(0.1, 0));
+    await tester.pump();
+
+    final cacheDuringPan = _painter(tester, canvasFinder).tilePictureCache!;
+    expect(cacheDuringPan.reuseEnabled, isTrue);
+    expect(cacheDuringPan.writesEnabled, isTrue);
+
+    await firstPointer.up();
+    await secondPointer.up();
+    await tester.pump();
   });
 
   testWidgets('suppresses selected-symbol rendering in overview', (

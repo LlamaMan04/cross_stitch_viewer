@@ -10,7 +10,7 @@ The primary suspected cause is synchronous work for newly exposed 16×16 tiles: 
 
 The renderer already has bounded tile-picture caching with document, style, LOD, and quantized-scale keys; leased native-picture disposal; sparse tile-backed grid queries; overview summaries; visible-cell memoization; fill/grid path batching; glyph layout caching; zoom-time tile-picture bypass; explicit interaction states; tile-aligned paint/prefetch bounds; shared tile recording; cooperative tile prefetching; and stale-request invalidation. Renderer instrumentation, unit/widget tests, and representative large-pattern fixtures also exist.
 
-The remaining work below is not yet complete: previous-frame pan reuse, a strict synchronous-recording limit during pans, glyph-picture caching below the tile level, dynamic overlay indexes, grid geometry caching, parameter tuning, and end-to-end performance validation. The status labels below describe the repository as it exists today.
+The remaining work below is not yet complete: glyph-picture caching below the tile level, dynamic overlay indexes, grid geometry caching, parameter tuning, and end-to-end performance validation. The status labels below describe the repository as it exists today.
 
 **Status legend:** **Complete** means implemented and covered by focused tests where applicable; **Partial** means the supporting mechanism exists but the planned behavior or diagnostics are incomplete; **Open** means the work has not been implemented.
 
@@ -56,7 +56,7 @@ Implement the following behavior:
 
 Do not let prefetch work run unbounded inside `paint`. It must be cooperative and observable through metrics.
 
-#### 1.4 Split pan and zoom policies — **Partial**
+#### 1.4 Split pan and zoom policies — **Complete**
 
 Represent interaction state explicitly as either:
 
@@ -91,7 +91,7 @@ Retain the previous static tile frame or its leases at the start of a same-scale
 
 The frame-reuse implementation must be disabled or invalidated when scale, LOD, document identity, theme, font inputs, or static render settings change.
 
-#### 1.6 Add Phase 1 tests — **Partial**
+#### 1.6 Add Phase 1 tests — **Complete**
 
 Cover:
 
@@ -102,7 +102,7 @@ Cover:
 - Correct document-edge clipping during translated-frame reuse.
 - Lease safety when a retained frame is evicted or replaced.
 
-Bounds, coordinator, cancellation, basic cache behavior, strict synchronous-recording limits, translated-frame reuse, and retained-frame lease safety have focused tests.
+Focused tests cover every listed scenario, including configurable prefetch bounds, strict synchronous-recording limits, pan reuse versus pinch and wheel zoom bypass, translated-frame document-edge clipping, static-input invalidation, and retained-frame lease safety.
 
 ### Phase 2 — Reduce glyph recording cost — **Open**
 

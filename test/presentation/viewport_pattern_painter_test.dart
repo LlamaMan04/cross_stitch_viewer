@@ -340,6 +340,57 @@ void main() {
     expect(tilePictureCache.entryCount, 2);
   });
 
+  test('honors a disabled prefetch expansion when warming tiles', () {
+    final document = LargeSamplePatternFixture.create();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    final tilePictureCache = PatternTilePictureCache();
+    final callbacks = <FrameCallback>[];
+    final tilePrefetchCoordinator = PatternTilePrefetchCoordinator(
+      scheduleFrame: callbacks.add,
+    );
+    final cameraController = PatternViewportController(
+      camera: const PatternCamera(cellSize: 20, origin: Offset.zero),
+    );
+    addTearDown(glyphLayoutCache.dispose);
+    addTearDown(tilePictureCache.dispose);
+    addTearDown(tilePrefetchCoordinator.dispose);
+    addTearDown(cameraController.dispose);
+    final painter = ViewportPatternPainter(
+      document: document,
+      camera: cameraController.camera,
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: 1,
+        startColumn: 0,
+        endColumn: 1,
+      ),
+      settings: const PatternRenderSettings(showCellColor: true),
+      selection: const PatternRenderSelection(),
+      completedCells: const <GridCoordinate>{},
+      completionSelection: const <GridCoordinate>{},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(document),
+      tilePictureCache: tilePictureCache,
+      tilePrefetchCoordinator: tilePrefetchCoordinator,
+      cameraController: cameraController,
+      viewportSize: const Size(100, 100),
+      prefetchTileDistance: 0,
+      renderLod: RenderLod.detail,
+      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{},
+    );
+    final pictureRecorder = PictureRecorder();
+
+    painter.paint(Canvas(pictureRecorder), const Size(100, 100));
+    pictureRecorder.endRecording().dispose();
+
+    expect(tilePictureCache.entryCount, 1);
+    expect(tilePrefetchCoordinator.queuedRequestCount, 0);
+    expect(callbacks, isEmpty);
+  });
+
   test(
     'paints cache misses directly during interaction and warms afterward',
     () {

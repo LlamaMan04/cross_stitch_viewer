@@ -144,6 +144,13 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Focal point captured at the start of a scale gesture.
   Offset _gestureStartFocalPoint = Offset.zero;
 
+  /// Relative scale change required before a scale gesture becomes zooming.
+  ///
+  /// Touch recognizers can report minute scale changes during ordinary drags.
+  /// Keeping this tolerance above that noise preserves cached-picture reuse for
+  /// same-scale pans while still reacting before a visible zoom is apparent.
+  static const double _zoomScaleTolerance = 0.005;
+
   /// Pointer currently driving an additive completion-selection drag.
   int? _selectionDragPointer;
 
@@ -344,6 +351,7 @@ class _PatternViewportState extends State<PatternViewport> {
                         pendingOverviewCoordinates: _pendingOverviewCoordinates,
                         cameraController: cameraController,
                         viewportSize: viewportSize,
+                        prefetchTileDistance: widget.prefetchTileDistance,
                         maximumSynchronousTileRecordingsDuringPan:
                             widget.maximumSynchronousTileRecordingsDuringPan,
                         staticFrameReuse: _staticFrameReuse,
@@ -724,9 +732,6 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Applies combined drag and pinch input from the gesture's initial camera.
   void _handleScaleUpdate(ScaleUpdateDetails details) {
     if (_selectionDragPointer != null) return;
-    if ((details.scale - 1).abs() > 0.0001) {
-      _bypassTilePicturesForZoom();
-    }
     // Gesture updates always derive from the same start snapshot.
     final startCamera = _gestureStartCamera;
     final viewportSize = _viewportSize;
@@ -747,6 +752,11 @@ class _PatternViewportState extends State<PatternViewport> {
       minimumCellSize,
       maximumCellSize,
     );
+    final relativeScaleDelta =
+        (nextCellSize - startCamera.cellSize).abs() / startCamera.cellSize;
+    if (relativeScaleDelta > _zoomScaleTolerance) {
+      _bypassTilePicturesForZoom();
+    }
     // Combined focal movement and scale support both drag and pinch.
     final nextOrigin = Offset(
       details.localFocalPoint.dx - gridPoint.dx * nextCellSize,
