@@ -152,7 +152,7 @@ Native-platform readability validation passed at the target detail scales.
 
 ### Phase 3 — Index and batch dynamic overlays — **Open**
 
-#### 3.1 Build completed-cell tile indexes
+#### 3.1 Build completed-cell tile indexes — **Complete**
 
 Create an immutable or incrementally maintained index from `PatternTileCoordinate` to completed coordinates. Rebuild it only when the completed-cell set changes.
 
@@ -164,6 +164,12 @@ During painting:
 4. Accumulate rectangles into paths grouped by overlay paint.
 
 Completion changes must update or replace the affected index without coupling it to imported pattern data.
+
+Implemented with a viewport-owned immutable source-tile index and a defensive
+completion snapshot. Detail/grid painting visits only index buckets intersecting
+`paintBounds`, applies exact-bounds filtering, and submits completed rectangles
+as one path for the shared overlay paint. Focused tests cover tile boundaries,
+source-set mutation isolation, visible-tile filtering, and batched submission.
 
 #### 3.2 Build selected-symbol indexes
 

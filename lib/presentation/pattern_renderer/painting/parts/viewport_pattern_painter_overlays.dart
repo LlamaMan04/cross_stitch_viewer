@@ -103,13 +103,19 @@ extension _ViewportPatternPainterOverlays on ViewportPatternPainter {
 
   /// Paints the configured neutral overlay on completed visible cells.
   int _paintCompletedCells(Canvas canvas) {
-    if (completedCells.isEmpty || renderLod == RenderLod.overview) return 0;
+    if (completedCellTileIndex.isEmpty || renderLod == RenderLod.overview) {
+      return 0;
+    }
+    final completedPath = Path();
     var count = 0;
     for (final cell in completedVisibleCells) {
-      canvas.drawRect(_cellRect(cell), _completedOverlayPaint);
+      completedPath.addRect(_cellRect(cell));
       count++;
     }
-    _dynamicOverlayPrimitivesPainted += count;
+    if (count > 0) {
+      canvas.drawPath(completedPath, _completedOverlayPaint);
+      _dynamicOverlayPrimitivesPainted++;
+    }
     return count;
   }
 

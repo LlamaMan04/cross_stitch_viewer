@@ -17,6 +17,7 @@ import '../tiles/pattern_static_frame_reuse.dart';
 import '../tiles/pattern_static_tile_recorder.dart';
 import '../tiles/pattern_tile_prefetch_coordinator.dart';
 import '../viewport/pattern_camera.dart';
+import '../viewport/completed_cell_tile_index.dart';
 import '../viewport/pattern_render_selection.dart';
 import '../viewport/pattern_viewport_bounds.dart';
 import '../viewport/pattern_viewport_controller.dart';
@@ -39,6 +40,7 @@ class ViewportPatternPainter extends CustomPainter {
     required this.settings,
     required this.selection,
     required this.completedCells,
+    CompletedCellTileIndex? completedCellTileIndex,
     required this.completionSelection,
     required this.surfaceColor,
     required this.regionColor,
@@ -59,7 +61,9 @@ class ViewportPatternPainter extends CustomPainter {
         PatternViewportBounds.defaultPrefetchTileDistance,
     this.maximumSynchronousTileRecordingsDuringPan = 1,
     this.staticFrameReuse,
-  }) : _staticGeometry = _StaticPaintGeometry(
+  }) : completedCellTileIndex =
+           completedCellTileIndex ?? CompletedCellTileIndex(completedCells),
+       _staticGeometry = _StaticPaintGeometry(
          camera: camera,
          visibleBounds: visibleBounds,
          renderLod: renderLod,
@@ -124,6 +128,9 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Completed grid coordinates used by dynamic cell overlays.
   final Set<GridCoordinate> completedCells;
+
+  /// Tile-local completed coordinates used to avoid scanning visible stitches.
+  final CompletedCellTileIndex completedCellTileIndex;
 
   /// Exact coordinates selected for a pending completion action.
   final Set<GridCoordinate> completionSelection;
@@ -254,9 +261,12 @@ class ViewportPatternPainter extends CustomPainter {
 
   /// Completed populated cells intersecting the current visible bounds.
   Iterable<StitchCell> get completedVisibleCells sync* {
-    for (final cell in _visibleCells) {
+    for (final coordinate in completedCellTileIndex.coordinatesIntersecting(
+      visibleBounds,
+    )) {
       _dynamicOverlayCandidatesVisited++;
-      if (completedCells.contains(cell.coordinate)) yield cell;
+      final cell = document.grid.cellAt(coordinate);
+      if (cell != null) yield cell;
     }
   }
 

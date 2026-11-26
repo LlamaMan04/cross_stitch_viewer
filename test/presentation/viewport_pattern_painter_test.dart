@@ -248,6 +248,46 @@ void main() {
     expect(metrics?.drawCallCount, greaterThanOrEqualTo(4));
   });
 
+  test('batches only completed coordinates in visible source tiles', () {
+    final fixture = _createCountingDocument();
+    final glyphLayoutCache = PatternGlyphLayoutCache();
+    addTearDown(glyphLayoutCache.dispose);
+    PatternRenderBatchMetrics? metrics;
+    final painter = ViewportPatternPainter(
+      document: fixture.document,
+      camera: const PatternCamera(cellSize: 40, origin: Offset.zero),
+      visibleBounds: const GridBounds(
+        startRow: 0,
+        endRow: 4,
+        startColumn: 0,
+        endColumn: 5,
+      ),
+      settings: const PatternRenderSettings(showCellColor: true),
+      selection: const PatternRenderSelection(),
+      completedCells: <GridCoordinate>{
+        const GridCoordinate(0, 0),
+        const GridCoordinate(3, 4),
+        const GridCoordinate(16, 16),
+      },
+      completionSelection: const <GridCoordinate>{},
+      surfaceColor: Colors.white,
+      regionColor: Colors.blue,
+      completionSelectionColor: Colors.teal,
+      glyphLayoutCache: glyphLayoutCache,
+      symbolRenderCache: PatternSymbolRenderCache(fixture.document),
+      renderLod: RenderLod.detail,
+      completedOverviewCoordinates: const <int, Set<PatternTileCoordinate>>{},
+      onBatchMetrics: (value) => metrics = value,
+    );
+    final recorder = PictureRecorder();
+
+    painter.paint(Canvas(recorder), const Size(400, 300));
+    recorder.endRecording().dispose();
+
+    expect(metrics?.dynamicOverlayCandidatesVisited, 2);
+    expect(metrics?.dynamicOverlayPrimitivesPainted, 1);
+  });
+
   test('reuses static tile pictures while the camera origin changes', () {
     final fixture = _createCountingDocument();
     final glyphLayoutCache = PatternGlyphLayoutCache();
@@ -653,7 +693,7 @@ void main() {
 
     expect(completedMetrics?.tilePictureHits, 1);
     expect(completedMetrics?.tilePictureMisses, 0);
-    expect(fixture.grid.queryCount, 2);
+    expect(fixture.grid.queryCount, 1);
     expect(completedMetrics?.drawCallCount, greaterThan(4));
   });
 }

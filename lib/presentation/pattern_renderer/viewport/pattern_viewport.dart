@@ -10,6 +10,7 @@ import '../../../domain/pattern_grid.dart';
 import '../../../domain/progress_models.dart';
 import '../../../domain/value_objects.dart';
 import 'pattern_camera.dart';
+import 'completed_cell_tile_index.dart';
 import '../cache/pattern_glyph_layout_cache.dart';
 import '../cache/pattern_glyph_picture_cache.dart';
 import '../cache/pattern_symbol_render_cache.dart';
@@ -140,6 +141,12 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Summary blocks containing completion at every overview resolution.
   late Map<int, Set<PatternTileCoordinate>> _completedOverviewCoordinates;
 
+  /// Immutable source-tile index rebuilt only after completed coordinates change.
+  late CompletedCellTileIndex _completedCellTileIndex;
+
+  /// Defensive completed-coordinate snapshot used to detect in-place mutation.
+  late Set<GridCoordinate> _indexedCompletedCells;
+
   /// Summary blocks containing pending completion selections by resolution.
   late Map<int, Set<PatternTileCoordinate>> _pendingOverviewCoordinates;
 
@@ -190,9 +197,7 @@ class _PatternViewportState extends State<PatternViewport> {
     _symbolRenderCache = PatternSymbolRenderCache(widget.document);
     _instrumentation = PatternRenderInstrumentation.createIfEnabled();
     _instrumentation?.attach();
-    _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
-      widget.completedCells,
-    );
+    _replaceCompletedCellIndexes(widget.completedCells);
     _pendingOverviewCoordinates = _indexOverviewCoordinates(
       widget.completionSelection.coordinates,
     );
@@ -248,10 +253,8 @@ class _PatternViewportState extends State<PatternViewport> {
       _tilePrefetchCoordinator.invalidate();
     }
     if (oldWidget.document != widget.document ||
-        !identical(oldWidget.completedCells, widget.completedCells)) {
-      _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
-        widget.completedCells,
-      );
+        !_completedCellsMatch(widget.completedCells)) {
+      _replaceCompletedCellIndexes(widget.completedCells);
     }
     if (oldWidget.completionSelection != widget.completionSelection) {
       _pendingOverviewCoordinates = _indexOverviewCoordinates(
@@ -349,6 +352,7 @@ class _PatternViewportState extends State<PatternViewport> {
                         settings: widget.settings,
                         selection: widget.selection,
                         completedCells: widget.completedCells,
+                        completedCellTileIndex: _completedCellTileIndex,
                         completionSelection:
                             widget.completionSelection.coordinates,
                         surfaceColor: colors.surfaceContainerLowest,
@@ -383,6 +387,20 @@ class _PatternViewportState extends State<PatternViewport> {
       },
     );
   }
+
+  /// Replaces completion-derived indexes from a defensive progress snapshot.
+  void _replaceCompletedCellIndexes(Set<GridCoordinate> completedCells) {
+    _indexedCompletedCells = Set<GridCoordinate>.unmodifiable(completedCells);
+    _completedCellTileIndex = CompletedCellTileIndex(_indexedCompletedCells);
+    _completedOverviewCoordinates = _indexCompletedOverviewCoordinates(
+      _indexedCompletedCells,
+    );
+  }
+
+  /// Whether [completedCells] matches the snapshot backing completion indexes.
+  bool _completedCellsMatch(Set<GridCoordinate> completedCells) =>
+      _indexedCompletedCells.length == completedCells.length &&
+      _indexedCompletedCells.containsAll(completedCells);
 
   /// Indexes completed coordinates at every supported overview resolution.
   Map<int, Set<PatternTileCoordinate>> _indexCompletedOverviewCoordinates(
