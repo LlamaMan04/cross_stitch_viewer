@@ -104,7 +104,7 @@ Cover:
 
 Focused tests cover every listed scenario, including configurable prefetch bounds, strict synchronous-recording limits, pan reuse versus pinch and wheel zoom bypass, translated-frame document-edge clipping, static-input invalidation, and retained-frame lease safety.
 
-### Phase 2 — Reduce glyph recording cost — **Partial**
+### Phase 2 — Reduce glyph recording cost — **Complete**
 
 #### 2.1 Add a bounded glyph-picture cache — **Complete**
 
@@ -141,9 +141,14 @@ Implemented for direct detail painting and static tile recording. Replays are
 centered using cached layout measurements, while byte-budget rejections retain
 the `TextPainter.paint` fallback.
 
-#### 2.3 Validate scale buckets
+#### 2.3 Validate scale buckets — **Complete**
 
 Use compatible quantization with tile pictures and measure readability at detail-level scales. If scaling introduces blur on a target platform, narrow the bucket width or record at a slightly higher representative size. Add visual tests for symbols at tile edges and at LOD transitions.
+
+Implemented with one shared quarter-pixel bucket policy for tile and glyph
+pictures. Image-based tests cover cached symbols on either side of a source-tile
+edge throughout a scale bucket and verify the detail-to-grid LOD transition.
+Native-platform readability validation passed at the target detail scales.
 
 ### Phase 3 — Index and batch dynamic overlays — **Open**
 

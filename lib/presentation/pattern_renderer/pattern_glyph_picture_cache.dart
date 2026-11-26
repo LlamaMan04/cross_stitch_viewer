@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'pattern_scale_bucket.dart';
+
 /// Identifies one recorded glyph appearance independently of its tile location.
 class PatternGlyphPictureKey {
   /// Creates a key from every text input that changes glyph pixels or layout.
@@ -192,14 +194,12 @@ class PatternGlyphPictureCache {
 
   /// Converts a positive logical font size into a quarter-pixel cache bucket.
   static int quantizeFontSize(double fontSize) {
-    assert(fontSize > 0 && fontSize.isFinite);
-    return (fontSize * 4).round().clamp(1, 1 << 30);
+    return PatternScaleBucket.quantize(fontSize);
   }
 
   /// Returns the representative logical font size for [fontSizeBucket].
   static double fontSizeForBucket(int fontSizeBucket) {
-    assert(fontSizeBucket > 0);
-    return fontSizeBucket / 4;
+    return PatternScaleBucket.representativeSize(fontSizeBucket);
   }
 
   /// Acquires and promotes a cached glyph picture, or records a cache miss.
