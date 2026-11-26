@@ -5,12 +5,12 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/test_patterns/large_sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_static_tile_recorder.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_picture_cache.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_prefetch_coordinator.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_viewport_bounds.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/tiles/pattern_static_tile_recorder.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_tile_picture_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/tiles/pattern_tile_prefetch_coordinator.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_viewport_bounds.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/render_lod.dart';
 
 /// Verifies bounded, duplicate-free, revision-aware tile cache warming.
 void main() {

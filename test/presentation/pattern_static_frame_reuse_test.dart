@@ -7,11 +7,11 @@ import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_static_frame_reuse.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_static_tile_recorder.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_picture_cache.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/tiles/pattern_static_frame_reuse.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/tiles/pattern_static_tile_recorder.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_tile_picture_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/render_lod.dart';
 
 /// Verifies translated static-frame reuse and its cache-lease ownership.
 void main() {

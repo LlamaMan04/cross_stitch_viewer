@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/pattern_backstitch.dart';
-import '../../domain/pattern_definitions.dart';
-import '../../domain/pattern_grid.dart';
-import '../../domain/pattern_document.dart';
+import '../../../domain/pattern_backstitch.dart';
+import '../../../domain/pattern_definitions.dart';
+import '../../../domain/pattern_grid.dart';
+import '../../../domain/pattern_document.dart';
 
 /// Immutable presentation metadata derived once from a pattern symbol.
 class PatternSymbolRenderMetadata {

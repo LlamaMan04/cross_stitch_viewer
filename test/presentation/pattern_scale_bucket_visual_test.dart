@@ -8,14 +8,14 @@ import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
 import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_layout_cache.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_picture_cache.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_symbol_render_cache.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_picture_cache.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_glyph_layout_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_glyph_picture_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_render_selection.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_symbol_render_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_tile_picture_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/render_lod.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/painting/viewport_pattern_painter.dart';
 
 /// Validates rendered glyph output around scale buckets and LOD boundaries.
 void main() {

@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_tile_picture_cache.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_tile_picture_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/render_lod.dart';
 
 /// Verifies bounded reuse and interaction controls for tile display lists.
 void main() {

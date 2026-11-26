@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_interaction.dart';
 
 /// Verifies exact-cell completion selection independently of symbol identity.
 void main() {

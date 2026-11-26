@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
-import 'viewport_pattern_painter.dart';
+import '../painting/viewport_pattern_painter.dart';
 
 /// Enables opt-in renderer profiling in debug and profile builds only.
 const bool patternRenderInstrumentationEnabled =

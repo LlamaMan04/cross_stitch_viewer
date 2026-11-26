@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_viewport_controller.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_viewport_controller.dart';
 
 /// Verifies camera notification behavior used by notifier-driven painting.
 void main() {

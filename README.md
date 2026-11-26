@@ -59,7 +59,13 @@ lib/
   domain/                           Pattern and progress contracts
   infrastructure/persistence/       Drift database, migrations, repositories
   presentation/screens/              Library, settings, and workspace screens
-  presentation/pattern_renderer/     Camera, viewport, painter, caches, input
+  presentation/pattern_renderer/     Pattern rendering feature
+    view/                            Public render-view widget
+    viewport/                        Camera, bounds, interaction, and LOD state
+    painting/                        Pattern and ruler painters
+    cache/                           Glyph, symbol, and tile-picture caches
+    tiles/                           Tile recording, reuse, and prefetching
+    diagnostics/                     Optional renderer instrumentation
 test/
   app/                              Fixture tests
   domain/                           Domain contract and validation tests

@@ -10,9 +10,9 @@ import 'package:stitch_scope/app/test_patterns/sparse_sample_pattern_fixture.dar
 import 'package:stitch_scope/domain/pattern_document.dart';
 import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_instrumentation.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_view.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/diagnostics/pattern_render_instrumentation.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_render_selection.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/view/pattern_render_view.dart';
 
 /// Repository document that defines these target-device baseline scenarios.
 const String phase0BaselineDocument = 'docs/PHASE_0_RENDERER_BASELINE.md';

@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_glyph_picture_cache.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/cache/pattern_glyph_picture_cache.dart';
 
 /// Verifies bounded, leased ownership of reusable glyph display lists.
 void main() {

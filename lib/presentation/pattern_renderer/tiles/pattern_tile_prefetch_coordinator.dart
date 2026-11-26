@@ -3,12 +3,12 @@ import 'dart:collection';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../domain/pattern_grid.dart';
-import 'pattern_camera.dart';
+import '../../../domain/pattern_grid.dart';
+import '../cache/pattern_tile_picture_cache.dart';
+import '../viewport/pattern_camera.dart';
+import '../viewport/pattern_viewport_bounds.dart';
+import '../viewport/render_lod.dart';
 import 'pattern_static_tile_recorder.dart';
-import 'pattern_tile_picture_cache.dart';
-import 'pattern_viewport_bounds.dart';
-import 'render_lod.dart';
 
 /// Schedules a bounded amount of static tile cache warming after each frame.
 class PatternTilePrefetchCoordinator {

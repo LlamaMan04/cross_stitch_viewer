@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
-import '../../domain/pattern_grid.dart';
-import '../../domain/value_objects.dart';
+import '../../../domain/pattern_grid.dart';
+import '../../../domain/value_objects.dart';
 
 /// Immutable grid-space camera used by the viewport and painter.
 class PatternCamera {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/pattern_document.dart';
-import '../../domain/progress_models.dart';
-import '../../domain/value_objects.dart';
-import 'pattern_interaction.dart';
-import 'pattern_render_selection.dart';
-import 'pattern_viewport.dart';
+import '../../../domain/pattern_document.dart';
+import '../../../domain/progress_models.dart';
+import '../../../domain/value_objects.dart';
+import '../viewport/pattern_interaction.dart';
+import '../viewport/pattern_render_selection.dart';
+import '../viewport/pattern_viewport.dart';
 
 /// Places a normalized pattern document in the viewport rendering engine.
 class PatternRenderView extends StatelessWidget {

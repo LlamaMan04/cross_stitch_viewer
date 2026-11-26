@@ -7,14 +7,14 @@ import '../../domain/pattern_document.dart';
 import '../../domain/progress_models.dart';
 import '../../domain/repositories.dart';
 import '../../domain/value_objects.dart';
-import '../pattern_renderer/pattern_interaction.dart';
-import '../pattern_renderer/pattern_render_selection.dart';
-import '../pattern_renderer/pattern_render_view.dart';
+import '../pattern_renderer/viewport/pattern_interaction.dart';
+import '../pattern_renderer/viewport/pattern_render_selection.dart';
+import '../pattern_renderer/view/pattern_render_view.dart';
 import 'pattern_workspace_controls.dart';
 import 'pattern_workspace_palette.dart';
 import 'pattern_workspace_settings_panel.dart';
 
-export '../pattern_renderer/pattern_render_view.dart';
+export '../pattern_renderer/view/pattern_render_view.dart';
 
 /// Loads a persisted pattern and its independent viewport render settings.
 class PatternWorkspaceScreen extends StatefulWidget {

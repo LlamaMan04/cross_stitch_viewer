@@ -3,10 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_selection.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_render_view.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/viewport_ruler_painter.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_render_selection.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/view/pattern_render_view.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/painting/viewport_pattern_painter.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/painting/viewport_ruler_painter.dart';
 
 /// Covers rendering inputs supplied through the public pattern render view.
 void main() {

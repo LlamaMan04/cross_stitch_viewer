@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-import '../../domain/pattern_grid.dart';
-import '../../domain/value_objects.dart';
+import '../../../domain/pattern_grid.dart';
+import '../../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 
 /// Separates the document range painted now from the tile range warmed later.

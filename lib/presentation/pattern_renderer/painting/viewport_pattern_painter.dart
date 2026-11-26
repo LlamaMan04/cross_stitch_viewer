@@ -4,30 +4,30 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../domain/pattern_definitions.dart';
-import '../../domain/pattern_document.dart';
-import '../../domain/pattern_grid.dart';
-import '../../domain/progress_models.dart';
-import '../../domain/value_objects.dart';
-import 'pattern_camera.dart';
-import 'pattern_glyph_layout_cache.dart';
-import 'pattern_glyph_picture_cache.dart';
-import 'pattern_render_selection.dart';
-import 'pattern_static_frame_reuse.dart';
-import 'pattern_symbol_render_cache.dart';
-import 'pattern_static_tile_recorder.dart';
-import 'pattern_tile_prefetch_coordinator.dart';
-import 'pattern_tile_picture_cache.dart';
-import 'pattern_viewport_controller.dart';
-import 'pattern_viewport_bounds.dart';
-import 'render_lod.dart';
+import '../../../domain/pattern_definitions.dart';
+import '../../../domain/pattern_document.dart';
+import '../../../domain/pattern_grid.dart';
+import '../../../domain/progress_models.dart';
+import '../../../domain/value_objects.dart';
+import '../cache/pattern_glyph_layout_cache.dart';
+import '../cache/pattern_glyph_picture_cache.dart';
+import '../cache/pattern_symbol_render_cache.dart';
+import '../cache/pattern_tile_picture_cache.dart';
+import '../tiles/pattern_static_frame_reuse.dart';
+import '../tiles/pattern_static_tile_recorder.dart';
+import '../tiles/pattern_tile_prefetch_coordinator.dart';
+import '../viewport/pattern_camera.dart';
+import '../viewport/pattern_render_selection.dart';
+import '../viewport/pattern_viewport_bounds.dart';
+import '../viewport/pattern_viewport_controller.dart';
+import '../viewport/render_lod.dart';
 
-part 'viewport_pattern_painter_cells.dart';
-part 'viewport_pattern_painter_grid.dart';
-part 'viewport_pattern_painter_metrics.dart';
-part 'viewport_pattern_painter_overlays.dart';
-part 'viewport_pattern_painter_overview.dart';
-part 'viewport_pattern_painter_tiles.dart';
+part 'parts/viewport_pattern_painter_cells.dart';
+part 'parts/viewport_pattern_painter_grid.dart';
+part 'parts/viewport_pattern_painter_metrics.dart';
+part 'parts/viewport_pattern_painter_overlays.dart';
+part 'parts/viewport_pattern_painter_overview.dart';
+part 'parts/viewport_pattern_painter_tiles.dart';
 
 /// Paints only the pattern cells and rules intersecting visible grid bounds.
 class ViewportPatternPainter extends CustomPainter {

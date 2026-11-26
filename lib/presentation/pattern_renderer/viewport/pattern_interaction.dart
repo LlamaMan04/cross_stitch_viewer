@@ -1,4 +1,4 @@
-import '../../domain/value_objects.dart';
+import '../../../domain/value_objects.dart';
 
 /// Active meaning assigned to a tap inside the pattern viewport.
 enum PatternInteractionMode {

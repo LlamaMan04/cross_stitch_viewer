@@ -1,4 +1,4 @@
-part of 'viewport_pattern_painter.dart';
+part of '../viewport_pattern_painter.dart';
 
 /// Counts batched primitives and canvas calls for one renderer frame.
 class PatternRenderBatchMetrics {

@@ -3,9 +3,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../domain/pattern_grid.dart';
+import '../../../domain/pattern_grid.dart';
 import 'pattern_scale_bucket.dart';
-import 'render_lod.dart';
+import '../viewport/render_lod.dart';
 
 /// Static renderer settings that affect recorded tile pictures.
 class PatternTilePictureStyle {

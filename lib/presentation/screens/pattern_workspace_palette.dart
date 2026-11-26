@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/pattern_backstitch.dart';
 import '../../domain/pattern_definitions.dart';
 import '../../domain/pattern_document.dart';
-import '../pattern_renderer/pattern_render_selection.dart';
+import '../pattern_renderer/viewport/pattern_render_selection.dart';
 
 /// Floating symbol palette and selected-thread inspector.
 class PatternSymbolPalettePanel extends StatelessWidget {

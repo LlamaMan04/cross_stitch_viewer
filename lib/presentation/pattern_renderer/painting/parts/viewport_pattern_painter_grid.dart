@@ -1,4 +1,4 @@
-part of 'viewport_pattern_painter.dart';
+part of '../viewport_pattern_painter.dart';
 
 /// Paints the document background and visible grid rules.
 extension _ViewportPatternPainterGrid on ViewportPatternPainter {

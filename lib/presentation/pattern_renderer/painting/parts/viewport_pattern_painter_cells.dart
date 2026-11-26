@@ -1,4 +1,4 @@
-part of 'viewport_pattern_painter.dart';
+part of '../viewport_pattern_painter.dart';
 
 /// Paints populated cell fills and symbol glyphs for the viewport painter.
 extension _ViewportPatternPainterCells on ViewportPatternPainter {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/render_lod.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/render_lod.dart';
 
 /// Verifies renderer detail thresholds and transition hysteresis.
 void main() {

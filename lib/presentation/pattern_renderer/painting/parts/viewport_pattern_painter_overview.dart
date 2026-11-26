@@ -1,4 +1,4 @@
-part of 'viewport_pattern_painter.dart';
+part of '../viewport_pattern_painter.dart';
 
 /// Paints summary-density layers used at overview zoom levels.
 extension _ViewportPatternPainterOverview on ViewportPatternPainter {

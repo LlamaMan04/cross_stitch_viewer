@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stitch_scope/domain/pattern_grid.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_camera.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_viewport_bounds.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_camera.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_viewport_bounds.dart';
 
 /// Verifies distinct document-clamped paint and prefetch ranges.
 void main() {

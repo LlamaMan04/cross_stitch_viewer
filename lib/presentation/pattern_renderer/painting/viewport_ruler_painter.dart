@@ -2,11 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../domain/pattern_grid.dart';
-import '../../domain/value_objects.dart';
-import 'pattern_camera.dart';
-import 'pattern_viewport_controller.dart';
-import 'render_lod.dart';
+import '../../../domain/pattern_grid.dart';
+import '../../../domain/value_objects.dart';
+import '../viewport/pattern_camera.dart';
+import '../viewport/pattern_viewport_controller.dart';
+import '../viewport/render_lod.dart';
 
 /// Paints fixed top and left rulers aligned to the drawable pattern grid.
 class ViewportRulerPainter extends CustomPainter {

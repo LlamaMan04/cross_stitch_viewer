@@ -1,10 +1,10 @@
 import 'dart:ui' as ui;
 
-import '../../domain/pattern_grid.dart';
-import '../../domain/value_objects.dart';
-import 'pattern_camera.dart';
+import '../../../domain/pattern_grid.dart';
+import '../../../domain/value_objects.dart';
+import '../cache/pattern_tile_picture_cache.dart';
+import '../viewport/pattern_camera.dart';
 import 'pattern_static_tile_recorder.dart';
-import 'pattern_tile_picture_cache.dart';
 
 /// Retains cache leases for a settled static layer during same-scale panning.
 class PatternStaticFrameReuse {

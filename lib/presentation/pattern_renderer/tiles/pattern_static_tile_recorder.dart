@@ -1,7 +1,7 @@
-import '../../domain/pattern_document.dart';
-import '../../domain/pattern_grid.dart';
-import 'pattern_tile_picture_cache.dart';
-import 'render_lod.dart';
+import '../../../domain/pattern_document.dart';
+import '../../../domain/pattern_grid.dart';
+import '../cache/pattern_tile_picture_cache.dart';
+import '../viewport/render_lod.dart';
 
 /// Records the static pictures for one source tile using painter-owned visuals.
 typedef PatternStaticTilePictureRecorder = PatternTilePictures Function({

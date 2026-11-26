@@ -1,4 +1,4 @@
-part of 'viewport_pattern_painter.dart';
+part of '../viewport_pattern_painter.dart';
 
 /// Paints dynamic selections, progress, regions, and backstitches.
 extension _ViewportPatternPainterOverlays on ViewportPatternPainter {

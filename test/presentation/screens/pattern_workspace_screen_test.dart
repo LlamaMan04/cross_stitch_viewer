@@ -4,8 +4,8 @@ import 'package:stitch_scope/app/test_patterns/large_sample_pattern_fixture.dart
 import 'package:stitch_scope/app/test_patterns/sample_pattern_fixture.dart';
 import 'package:stitch_scope/domain/progress_models.dart';
 import 'package:stitch_scope/domain/value_objects.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/pattern_interaction.dart';
-import 'package:stitch_scope/presentation/pattern_renderer/viewport_pattern_painter.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/viewport/pattern_interaction.dart';
+import 'package:stitch_scope/presentation/pattern_renderer/painting/viewport_pattern_painter.dart';
 import 'package:stitch_scope/presentation/screens/pattern_workspace_screen.dart';
 
 import '../../domain/in_memory_repositories.dart';

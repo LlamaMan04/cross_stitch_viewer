@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import '../../domain/pattern_grid.dart';
+import '../../../domain/pattern_grid.dart';
 
 /// Automatic detail level selected from the current on-screen cell size.
 enum RenderLod {

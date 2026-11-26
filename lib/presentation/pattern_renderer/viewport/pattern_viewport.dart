@@ -5,25 +5,25 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../domain/pattern_document.dart';
-import '../../domain/pattern_grid.dart';
-import '../../domain/progress_models.dart';
-import '../../domain/value_objects.dart';
+import '../../../domain/pattern_document.dart';
+import '../../../domain/pattern_grid.dart';
+import '../../../domain/progress_models.dart';
+import '../../../domain/value_objects.dart';
 import 'pattern_camera.dart';
-import 'pattern_glyph_layout_cache.dart';
-import 'pattern_glyph_picture_cache.dart';
+import '../cache/pattern_glyph_layout_cache.dart';
+import '../cache/pattern_glyph_picture_cache.dart';
+import '../cache/pattern_symbol_render_cache.dart';
+import '../cache/pattern_tile_picture_cache.dart';
+import '../diagnostics/pattern_render_instrumentation.dart';
+import '../painting/viewport_pattern_painter.dart';
+import '../painting/viewport_ruler_painter.dart';
+import '../tiles/pattern_static_frame_reuse.dart';
+import '../tiles/pattern_tile_prefetch_coordinator.dart';
 import 'pattern_interaction.dart';
-import 'pattern_render_instrumentation.dart';
 import 'pattern_render_selection.dart';
-import 'pattern_symbol_render_cache.dart';
-import 'pattern_static_frame_reuse.dart';
-import 'pattern_tile_picture_cache.dart';
-import 'pattern_tile_prefetch_coordinator.dart';
 import 'pattern_viewport_bounds.dart';
 import 'pattern_viewport_controller.dart';
 import 'render_lod.dart';
-import 'viewport_pattern_painter.dart';
-import 'viewport_ruler_painter.dart';
 
 /// Interactive viewport that owns camera gestures and visible-only painting.
 class PatternViewport extends StatefulWidget {

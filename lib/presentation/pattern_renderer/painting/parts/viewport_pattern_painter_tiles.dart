@@ -1,4 +1,4 @@
-part of 'viewport_pattern_painter.dart';
+part of '../viewport_pattern_painter.dart';
 
 /// Prepares, records, and replays cached static source tiles.
 extension _ViewportPatternPainterTiles on ViewportPatternPainter {
