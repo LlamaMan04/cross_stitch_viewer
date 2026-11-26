@@ -10,50 +10,11 @@ The primary suspected cause is synchronous work for newly exposed 16×16 tiles: 
 
 The renderer already has bounded tile-picture caching with document, style, LOD, and quantized-scale keys; leased native-picture disposal; sparse tile-backed grid queries; overview summaries; visible-cell memoization; fill/grid path batching; glyph layout caching; zoom-time tile-picture bypass; explicit interaction states; tile-aligned paint/prefetch bounds; shared tile recording; cooperative tile prefetching; and stale-request invalidation. Renderer instrumentation, unit/widget tests, and representative large-pattern fixtures also exist.
 
-The remaining work below is not yet complete: captured target-device baselines, previous-frame pan reuse, a strict synchronous-recording limit during pans, glyph-picture caching below the tile level, dynamic overlay indexes, grid geometry caching, parameter tuning, and end-to-end performance validation. The status labels below describe the repository as it exists today.
+The remaining work below is not yet complete: previous-frame pan reuse, a strict synchronous-recording limit during pans, glyph-picture caching below the tile level, dynamic overlay indexes, grid geometry caching, parameter tuning, and end-to-end performance validation. The status labels below describe the repository as it exists today.
 
 **Status legend:** **Complete** means implemented and covered by focused tests where applicable; **Partial** means the supporting mechanism exists but the planned behavior or diagnostics are incomplete; **Open** means the work has not been implemented.
 
 ## Implementation plan
-
-### Phase 0 — Establish a reproducible baseline
-
-#### 0.1 Expand renderer metrics — **Partial**
-
-Extend `PatternRenderBatchMetrics` and its instrumentation output with:
-
-- Direct cell-fill count and direct glyph-paint count.
-- Tile recordings started, completed, rejected, and queued.
-- Prefetch requests, prefetched tiles, cancelled requests, and stale requests.
-- Dynamic-overlay candidates visited and primitives painted.
-- Grid rules generated and grid paths recorded/replayed.
-- Per-frame pan/zoom state and whether the frame was interactive.
-
-Keep cumulative cache counters separate from per-frame counters so a trace can distinguish current-frame work from lifetime totals.
-
-The requested fields and instrumentation output now exist. The remaining diagnostic cleanup is to separate lifetime counters from per-frame deltas consistently: cache evictions and prefetch counters are currently exposed from their long-lived owners, while queued recordings represent the current queue length rather than newly queued work. Grid-path replay is also reserved in the metrics model but is not yet populated.
-
-#### 0.2 Add repeatable benchmark scenarios — **Complete**
-
-Create a renderer benchmark or diagnostic test harness using deterministic fixtures for:
-
-1. A large sparse pattern.
-2. A dense pattern with a small repeated symbol set.
-3. A pattern with many distinct symbols and colors.
-4. Completed-cell and selected-symbol overlays enabled.
-
-For each scenario, exercise:
-
-- Slow horizontal, vertical, and diagonal pans across tile boundaries.
-- Repeated back-and-forth pans over the same boundary.
-- Wheel and pinch zoom near each LOD threshold.
-- Theme/style changes after the cache has warmed.
-
-Capture build time, raster time, tile hits/misses, recordings, evictions, cache bytes, visible cells, glyph work, overlay candidates, grid work, and draw calls.
-
-#### 0.3 Record baseline traces — **Open**
-
-Run the scenarios on at least one desktop and one slower/mobile-class target. Store the scenario description and summarized results in the repository, not brittle platform-specific absolute timing assertions. Use the baseline to identify the dominant cost before changing tile size or cache budgets.
 
 ### Phase 1 — Make same-scale panning tile-aware
 
@@ -289,15 +250,13 @@ Use golden or screenshot-based comparisons where practical, with targeted manual
 
 ## Recommended delivery order
 
-1. Finalize instrumentation accounting and preserve the benchmark scenarios.
-2. Capture the desktop and mobile-class Phase 0 traces.
-3. Finish the strict synchronous-recording limit for same-scale pans.
-4. Add previous-frame static-layer reuse.
-5. Add completed and selected overlay indexes with path batching.
-6. Add glyph-picture caching and scale-bucket validation.
-7. Add grid geometry caching.
-8. Tune tile size, cache budgets, prefetch distance, and scale quantization.
-9. Run functional, performance, and visual regression validation.
+1. Finish the strict synchronous-recording limit for same-scale pans.
+2. Add previous-frame static-layer reuse.
+3. Add completed and selected overlay indexes with path batching.
+4. Add glyph-picture caching and scale-bucket validation.
+5. Add grid geometry caching.
+6. Tune tile size, cache budgets, prefetch distance, and scale quantization.
+7. Run functional, performance, and visual regression validation.
 
 ## Definition of done
 
