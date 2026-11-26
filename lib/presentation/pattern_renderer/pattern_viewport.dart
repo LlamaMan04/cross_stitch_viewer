@@ -15,6 +15,7 @@ import 'pattern_interaction.dart';
 import 'pattern_render_instrumentation.dart';
 import 'pattern_render_selection.dart';
 import 'pattern_symbol_render_cache.dart';
+import 'pattern_static_frame_reuse.dart';
 import 'pattern_tile_picture_cache.dart';
 import 'pattern_tile_prefetch_coordinator.dart';
 import 'pattern_viewport_bounds.dart';
@@ -109,6 +110,9 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Static tile display lists shared by every painter for this viewport.
   final PatternTilePictureCache _tilePictureCache = PatternTilePictureCache();
 
+  /// Retained settled pictures that may be translated during an active pan.
+  final PatternStaticFrameReuse _staticFrameReuse = PatternStaticFrameReuse();
+
   /// Cooperative warmer for source tiles just beyond the visible viewport.
   final PatternTilePrefetchCoordinator _tilePrefetchCoordinator =
       PatternTilePrefetchCoordinator();
@@ -185,6 +189,7 @@ class _PatternViewportState extends State<PatternViewport> {
     _wheelInteractionTimer?.cancel();
     _instrumentation?.dispose();
     _cameraController?.dispose();
+    _staticFrameReuse.clear();
     _tilePictureCache.dispose();
     _tilePrefetchCoordinator.dispose();
     _glyphLayoutCache.dispose();
@@ -197,6 +202,7 @@ class _PatternViewportState extends State<PatternViewport> {
     super.didChangeDependencies();
     if (_dependenciesInitialized) {
       _tilePictureCache.clear();
+      _staticFrameReuse.clear();
       _glyphLayoutCache.clear();
       _tilePrefetchCoordinator.invalidate();
     }
@@ -212,10 +218,12 @@ class _PatternViewportState extends State<PatternViewport> {
       _cameraController = null;
       _gestureStartCamera = null;
       _symbolRenderCache = PatternSymbolRenderCache(widget.document);
+      _staticFrameReuse.clear();
       _tilePictureCache.clear();
       _tilePrefetchCoordinator.invalidate();
     } else if (_staticTilePictureSettingsChanged(oldWidget.settings)) {
       // Only static fills and glyph contrast require picture invalidation.
+      _staticFrameReuse.clear();
       _tilePictureCache.clear();
       _tilePrefetchCoordinator.invalidate();
     }
@@ -338,6 +346,7 @@ class _PatternViewportState extends State<PatternViewport> {
                         viewportSize: viewportSize,
                         maximumSynchronousTileRecordingsDuringPan:
                             widget.maximumSynchronousTileRecordingsDuringPan,
+                        staticFrameReuse: _staticFrameReuse,
                         onBatchMetrics: _instrumentation?.recordPaint,
                       ),
                       child: const SizedBox.expand(),
@@ -785,6 +794,7 @@ class _PatternViewportState extends State<PatternViewport> {
   /// Disables tile-picture reads and writes as soon as an interaction zooms.
   void _bypassTilePicturesForZoom() {
     _cameraController?.beginZooming();
+    _staticFrameReuse.clear();
     if (!_tilePictureCache.reuseEnabled) return;
     _tilePictureCache.suspendWrites();
     _tilePictureCache.suspendReuse();
@@ -803,6 +813,7 @@ class _PatternViewportState extends State<PatternViewport> {
     _wheelInteractionTimer = null;
     _tilePictureCache.resumeWrites();
     _tilePictureCache.resumeReuse();
+    _staticFrameReuse.clear();
     _cameraController?.settleInteraction();
     _cameraController?.requestRepaint();
     _reportSettledViewport();

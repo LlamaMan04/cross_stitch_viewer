@@ -12,6 +12,7 @@ import '../../domain/value_objects.dart';
 import 'pattern_camera.dart';
 import 'pattern_glyph_layout_cache.dart';
 import 'pattern_render_selection.dart';
+import 'pattern_static_frame_reuse.dart';
 import 'pattern_symbol_render_cache.dart';
 import 'pattern_static_tile_recorder.dart';
 import 'pattern_tile_prefetch_coordinator.dart';
@@ -52,6 +53,7 @@ class ViewportPatternPainter extends CustomPainter {
     this.cameraController,
     this.viewportSize,
     this.maximumSynchronousTileRecordingsDuringPan = 1,
+    this.staticFrameReuse,
   }) : _staticGeometry = _StaticPaintGeometry(
          camera: camera,
          visibleBounds: visibleBounds,
@@ -80,6 +82,9 @@ class ViewportPatternPainter extends CustomPainter {
   ///
   /// Additional cache misses paint directly and are warmed after the frame.
   final int maximumSynchronousTileRecordingsDuringPan;
+
+  /// Viewport-owned leases used to replay the prior static layer while panning.
+  final PatternStaticFrameReuse? staticFrameReuse;
 
   /// Camera used for the current interaction or direct painter invocation.
   PatternCamera get camera =>
@@ -271,10 +276,30 @@ class ViewportPatternPainter extends CustomPainter {
     if (renderLod == RenderLod.overview) {
       drawCallCount += _paintOverviewTiles(canvas);
     }
+    final recorder = createStaticTileRecorder();
+    final reuse = staticFrameReuse;
+    final canReplayRetainedFrame =
+        cameraController?.interactionState ==
+            PatternViewportInteractionState.panning &&
+        recorder != null &&
+        reuse?.canReplay(recorder: recorder, camera: camera) == true;
+    final retainedCoordinates = canReplayRetainedFrame
+        ? reuse!.coordinatesIntersecting(visibleBounds)
+        : const <PatternTileCoordinate>{};
     final staticTileFrame = tilePictureCache == null
         ? null
-        : _prepareStaticTileFrame();
+        : _prepareStaticTileFrame(excludedCoordinates: retainedCoordinates);
     try {
+      final retainedFillCount = canReplayRetainedFrame
+          ? reuse!.paintLayer(
+              canvas: canvas,
+              camera: camera,
+              bounds: visibleBounds,
+              dimensions: document.grid.dimensions,
+              pictureFor: (pictures) => pictures.fillPicture,
+              countFor: (pictures) => pictures.cellFillCount,
+            )
+          : 0;
       final fillMetrics = staticTileFrame == null
           ? _paintCellFills(canvas)
           : staticTileFrame.paintFills(canvas, this);
@@ -296,6 +321,16 @@ class ViewportPatternPainter extends CustomPainter {
                   : 0,
             )
           : staticTileFrame.paintGlyphs(canvas, this);
+      final retainedGlyphCount = canReplayRetainedFrame
+          ? reuse!.paintLayer(
+              canvas: canvas,
+              camera: camera,
+              bounds: visibleBounds,
+              dimensions: document.grid.dimensions,
+              pictureFor: (pictures) => pictures.glyphPicture,
+              countFor: (pictures) => pictures.glyphCount,
+            )
+          : 0;
       drawCallCount += glyphMetrics.drawCallCount;
       final gridMetrics = settings.showGrid
           ? _paintGrid(canvas)
@@ -309,7 +344,7 @@ class ViewportPatternPainter extends CustomPainter {
       canvas.restore();
       onBatchMetrics?.call(
         PatternRenderBatchMetrics(
-          cellFillCount: fillMetrics.primitiveCount,
+          cellFillCount: fillMetrics.primitiveCount + retainedFillCount,
           cellFillDrawCalls: fillMetrics.drawCallCount,
           gridRuleCount: gridMetrics.primitiveCount,
           gridDrawCalls: gridMetrics.drawCallCount,
@@ -318,7 +353,7 @@ class ViewportPatternPainter extends CustomPainter {
               : staticTileFrame?.visibleCellCount ??
                     _cachedVisibleCells?.length ??
                     0,
-          glyphCount: glyphMetrics.primitiveCount,
+          glyphCount: glyphMetrics.primitiveCount + retainedGlyphCount,
           drawCallCount: drawCallCount,
           tilePictureHits: staticTileFrame?.cacheHitCount ?? 0,
           tilePictureMisses: staticTileFrame?.cacheMissCount ?? 0,
@@ -355,6 +390,15 @@ class ViewportPatternPainter extends CustomPainter {
               PatternViewportInteractionState.settled,
         ),
       );
+      if (recorder != null &&
+          cameraController?.interactionState ==
+              PatternViewportInteractionState.settled) {
+        reuse?.capture(
+          coordinates: staticTileFrame?.coordinates ?? const [],
+          recorder: recorder,
+          camera: camera,
+        );
+      }
     } finally {
       staticTileFrame?.release();
     }

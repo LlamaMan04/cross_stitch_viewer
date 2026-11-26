@@ -78,7 +78,7 @@ For continuous zooming:
 
 Ensure a small scale delta cannot accidentally switch a pure pan into zoom mode, and ensure wheel zoom uses the same policy as pinch zoom.
 
-#### 1.5 Reuse the previous static frame during active pan — **Open**
+#### 1.5 Reuse the previous static frame during active pan — **Complete**
 
 Retain the previous static tile frame or its leases at the start of a same-scale pan. During the gesture:
 
@@ -102,7 +102,7 @@ Cover:
 - Correct document-edge clipping during translated-frame reuse.
 - Lease safety when a retained frame is evicted or replaced.
 
-Bounds, coordinator, cancellation, basic cache behavior, and strict synchronous-recording limits have focused tests. Tests for translated-frame reuse and retained-frame lease safety remain to be added.
+Bounds, coordinator, cancellation, basic cache behavior, strict synchronous-recording limits, translated-frame reuse, and retained-frame lease safety have focused tests.
 
 ### Phase 2 — Reduce glyph recording cost — **Open**
 

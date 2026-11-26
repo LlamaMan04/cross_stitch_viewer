@@ -3,7 +3,10 @@ part of 'viewport_pattern_painter.dart';
 /// Prepares, records, and replays cached static source tiles.
 extension _ViewportPatternPainterTiles on ViewportPatternPainter {
   /// Resolves cached or direct static content for every visible source tile.
-  _StaticTileFrame _prepareStaticTileFrame() {
+  _StaticTileFrame _prepareStaticTileFrame({
+    Set<PatternTileCoordinate> excludedCoordinates =
+        const <PatternTileCoordinate>{},
+  }) {
     final recorder = createStaticTileRecorder();
     if (recorder == null || visibleBounds.isEmpty) {
       return const _StaticTileFrame();
@@ -32,6 +35,7 @@ extension _ViewportPatternPainterTiles on ViewportPatternPainter {
         tileColumn++
       ) {
         final coordinate = PatternTileCoordinate(tileRow, tileColumn);
+        if (excludedCoordinates.contains(coordinate)) continue;
         // Cache hits remain available during panning; only new recordings are
         // limited so a tile boundary cannot monopolize the paint callback.
         final mayRecordSynchronously =
@@ -195,6 +199,10 @@ class _StaticTileFrame {
 
   /// Visible tile content retained for the duration of this paint frame.
   final List<_StaticTileContent> contents;
+
+  /// Coordinates represented by this frame's ordinary static-tile content.
+  Iterable<PatternTileCoordinate> get coordinates =>
+      contents.map((content) => content.coordinate);
 
   /// Number of visible tiles replayed from retained cache entries.
   final int cacheHitCount;
